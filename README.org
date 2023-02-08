@@ -1,0 +1,87 @@
+#+title: Readme
+
+
+[[./resources/logo.png]]
+
+* Description
+Set of personal hacks and tweaks, services and packages in Guix ecosystem.
+
+Feel free to use. I will try my best to keep stability and avoid breaking changes on new versions.
+* Nonfree software warning
+This channels includes nonfree software!
+
+Please do NOT promote this repository on any official Guix communication channels, such as their mailing lists or IRC channel, even in response to support requests! This is to show respect for the Guix project’s strict policy against recommending nonfree software, and to avoid any unnecessary hostility.
+* Packages
+** Cups
+Repacked ~cups~ & ~cups-filters~ so, the filters package would be extensible with drivers from manufacturers.
+* Services
+** Desktop-icons
+Simple services that symlinks provided entries ~(icons, desktop-entries)~ to the proper directories in user's home directory.
+
+Was originally made to add flatpak icons to my gnome desktop.
+
+#+begin_src scheme
+(define-record-type* <desktop-icons-service-conf>
+  ...
+  ;; entries := (icons, desktop-entries) where icons := list of .svg or .png, desktop-entries := list of .desktop entries
+  ;; https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html
+  (entries desktop-icons-service-conf:entries
+           (default '())))
+#+end_src
+** Dotfiles manager
+Symlinks all your dotfiles with given scheme.
+
+Depends on ~STORAGE~ envvar: where to look for symlink's source. Presumably you'd store your dotfiles in your guix-config that's synced with git.
+
+It's actually a bad idea to synchronize dotifles files like this, better to create gexps generating properly serialized outputs and symlink them. Quick and dirty solution.
+
+#+begin_src scheme
+(define* (-storage- #:optional (x ""))
+  (string-append (getenv "STORAGE") "/" x))
+
+(define-record-type* <dotfile-manager-conf>
+  ...
+  (schemes dotfile-manager-conf:schemes)
+  (storage dotfile-manager-conf:storage
+           (default -storage-)))
+
+(schemes
+ `((,(specification->package "clojure")
+    ((".config/clojure" "clojure")))
+   (,(specification->package "emacs")
+    ((".doom.d" "doom.d")))
+   ("guile" ;; can't refer guile package inside gexp
+    ((".guile" ".guile")))
+   (,node
+    ((".npmrc" "npmrc")))
+   (,(specification->package "git")
+    ((".gitconfig" "gitconfig")))
+   (,(specification->package "openssh")
+    ((".ssh" "keys/ssh")))))
+#+end_src
+** Projects manager
+On boot and reconfiguration: clones all the git repos from passed ~(projects)~ to ~dir~. Then sets up cronjob to fetch those projects from their dirs every ~period~ seconds.
+
+#+begin_src scheme
+(define-record-type* <project-manager-conf>
+  ...
+  (dir project-manager-conf:dir)
+  (period project-manager-conf:period (default 300))
+  (projects project-manager-conf:projects))
+
+(project-manager-conf
+ (dir (string-append (getenv "HOME") "Projects"))
+ (projects
+  (append
+   (map channel->project (current-channels))
+   (list
+    (project*
+     "https://git.sr.ht/~sircmpwn/wlroots"
+     "wlroots")
+    (project*
+     "https://notabug.org/ZelphirKaltstahl/guile-examples"
+     "guile-examples")))))
+#+end_src
+* Utils
+** Flatpak
+~entries~ - finds all entries of currently installed flatpak apps in `dir`. Returns a list of '(icons desktop-entries), where icon := (or .png .svg) file, desktop-entry := .desktop file

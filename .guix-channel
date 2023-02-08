@@ -1,0 +1,15 @@
+;; -*- mode: scheme; -*-
+
+(channel
+ (version 0)
+ (directory "x-files")
+ (dependencies
+  (channel
+   (name rde)
+   (url "https://git.sr.ht/~abcdw/rde"))
+  (channel
+   (name druix)
+   (url "https://github.com/drewc/druix"))
+  (channel
+   (name nonguix)
+   (url "https://gitlab.com/nonguix/nonguix"))))
