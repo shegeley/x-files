@@ -9,7 +9,8 @@
    (url "https://git.sr.ht/~abcdw/rde"))
   (channel
    (name druix)
-   (url "https://github.com/drewc/druix"))
+   (url "git@github.com:drewc/druix.git")
+   (branch "main"))
   (channel
    (name nonguix)
    (url "https://gitlab.com/nonguix/nonguix"))))
