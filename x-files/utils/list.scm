@@ -43,3 +43,11 @@
      (if (pred x1)
          (cons* (copred x1) (replace-by rest pred copred))
          (cons* x1 (replace-by rest pred copred))))))
+
+
+(define (even-list-replace elist x f)
+  (let* ((alist (even-list->alist elist))
+         (prev-value
+          (assoc-ref (even-list->alist elist) x)))
+    (alist->even-list
+     (assoc-set! alist x (f prev-value)))))

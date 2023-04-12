@@ -11,7 +11,8 @@
   #:use-module (srfi srfi-26)
 
   #:export (interpose
-            variable-rewire!))
+            variable-rewire!
+            ref-in))
 
 (define~ (interpose lst
                     #:optional (token " "))
@@ -34,3 +35,10 @@
   (variable-set!
    (module-variable
     (resolve-module module-name) var) val))
+
+(define (ref-in x path)
+  (match path
+    ('() x)
+    (else
+     (ref-in (assoc-ref x (first path))
+             (cdr path)))))
