@@ -36,9 +36,36 @@
    (module-variable
     (resolve-module module-name) var) val))
 
-(define (ref-in x path)
+(define~ (ref-in x path)
+  `(((((a . 1)
+       (b . 2)
+       (c . ((c1 . 11)
+             (c2 . 12)))) (c c2)) . 12)
+    ;; NOTE: be careful when dealing with #t #f as values
+    ((((a . 1)
+       (b . 2)
+       (c . ((c1 . 11)
+             (c2 . 12)))) (c c3)) . #f)
+    ((((a . #f)
+       (b . 2)
+       (c . ((c1 . 11)
+             (c2 . #f)))) (a)) . #f))
   (match path
     ('() x)
     (else
      (ref-in (assoc-ref x (first path))
              (cdr path)))))
+
+(define* (hash-unique l
+                      #:key (f (lambda (x y) x)))
+  (let ((h (make-hash-table (length l))))
+    (begin
+      (map
+       (lambda (x)
+         (hash-set! h x #t)) l)
+      (hash-map->list f h))))
+
+(define* (pairize f x #:optional
+                  (g identity)
+                  (h identity))
+  (h (cons (g x) (f x))))
