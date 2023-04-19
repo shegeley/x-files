@@ -12,7 +12,10 @@
     (syntax-case s ()
       ((_ alist ((reference variable) rest ...)
           body ...)
-       #'(let* ((variable (ref-in alist reference)))
+       #'(let* ((variable (if
+                           (list? reference)
+                           (ref-in alist reference)
+                           (ref-in alist (list reference)))))
            (match-alist-inner alist (rest ...) body ...)))
       ((_ alist (reference rest ...)
           body ...)
