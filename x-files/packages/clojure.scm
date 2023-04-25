@@ -11,11 +11,9 @@
 
   #:use-module (nonguix build-system binary)
 
-  #:use-module (nongnu packages clojure)
+  #:use-module (nongnu packages clojure))
 
-  #:export (babashka))
-
-(define babashka
+(define-public babashka
   ;; NOTE: Taken from @krevedkokun. Lazy version.
   ;; Also see https://gitlab.com/nonguix/nonguix/-/issues/151
   (package
@@ -62,7 +60,7 @@ Its main goal is to leverage Clojure in places where you would be using bash oth
    ;; NOTE: Taken from @krevedkokun. Lazy version.
   (package
     (name "clojure-lsp")
-    (version "2022.11.03-00.14.57")
+    (version "2023.04.19-12.43.29")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -72,7 +70,7 @@ Its main goal is to leverage Clojure in places where you would be using bash oth
              "/clojure-lsp-native-static-linux-amd64.zip"))
        (sha256
         (base32
-         "0a93fjrslyqrj1in49a51b0hnrjmgjamxxg39y9h9b9xpsy1dwcz"))))
+         "0lymhd1svjbp4bkb738vx79g611k5gm7lxmdiysrwkxs3mw9aqrq"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan
@@ -81,6 +79,19 @@ Its main goal is to leverage Clojure in places where you would be using bash oth
      `(("unzip" ,unzip)))
     (supported-systems '("x86_64-linux"))
     (home-page "https://github.com/clojure-lsp/clojure-lsp")
-    (synopsis  "")
-    (description "")
+    (synopsis  "A Language Server for Clojure(script). Taking a Cursive-like approach of statically analyzing code.")
+    (description "The goal of this project is to bring great editing tools for Clojure/Clojurescript to all editors and programatically via its CLI and API. It aims to work alongside you to help you navigate, identify and fix errors, perform refactors and much more!
+You will get:
+ - Autocomplete
+ - Jump to definition/implementation
+ - Find references
+ - Renaming
+ - Code actions
+ - Errors
+ - Automatic ns cleaning
+ - Lots of Refactorings
+ - Code lens
+ - Semantic tokens (syntax highlighting)
+ - Call hierarchy
+ - Java interop")
     (license license:expat)))
