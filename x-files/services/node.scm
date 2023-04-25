@@ -24,9 +24,12 @@
   #:use-module (ice-9 match)
   #:use-module (ice-9 format))
 
+(define python-package-matcher
+  `(("python3" . ,python-3)))
+
 (define config
   `(("script-shell" . "bash")
-    ("python" . "python3.9")
+    ("python" . "python3")
     ("prefix" . ,(string-append
                   (getenv "HOME") "/" "npm-packages"))))
 
@@ -38,10 +41,13 @@
     ('() "")))
 
 (define (profile config)
-  (list bash
-        (specification->package "python@3.9")
-        node
-        yarn))
+  (match-alist
+   config
+   (("python" python))
+   (list bash
+         (assoc-ref python-package-matcher python)
+         node
+         yarn)))
 
 (define (activation config)
   (match-alist
