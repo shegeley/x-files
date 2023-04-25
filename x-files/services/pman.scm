@@ -33,9 +33,6 @@
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 exceptions)
 
-  #:use-module (mcron base)
-  #:use-module (mcron job-specifier)
-
   #:use-module (oop goops)
 
   #:use-module (srfi srfi-1)
