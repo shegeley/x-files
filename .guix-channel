@@ -2,14 +2,14 @@
 
 (channel
  (version 0)
- (directory "x-files")
+ (directory ".")
  (dependencies
   (channel
    (name rde)
    (url "https://git.sr.ht/~abcdw/rde"))
   (channel
    (name druix)
-   (url "git@github.com:drewc/druix.git")
+   (url "https://github.com/drewc/druix.git")
    (branch "main"))
   (channel
    (name nonguix)
