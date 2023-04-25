@@ -44,27 +44,27 @@
         yarn))
 
 (define (activation config)
-  (match-alist config
-               (("prefix" prefix))
-               (with-imported-modules
-                   `((guix build utils))
-                 #~(begin
-                     (use-modules (guix build utils))
+  (match-alist
+   config
+   (("prefix" prefix))
+   (with-imported-modules
+       `((guix build utils))
+     #~(begin
+         (use-modules (guix build utils))
 
-                     (define npmrc
-                       (string-append
-                        (getenv "HOME") "/.npmrc"))
-
-                     (unless (directory-exists? #$prefix)
-                       (mkdir #$prefix))))))
+         (unless (directory-exists? #$prefix)
+           (mkdir #$prefix))))))
 
 (define (files config)
   `((".npmrc"
      ,(plain-file "npmrc"
                   (serialize config)))))
 
-(define (envars! _)
-  '())
+(define (envars! config)
+  (match-alist
+   config
+   (("prefix" prefix))
+   `(("PATH" . ,(string-append "$PATH:" prefix "/bin")))))
 
 (define-public node-dev-service-type
   (service-type
