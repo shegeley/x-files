@@ -14,17 +14,21 @@
 
   #:export-syntax (define~))
 
-(define (debug?)
-  (equal? (getenv "DEBUG") "TRUE"))
+(define (dev?)
+  (equal? (getenv "ENV") "DEV"))
 
-(define* result-formatter
-  (match-lambda
+(define* (result-formatter
+          port
+          args)
+  (match args
     ((or (list expected actual ok)
          (list ... expected actual ok))
-     (format #f "Expected value: ~a. Actual value: ~a. Test ~a ~%" expected actual (if ok "passed" "failed")))))
+     (format port
+             "Expected value: ~a. Actual value: ~a. Test ~a ~%" expected actual
+             (if ok "passed" "failed")))))
 
 (define* (test-runner*
-          #:key (port #t))
+          #:key (port (if (dev?) #t #f)))
   (let ((runner (test-runner-null))
         ;; results := '((expected1 actual1 (equal? expected1 actual1))
         ;;              (expected2 actual2 (equal? expected2 actual2)))
@@ -51,7 +55,7 @@
         (begin
           (format port "Done ~%")
           (map (lambda (res)
-                 (format port (result-formatter res)))
+                 (result-formatter port res))
                results))))
     runner))
 
@@ -59,16 +63,14 @@
            name
            proc
            example
-           #:key (port #t)
-                 (debug? debug?))
+           #:key (port (if (dev?) #t #f)))
   (let ((runner (test-runner-null))
         ;; results := '((expected1 actual1 (equal? expected1 actual1))
         ;;              (expected2 actual2 (equal? expected2 actual2)))
         (results '()))
     (test-runner-on-test-begin! runner
       (lambda (runner)
-        (if (debug?)
-            (format port "~a" name))))
+        (format port "Start testing ~a. ~%" name)))
     (test-runner-on-test-end! runner
       (lambda (runner)
         (begin
@@ -86,14 +88,13 @@
             results)))))
     (test-runner-on-final! runner
       (lambda (runner)
-        (if (debug?)
-            (begin
-              (format port
-                      "Done testing ~a. ~%"
-                      (symbol->string (procedure-name proc)))
-              (map (lambda (res)
-                     (format port (result-formatter res)))
-                   results)))))
+        (begin
+          (format port
+                  "Done testing ~a. ~%"
+                  (symbol->string (procedure-name proc)))
+          (map (lambda (res)
+                 (result-formatter port res))
+               results))))
     runner))
 
 (define* (test!
