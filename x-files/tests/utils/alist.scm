@@ -37,7 +37,7 @@
                (('(hello its-me) hw))
                hw))
 
-(test-equal `(good bad cats)
+(test-equal `(good bad good)
   (match-alist alist*
                (('(animals canine dogs) dogs)
                 ('(animals canine wolfs) wolfs)
