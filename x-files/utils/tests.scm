@@ -49,11 +49,14 @@
             results)))))
     (test-runner-on-group-begin! runner
       (lambda (r name c)
-        (format port "Start testing ~a ... ~%" name)))
+        (format port "Start testing group ~a ... ~%" name)))
+    (test-runner-on-group-end! runner
+      (lambda (r)
+        (format port "Done testing group ~%")))
     (test-runner-on-final! runner
       (lambda (r)
         (begin
-          (format port "Done ~%")
+          (format port "Done testing all ~%")
           (map (lambda (res)
                  (result-formatter port res))
                results))))
