@@ -33,6 +33,8 @@
       (base32 "1laayiw7h4cdhsfmp0fy20bjanr7p95rm5xjmpfscrjbch906xnl"))))
    (build-system copy-build-system)
    (license license:asl2.0)
+   (arguments
+    (list #:validate-runpath? #f))
    (home-page "https://www.mongodb.com")
    (synopsis "MongoDB Shell is and official shell Mongo client")
    (description "MongoDB Shell is the quickest way to connect to (and work with) MongoDB. Easily query data, configure settings, and execute other actions with this modern, extensible command-line interface — replete with syntax highlighting, intelligent autocomplete, contextual help, and error messages..")))
