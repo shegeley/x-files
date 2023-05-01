@@ -14,7 +14,7 @@
 
   #:use-module (nongnu packages mozilla))
 
-;; https://downloads.mongodb.com/compass/mongosh-1.8.2-linux-x64.tgz)
+;; https://downloads.mongodb.com/compass/mongosh-1.8.2-linux-x64.tgz
 
 (define-public mongoshell
   (package
@@ -28,7 +28,7 @@
      (uri
       (string-append
        "https://downloads.mongodb.com/compass/mongosh-"
-       version "-linux-amd64.tar.gz"))
+       version "-linux-x64.tgz"))
      (sha256
       (base32 "0mqwxnz4f1wkxwxjy3jf249acg05kbpyppx8nnq0lbkqspwn5yag"))))
    (build-system copy-build-system)
