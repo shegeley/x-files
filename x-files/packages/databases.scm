@@ -30,7 +30,7 @@
        "https://downloads.mongodb.com/compass/mongosh-"
        version "-linux-x64.tgz"))
      (sha256
-      (base32 "0mqwxnz4f1wkxwxjy3jf249acg05kbpyppx8nnq0lbkqspwn5yag"))))
+      (base32 "1laayiw7h4cdhsfmp0fy20bjanr7p95rm5xjmpfscrjbch906xnl"))))
    (build-system copy-build-system)
    (license license:asl2.0)
    (home-page "https://www.mongodb.com")
