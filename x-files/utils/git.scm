@@ -47,13 +47,17 @@
    (filter reference-remote?
            (refs repo*))))
 
-(define (with-repo-remotes repo* thunk)
-  (map thunk
+(define (with-repo-remotes repo* f)
+  (map f
        (remotes repo*)))
 
 (define* (fetch-remotes
           repo*
-          #:key (remote-pred (const #t)))
+          #:key
+          (remote-pred (const #t))
+          fetch-options)
   (with-repo-remotes
    repo*
-   remote-fetch))
+   (lambda (x)
+     (remote-fetch x
+                   #:fetch-options fetch-options))))
