@@ -2,6 +2,9 @@
   #:use-module (ice-9 popen)
   #:use-module (ice-9 match)
 
+  #:use-module (x-files utils project)
+  #:use-module (guix build utils)
+
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
@@ -10,7 +13,9 @@
 
   #:export (results-formatter
             test-runner*
-            define~test-runner)
+            define~test-runner
+            %test-dir
+            with-test-dir)
 
   #:export-syntax (define~))
 
@@ -149,3 +154,27 @@
 ;;     (4 . 8)
 ;;     (6 . 12))
 ;;   (lambda (x) (* 2 x)))
+
+
+(define %test-dir
+  (string-append (git-project-dir)
+                 "/tmp"))
+
+
+(define-syntax-rule (with-directory-excursion* dir init body ...)
+  "Run BODY with DIR as the process's current directory."
+  (let ((init* (or init (getcwd))))
+    (dynamic-wind
+      (lambda ()
+        (chdir dir))
+      (lambda ()
+        body ...)
+      (lambda ()
+        (chdir init*)))))
+
+(define (with-test-dir dir body)
+  ;; body := procedure of one argument (absolutepath in the %test-dir)
+  (let ((d (string-append %test-dir "/" dir)))
+    (with-directory-excursion*
+     d (git-project-dir)
+     (body d))))
