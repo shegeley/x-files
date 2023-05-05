@@ -18,7 +18,9 @@
   #:use-module (git repository)
   #:use-module (git remote)
   #:use-module (git auth)
+  #:use-module (git fetch)
   #:use-module (git clone)
+  #:use-module (git bindings)
 
   #:use-module (guix describe)
   #:use-module (guix gexp)
@@ -43,7 +45,11 @@
   #:export (<project-manager-conf>
             project-manager-conf
             <project>
-            channel->project))
+            channel->project
+            clone!
+            fetch!
+            g-clone!
+            g-fetch!))
 
 (define-record-type* <project> project make-project
   project?
@@ -75,69 +81,64 @@
           ;; body := procedure of 2 arguments <project-manager-conf> <project>
           #:key (wrapper identity))
   (match-record
-   config <project-manager-conf>
-   (projects)
-   (wrapper
-    (with-extensions
-     (list guile-git
-           guile-bytestructures
-           guile-gcrypt)
-     (with-imported-modules
-      (source-module-closure
-       '((ice-9 format) (guix build utils)
-         (x-files utils git))
-       #:select?
-       (lambda (name)
-         (or ((@@ (guix modules) guix-module-name?) name)
-             (match name
-               (('x-files 'utils ..) #t)
-               (('git ..) #t)
-               (else #f)))))
-      #~(begin
-          (use-modules
-           (git bindings) (ice-9 format)
-           (git fetch) (git clone)
-           (guix build utils) (x-files utils git))
+      config <project-manager-conf>
+    (projects)
+    (wrapper
+     (with-extensions
+         (list guile-git
+               guile-bytestructures
+               guile-gcrypt)
+       (with-imported-modules
+           (source-module-closure
+            '((ice-9 format) (guix build utils)
+              (x-files utils git))
+            #:select?
+            (lambda (name)
+              (or ((@@ (guix modules) guix-module-name?) name)
+                  (match name
+                    (('x-files 'utils ..) #t)
+                    (('git ..) #t)
+                    (else #f)))))
+         #~(begin
+             (use-modules
+              (git bindings) (ice-9 format)
+              (git fetch) (git clone) (git auth)
+              (guix build utils) (x-files utils git))
 
-          #$@(map
-              (lambda (project)
-                (body config project)) projects)))))))
+             #$@(map
+                 (lambda (project)
+                   (body config project)) projects)))))))
 
-(define (fetch! config
-                project)
+(define (fetch! realdir auth-method)
+  (begin
+    (libgit2-init!)
+    ;; TODO: add a way to fetch git with credentials
+    (false-if-exception
+     (begin
+       (fetch-remotes
+        realdir
+        #:fetch-options (make-fetch-options auth-method))
+       (format #t "Git-repository ~a was successfully fetched. ~%" realdir)))))
+
+(define (g-fetch! config
+                  project)
   (match-record
-   config <project-manager-conf>
-   ((dir project-manager/dir)
-    (auth-method project-manager/auth-method))
-   (match-record
-    project <project>
-    (source
-     (dir project/dir)
-     (auth-method project/auth-method))
-    (let* ((auth-method (or project/auth-method
-                            project-manager/auth-method)))
-      #~(begin
-          (libgit2-init!)
-          ;; TODO: add a way to fetch git with credentials
-          (let* ((realdir (string-append #$project-manager/dir "/" #$project/dir)))
-            (false-if-exception
-             (begin
-               (fetch-remotes
-                realdir
-                #:fetch-options (make-fetch-options #$auth-method))
-               (format #t "Git-repository ~a was successfully fetched. ~%" realdir))
-             (lambda (ex)
-               (catch 'git-error
-                 ;; NOTE: Needs to be handled properly. Having problem with guile git lib auth
-                 (lambda ()
-                   (format #t "Coudn't fetch ~a git-repo. ~%" realdir)
-                   #f)
-                 (lambda _ #f))))))))))
+      config <project-manager-conf>
+    ((dir project-manager/dir)
+     (auth-method project-manager/auth-method))
+    (match-record
+        project <project>
+      (source
+       (dir project/dir)
+       (auth-method project/auth-method))
+      (let* ((auth-method (or project/auth-method
+                              project-manager/auth-method)))
+        #~(fetch! $#realdir #$auth-method)))))
 
 (define (fetcher-program-file config)
   ;; TODO: create template from both fetcher and activatoion.
   ;; reduce code duplication
-  (template config fetch!
+  (template config g-fetch!
             #:wrapper
             (lambda (x)
               (program-file
@@ -145,49 +146,51 @@
 
 (define (mcron-fetcher config)
   (match-record
-   config <project-manager-conf>
-   (period)
-   (list #~(job (lambda (t) (+ t #$period))
-                #$(fetcher-program-file config)
-                "Project manager's fetcher daemon"))))
+      config <project-manager-conf>
+    (period)
+    (list #~(job (lambda (t) (+ t #$period))
+                 #$(fetcher-program-file config)
+                 "Project manager's fetcher daemon"))))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
-                (name url)
-                (project* url (symbol->string name))))
+    (name url)
+    (project* url (symbol->string name))))
 
-(define (clone! config
-                project)
+(define (clone! source realdir auth-method)
+  (begin
+    (if (directory-exists? realdir)
+        (format #t "Directory ~s already exists. Skip cloning. ~%" realdir)
+        (begin
+          ((@@ (guix git)
+               clone) source realdir
+               (make-clone-options
+                #:fetch-options
+                (make-fetch-options
+                 auth-method)))
+          (format #t "Directory ~a was clonned into ~a. ~%" source realdir)))))
+
+(define (g-clone! config
+                  project)
   (match-record
-   config <project-manager-conf>
-   ((auth-method project-manager/auth-method)
-    (dir project-manager/dir))
-   (match-record
-    project <project>
-    (source
-     (dir project/dir)
-     (auth-method project/auth-method))
-    (let ((auth-method (or project-manager/auth-method
-                           project/auth-method)))
-      #~(begin
-          (let* ((realdir (string-append #$project-manager/dir "/" #$project/dir)))
-
-            (if (directory-exists? realdir)
-                (format #t "Directory ~s already exists. Skip cloning. ~%" realdir)
-                (begin
-                  ((@@ (guix git)
-                       clone*) #$source realdir
-                       (make-clone-options
-                        #:fetch-options
-                        (make-fetch-options
-                         #$auth-method)))
-                  (format #t "Directory ~a was clonned into ~a. ~%" #$source realdir)))))))))
+      config <project-manager-conf>
+    ((auth-method project-manager/auth-method)
+     (dir project-manager/dir))
+    (match-record
+        project <project>
+      (source
+       (dir project/dir)
+       (auth-method project/auth-method))
+      (let ((realdir (string-append project-manager/dir "/" project/dir))
+            (auth-method (or project-manager/auth-method
+                             project/auth-method)))
+        #~(clone #$source #$realdir #$auth-method)))))
 
 (define (activation config)
   (template
    config
    (lambda (config project)
-     (clone! config project))))
+     (g-clone! config project))))
 
 (define-public project-manager-service-type
   (service-type (name 'project-manager)
