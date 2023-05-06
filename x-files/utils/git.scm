@@ -1,9 +1,14 @@
 (define-module (x-files utils git)
   #:use-module (srfi srfi-1)
 
+  #:use-module (guix build utils)
+
   #:use-module (git repository)
   #:use-module (git remote)
   #:use-module (git reference)
+  #:use-module (git clone)
+  #:use-module (git auth)
+  #:use-module (git fetch)
 
   #:export (refs
             remotes
@@ -26,19 +31,19 @@
 
 (define (refs repo*)
   (with-repository
-   repo*
-   (lambda (r)
-     (reference-fold cons '() r))))
+      repo*
+      (lambda (r)
+        (reference-fold cons '() r))))
 
 (define (reference->remote repo* reference)
   (if (reference-remote? reference)
       (with-repository
-       repo*
-       (lambda (r)
-         (remote-lookup
-          r (third
-             (string-split
-              (reference-name reference) #\/))))) #f))
+          repo*
+          (lambda (r)
+            (remote-lookup
+             r (third
+                (string-split
+                 (reference-name reference) #\/))))) #f))
 
 (define (remotes repo*)
   (map
@@ -47,9 +52,10 @@
    (filter reference-remote?
            (refs repo*))))
 
-(define (with-repo-remotes repo* f)
-  (map f
-       (remotes repo*)))
+(define* (with-repo-remotes
+          repo* f
+          #:key (remote-pred (const #t)))
+  (map f (filter remote-pred (remotes repo*))))
 
 (define* (fetch-remotes
           repo*
@@ -60,4 +66,5 @@
    repo*
    (lambda (x)
      (remote-fetch x
-                   #:fetch-options fetch-options))))
+                   #:fetch-options fetch-options))
+   #:remote-pred remote-pred))
