@@ -9,7 +9,6 @@
   #:export (-home-
             %trash-dir
             trash!
-            git-project-dir
             file-format
             file-format=?
             *symlink*
