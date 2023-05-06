@@ -16,10 +16,13 @@
 
   #:use-module (guix build utils)
 
+  #:use-module (guix derivations)
   #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (guix monads)
+  #:use-module (guix monad-repl)
   #:use-module (guix store)
+  #:use-module (guix tests)
 
   #:use-module (ice-9 match)
   #:use-module (ice-9 format)
@@ -28,11 +31,6 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-64))
 
-(define %project
-  (project*
-   ;; NOTE: Here you should have your private repo to test
-   "git@gitlab.com:shegeley/notes.git"
-   "notes"))
 
 (setenv "ENV" "DEV")
 
@@ -42,24 +40,32 @@
 (with-test-dir
  "pman"
  (lambda (d)
-   (let ((%manager
-          (project-manager-conf
-           (dir d)
-           (projects (list %project)))))
+   (let* ((project-dir "notes")
+          (%project
+           (project*
+            ;; NOTE: Here you should have your private repo to test
+            "git@gitlab.com:shegeley/notes.git"
+            project-dir))
+          (%manager
+           (project-manager-conf
+            (dir d)
+            (projects (list %project))))
+          (d** (string-append d "/"
+                              (project:dir %project)))
+          (c (open-connection))
+          (drv (run-with-store
+                c
+                (gexp->script
+                 "pman-clone"
+                 ((@@ (x-files services pman) template)
+                  %manager
+                  (@@ (x-files services pman)
+                      g-clone!))))))
      (test-begin "git clone private repo: as a simple operation from pman module")
+     (build-derivations c (list drv))
+     (invoke (derivation->output-path drv))
+     (test-equal #t (directory-exists? d))
      (test-assert
-         ((@@ (x-files services pman)
-              clone!)
-          ((@@ (x-files services pman) project:source)
-           %project)
-          (string-append d "/my-notes")
-          (%make-auth-ssh-agent)))
-     (test-end)
-     (test-begin "git clone private repo: as gexp from pman module")
-     (test-assert
-         ;; NOTE: simple test-assert of error catching (makes sure there is no errors)
-         (run-with-store (open-connection)
-           (gexp->script "pman/clone"
-                         ((@@ (x-files services pman)
-                              g-clone!) %manager %project))))
-     (test-end))))
+         (member (project:source %project)
+                 (map remote-url (remotes d**))))
+     (test-end "git clone private repo: as a simple operation from pman module"))))
