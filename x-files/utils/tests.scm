@@ -175,6 +175,8 @@
 (define (with-test-dir dir body)
   ;; body := procedure of one argument (absolutepath in the %test-dir)
   (let ((d (string-append %test-dir "/" dir)))
+    (unless (directory-exists? d)
+      (mkdir-p d))
     (with-directory-excursion*
      d (git-project-dir)
      (body d))))
