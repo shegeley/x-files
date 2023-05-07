@@ -176,7 +176,6 @@
                  #:optional
                  auth-method)
   #~(begin
-      (display "1 2 3 \n")
       (if (directory-exists? #$realdir)
           (format #t "Directory ~s already exists. Skip cloning. ~%" #$realdir)
           (begin
