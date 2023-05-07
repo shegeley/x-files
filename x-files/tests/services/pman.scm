@@ -8,6 +8,8 @@
   #:use-module (x-files utils tests)
   #:use-module (x-files utils git)
   #:use-module (x-files utils project)
+  #:use-module ((x-files utils gexp)
+                #:prefix g:)
 
   #:use-module (git repository)
   #:use-module (git remote)
@@ -51,19 +53,12 @@
             (dir d)
             (projects (list %project))))
           (d** (string-append d "/"
-                              (project:dir %project)))
-          (c (open-connection))
-          (drv (run-with-store
-                c
-                (gexp->script
-                 "pman-clone"
-                 ((@@ (x-files services pman) template)
-                  %manager
-                  (@@ (x-files services pman)
-                      g-clone!))))))
+                              (project:dir %project))))
      (test-begin "git clone private repo: as a simple operation from pman module")
-     (build-derivations c (list drv))
-     (invoke (derivation->output-path drv))
+     (g:invoke ((@@ (x-files services pman) template)
+                %manager
+                (@@ (x-files services pman)
+                    g-clone!)))
      (test-equal #t (directory-exists? d))
      (test-assert
          (member (project:source %project)
