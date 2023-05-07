@@ -79,6 +79,32 @@ On boot and reconfiguration: clones all the git repos from passed ~(projects)~ t
      "https://notabug.org/ZelphirKaltstahl/guile-examples"
      "guile-examples")))))
 #+end_src
+** Node Development Environment as a service
+Simple and extenable node development environment with basic tools needed for javascript development included.
+#+begin_src scheme
+(define config
+  `(("script-shell" . "bash")
+    ("python" . "python3")
+    ("prefix" . ,(string-append
+                  (getenv "HOME") "/" "npm-packages"))))
+
+(define-public node-dev-service-type
+  (service-type
+   (name 'node-dev-service-type)
+   (extensions
+    (list
+     (service-extension home-files-service-type
+                        files)
+     (service-extension home-environment-variables-service-type
+                        envars!)
+     (service-extension home-profile-service-type
+                        profile)
+     (service-extension home-activation-service-type
+                        activation)))
+   (default-value config)
+   (description
+    "Node development environment service type")))
+#+end_src
 * Utils
 ** Flatpak
 ~entries~ - finds all entries of currently installed flatpak apps in `dir`. Returns a list of '(icons desktop-entries), where icon := (or .png .svg) file, desktop-entry := .desktop file
