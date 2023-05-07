@@ -18,7 +18,7 @@
   ;; Also see https://gitlab.com/nonguix/nonguix/-/issues/151
   (package
     (name "babashka")
-    (version "0.10.163")
+    (version "1.3.179")
     (source
      (origin
        (method url-fetch)
