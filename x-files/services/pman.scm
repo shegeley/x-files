@@ -60,7 +60,17 @@
   (source project:source)
   (dir project:dir)
   (auth-method project:auth-method
-               (default (%make-auth-ssh-agent))))
+               (default 'agent)))
+
+(define (auth-method! x)
+  (match x
+    ('agent
+     #~(%make-auth-ssh-agent))
+    ;; NOTE: credential auth is unsupported for now. couldn't make the gexp below work in current setup
+    ;; (('creds public private)
+    ;;  #~(%make-auth-ssh-credentials #$public #$private))
+    (_
+     (throw 'pman:unsupported-auth-method x))))
 
 (define-public (project* s d)
   (project
@@ -74,7 +84,7 @@
   project-manager-conf?
   (dir project-manager:dir)
   (auth-method project-manager:auth-method
-               (default (%make-auth-ssh-agent)))
+               (default 'agent))
   (period project-manager:period (default 300))
   ;; project can be a project* a channel or a package
   (projects project-manager:projects))
@@ -89,38 +99,39 @@
 
 (define-syntax-rule (with-modules+exts body ...)
   (with-extensions
-      (list guile-git
-            guile-bytestructures
-            guile-gcrypt)
-    (with-imported-modules
-        (source-module-closure
-         '((ice-9 format)
-           (guix build utils)
-           (x-files utils git))
-         (append %load-path
-                 (list (git-project-dir)))
-         #:select? modules-selector)
-      body ...)))
+   (list guile-git
+         guile-bytestructures
+         guile-gcrypt)
+   (with-imported-modules
+    (source-module-closure
+     '((ice-9 format)
+       (guix build utils)
+       (x-files utils git))
+     (append %load-path
+             (list (git-project-dir)))
+     #:select? modules-selector)
+    body ...)))
 
 (define* (template
           config body
           ;; body := procedure of 2 arguments <project-manager-conf> <project>
           #:key (wrapper identity))
   (match-record
-      config <project-manager-conf>
-    (projects)
-    (wrapper
-     (with-modules+exts
-      #~(begin
-          (use-modules
-           (git bindings) (ice-9 format)
-           (git fetch) (git clone) (git auth)
-           (x-files utils git)
-           (guix build utils))
+   config <project-manager-conf>
+   (projects)
+   (wrapper
+    (with-modules+exts
+     #~(begin
+         (use-modules
+          (git bindings) (ice-9 format)
+          (git fetch) (git clone) (git auth)
+          (x-files utils git)
+          (guix build utils))
 
-          #$@(map
-              (lambda (project)
-                (body config project)) projects))))))
+         #$@(map
+             (lambda (project)
+               (body config project)) projects))))))
+
 
 (define* (fetch! realdir
                  #:optional auth-method)
@@ -131,24 +142,25 @@
        (begin
          (fetch-remotes
           #$realdir
-          #:fetch-options (make-fetch-options (%make-auth-ssh-agent)))
+          #:fetch-options (make-fetch-options
+                           #$(auth-method! auth-method)))
          (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))))
 
 (define (g-fetch! config
                   project)
   (match-record
-      config <project-manager-conf>
-    ((dir project-manager/dir)
-     (auth-method project-manager/auth-method))
-    (match-record
-        project <project>
-      (source
-       (dir project/dir)
-       (auth-method project/auth-method))
-      (let* ((auth-method (or project/auth-method
-                              project-manager/auth-method))
-             (realdir (string-append project-manager/dir "/" project/dir)))
-        (fetch! realdir auth-method)))))
+   config <project-manager-conf>
+   ((dir project-manager/dir)
+    (auth-method project-manager/auth-method))
+   (match-record
+    project <project>
+    (source
+     (dir project/dir)
+     (auth-method project/auth-method))
+    (let* ((auth-method (or project/auth-method
+                            project-manager/auth-method))
+           (realdir (string-append project-manager/dir "/" project/dir)))
+      (fetch! realdir auth-method)))))
 
 (define (fetcher-program-file config)
   ;; TODO: create template from both fetcher and activatoion.
@@ -161,16 +173,16 @@
 
 (define (mcron-fetcher config)
   (match-record
-      config <project-manager-conf>
-    (period)
-    (list #~(job (lambda (t) (+ t #$period))
-                 #$(fetcher-program-file config)
-                 "Project manager's fetcher daemon"))))
+   config <project-manager-conf>
+   (period)
+   (list #~(job (lambda (t) (+ t #$period))
+                #$(fetcher-program-file config)
+                "Project manager's fetcher daemon"))))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
-    (name url)
-    (project* url (symbol->string name))))
+                (name url)
+                (project* url (symbol->string name))))
 
 (define* (clone! source realdir
                  #:optional
@@ -184,24 +196,24 @@
                  (make-clone-options
                   #:fetch-options
                   (make-fetch-options
-                   (%make-auth-ssh-agent))))
+                   #$(auth-method! auth-method))))
             (format #t "Directory ~a was clonned into ~a. ~%" #$source #$realdir)))))
 
 (define (g-clone! config
                   project)
   (match-record
-      config <project-manager-conf>
-    ((auth-method project-manager/auth-method)
-     (dir project-manager/dir))
-    (match-record
-        project <project>
-      (source
-       (dir project/dir)
-       (auth-method project/auth-method))
-      (let ((realdir (string-append project-manager/dir "/" project/dir))
-            (auth-method (or project-manager/auth-method
-                             project/auth-method)))
-        (clone! source realdir)))))
+   config <project-manager-conf>
+   ((auth-method project-manager/auth-method)
+    (dir project-manager/dir))
+   (match-record
+    project <project>
+    (source
+     (dir project/dir)
+     (auth-method project/auth-method))
+    (let ((realdir (string-append project-manager/dir "/" project/dir))
+          (auth-method (or project-manager/auth-method
+                           project/auth-method)))
+      (clone! source realdir auth-method)))))
 
 (define (activation config)
   (template

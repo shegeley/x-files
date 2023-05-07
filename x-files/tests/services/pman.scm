@@ -48,13 +48,16 @@
             ;; NOTE: Here you should have your private repo to test
             "git@gitlab.com:shegeley/notes.git"
             project-dir))
+          ;; (creds (list 'creds
+          ;;              "/home/shegeley/.ssh/zone51.pub"
+          ;;              "/home/shegeley/.ssh/zone51"))
           (%manager
            (project-manager-conf
             (dir d)
             (projects (list %project))))
           (d** (string-append d "/"
                               (project:dir %project))))
-     (test-begin "git clone private repo: as a simple operation from pman module")
+     (test-begin "git clone private repo with ssh-agent: as a simple operation from pman module")
      (g:invoke ((@@ (x-files services pman) template)
                 %manager
                 (@@ (x-files services pman)
@@ -63,4 +66,18 @@
      (test-assert
          (member (project:source %project)
                  (map remote-url (remotes d**))))
-     (test-end "git clone private repo: as a simple operation from pman module"))))
+     (test-end)
+     ;; NOTE: will be used for creds authentification when supported
+     ;; (test-begin "git cline private repo with ssh-credentials: as a simple operation from pman module")
+     ;; (g:invoke ((@@ (x-files services pman) template)
+     ;;            (project-manager-conf
+     ;;             (inherit %manager)
+     ;;             (auth-method creds))
+     ;;            (@@ (x-files services pman)
+     ;;                g-clone!)))
+     ;; (test-equal #t (directory-exists? d))
+     ;; (test-assert
+     ;;     (member (project:source %project)
+     ;;             (map remote-url (remotes d**))))
+     ;; (test-end)
+     )))
