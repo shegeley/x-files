@@ -1,4 +1,4 @@
-(define-module (x-files utils tests)
+(define-module (x-files tests utils)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 match)
 
@@ -155,14 +155,13 @@
 ;;     (6 . 12))
 ;;   (lambda (x) (* 2 x)))
 
-
 (define %test-dir
-  (string-append (git-project-dir)
-                 "/tmp"))
-
+  ;; Using project-local directory for tests
+  (string-append (git-project-dir) "/tmp"))
 
 (define-syntax-rule (with-directory-excursion* dir init body ...)
-  "Run BODY with DIR as the process's current directory."
+  "Run BODY with DIR as the process's current directory.
+   Stolen from (guix build utils) except for setting custom `'init`' dir"
   (let ((init* (or init (getcwd))))
     (dynamic-wind
       (lambda ()

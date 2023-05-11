@@ -5,7 +5,7 @@
   #:use-module (gnu home services)
 
   #:use-module (x-files services pman)
-  #:use-module (x-files utils tests)
+  #:use-module (x-files tests utils)
   #:use-module (x-files utils git)
   #:use-module (x-files utils project)
   #:use-module ((x-files utils gexp)
@@ -32,9 +32,6 @@
 
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-64))
-
-
-(setenv "ENV" "DEV")
 
 (test-runner-factory
  (lambda () (test-runner*)))
