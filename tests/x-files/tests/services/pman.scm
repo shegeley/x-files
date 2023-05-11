@@ -45,6 +45,7 @@
             ;; NOTE: Here you should have your private repo to test
             "git@gitlab.com:shegeley/notes.git"
             project-dir))
+          ;; NOTE: will be used when I will add auth via credentials
           ;; (creds (list 'creds
           ;;              "/home/shegeley/.ssh/zone51.pub"
           ;;              "/home/shegeley/.ssh/zone51"))
@@ -65,7 +66,7 @@
                  (map remote-url (remotes d**))))
      (test-end)
      ;; NOTE: will be used for creds authentification when supported
-     ;; (test-begin "git cline private repo with ssh-credentials: as a simple operation from pman module")
+     ;; (test-begin "git clone private repo with ssh-credentials: as a simple operation from pman module")
      ;; (g:invoke ((@@ (x-files services pman) template)
      ;;            (project-manager-conf
      ;;             (inherit %manager)
