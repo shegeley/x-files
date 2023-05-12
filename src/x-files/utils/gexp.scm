@@ -11,11 +11,16 @@
   #:use-module (guix store)
   #:use-module (guix tests)
 
-  #:export (invoke))
+  #:export (invoke
+            build))
+
+(define (build g)
+  (let* ((c (open-connection))
+         (drv (run-with-store c (gexp->script "script" g))))
+    (build-derivations c (list drv))
+    (derivation->output-path drv )))
 
 (define* (invoke x . args)
   "Builds and invokes a gexp with `'args`'"
-  (let* ((c (open-connection))
-         (drv (run-with-store c (gexp->script "script" x))))
-    (build-derivations c (list drv))
-    (apply utils:invoke (derivation->output-path drv) args)))
+  (let* ((r (build x)))
+    (apply utils:invoke r args)))
