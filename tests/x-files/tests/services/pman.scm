@@ -7,6 +7,7 @@
   #:use-module (x-files services pman)
   #:use-module (x-files tests utils)
   #:use-module (x-files utils git)
+  #:use-module (x-files utils tests)
   #:use-module (x-files utils project)
   #:use-module ((x-files utils gexp)
                 #:prefix g:)

@@ -63,12 +63,12 @@
                (default 'agent)))
 
 (define (auth-method! x)
+  "This is a draft to support other auth-methods later"
   (match x
     ('agent
+     ;; NOTE: WON'T WORK, USE set-fetch-auth-with-…!
      #~(%make-auth-ssh-agent))
-    ;; NOTE: credential auth is unsupported for now. couldn't make the gexp below work in current setup
-    ;; (('creds public private)
-    ;;  #~(%make-auth-ssh-credentials #$public #$private))
+    ;; NOTE: the only option to make creds work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
     (_
      (throw 'pman:unsupported-auth-method x))))
 
@@ -94,59 +94,62 @@
       (match name
         (('srfi ..) #t)
         (('x-files 'utils ..) #t)
-        (('git ..) #t)
+        (('git) #t)
         (else #f))))
 
 (define-syntax-rule (with-modules+exts body ...)
   (with-extensions
    (list guile-git
          guile-bytestructures
-         guile-gcrypt)
+         guile-gcrypt
+         guile-zlib)
    (with-imported-modules
     (source-module-closure
      '((ice-9 format)
+       (git)
        (guix build utils)
        (x-files utils git))
-     (append %load-path
-             (list (git-project-dir)))
      #:select? modules-selector)
     body ...)))
 
-(define* (template
-          config body
-          ;; body := procedure of 2 arguments <project-manager-conf> <project>
-          #:key (wrapper identity))
-  (match-record
-   config <project-manager-conf>
-   (projects)
-   (wrapper
-    (with-modules+exts
-     #~(begin
-         (use-modules
-          (git bindings) (ice-9 format)
-          (git fetch) (git clone) (git auth)
-          (x-files utils git)
-          (guix build utils))
+(define-syntax template
+  (syntax-rules ()
+    ((_ config body wrapper)
+     (match-record
+      config <project-manager-conf>
+      (projects)
+      (wrapper
+       (with-modules+exts
+        #~(begin
+            (use-modules
+             (srfi srfi-9)
+             (git)
+             (ice-9 format)
+             (x-files utils git)
+             (guix git)
+             (guix build utils))
 
-          (libgit2-init!)
+            (libgit2-init!)
 
-          #$@(map
-              (lambda (project)
-                (body config project)) projects))))))
-
+            #$@(map
+                (lambda (project)
+                  (body config project)) projects))))))
+    ((_ config body)
+     (template config body identity))))
 
 (define* (fetch! realdir
                  #:optional auth-method)
-  #~(begin
-      (libgit2-init!)
-      ;; TODO: add a way to fetch git with credentials
-      (false-if-exception
-       (begin
-         (fetch-remotes
-          #$realdir
-          #:fetch-options (make-fetch-options
-                           #$(auth-method! auth-method)))
-         (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))))
+  #~(unless
+        (false-if-exception
+         ;; TODO: add a way to fetch git with credentials
+         (let ((opts (make-fetch-options)))
+           ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
+           (set-fetch-auth-with-ssh-agent! opts)
+           (fetch-remotes
+            #$realdir
+            #:fetch-options opts)
+           (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))
+      (format #t "Git-repository fetch failed ~%")))
 
 (define (g-fetch! config
                   project)
@@ -168,9 +171,8 @@
   ;; TODO: create template from both fetcher and activatoion.
   ;; reduce code duplication
   (template config g-fetch!
-            #:wrapper
             (lambda (x)
-              (program-file
+              (scheme-file
                "project-manager-fetcher-script.scm" x))))
 
 (define (mcron-fetcher config)
@@ -189,17 +191,16 @@
 (define* (clone! source realdir
                  #:optional
                  auth-method)
-  #~(begin
-      (if (directory-exists? #$realdir)
-          (format #t "Directory ~s already exists. Skip cloning. ~%" #$realdir)
-          (begin
-            ((@@ (guix git)
-                 clone) #$source #$realdir
+  #~(if (directory-exists? #$realdir)
+        (format #t "Directory ~s already exists. Skip cloning. ~%" #$realdir)
+        (let ((opts (make-fetch-options)))
+          ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
+          (set-fetch-auth-with-ssh-agent! opts)
+          (clone #$source #$realdir
                  (make-clone-options
                   #:fetch-options
-                  (make-fetch-options
-                   #$(auth-method! auth-method))))
-            (format #t "Directory ~a was clonned into ~a. ~%" #$source #$realdir)))))
+                  opts))
+          (format #t "Directory ~a was clonned into ~a. ~%" #$source #$realdir))))
 
 (define (g-clone! config
                   project)
@@ -218,10 +219,9 @@
       (clone! source realdir auth-method)))))
 
 (define (activation config)
-  (template
-   config
-   (lambda (config project)
-     (g-clone! config project))))
+  (template config
+            (lambda (config project)
+              (g-clone! config project))))
 
 (define-public project-manager-service-type
   (service-type (name 'project-manager)
