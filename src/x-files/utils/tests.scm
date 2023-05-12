@@ -13,9 +13,7 @@
 
   #:export (results-formatter
             test-runner*
-            define~test-runner
-            %test-dir
-            with-test-dir)
+            define~test-runner)
 
   #:export-syntax (define~))
 
@@ -29,6 +27,41 @@
 
 (define (dev?)
   (equal? (getenv "ENV") "DEV"))
+
+(define* (test-runner*
+          #:key (port (if (dev?) #t #f)))
+  (let ((runner (test-runner-null))
+        ;; results := '((expected1 actual1 (equal? expected1 actual1))
+        ;;              (expected2 actual2 (equal? expected2 actual2)))
+        (results '()))
+    (test-runner-on-test-end! runner
+      (lambda (r)
+        (begin
+          (set!
+           results
+           (cons
+            (list
+             (test-result-ref runner 'expected-value)
+             (test-result-ref runner 'actual-value)
+             (case (test-result-kind runner)
+               ((pass xpass) #t)
+               ((fail xfail) #f)
+               (else #t)))
+            results)))))
+    (test-runner-on-group-begin! runner
+      (lambda (r name c)
+        (format port "Start testing group ~a ... ~%" name)))
+    (test-runner-on-group-end! runner
+      (lambda (r)
+        (format port "Done testing group ~%")))
+    (test-runner-on-final! runner
+      (lambda (r)
+        (begin
+          (format port "Done testing all ~%")
+          (map (lambda (res)
+                 (result-formatter port res))
+               results))))
+    runner))
 
 (define* (define~test-runner name proc example
            #:key (port (if (dev?) #t #f)))
