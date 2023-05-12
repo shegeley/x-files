@@ -128,9 +128,11 @@
           (x-files utils git)
           (guix build utils))
 
-         #$@(map
-             (lambda (project)
-               (body config project)) projects))))))
+          (libgit2-init!)
+
+          #$@(map
+              (lambda (project)
+                (body config project)) projects))))))
 
 
 (define* (fetch! realdir
