@@ -225,6 +225,14 @@
 
 (define-public project-manager-service-type
   (service-type (name 'project-manager)
+                (compose concatenate)
+                (extend (lambda (config projects*)
+                          (match-record
+                           config <project-manager-conf>
+                           (projects)
+                           (project-manager-conf
+                            (inherit config)
+                            (projects (append projects projects*))))))
                 (extensions
                  (list (service-extension home-activation-service-type activation)
                        (service-extension home-mcron-service-type mcron-fetcher)))
