@@ -27,7 +27,7 @@
          "https://github.com/babashka/babashka/releases/download/v"
          version "/babashka-" version "-linux-amd64.tar.gz"))
        (sha256
-        (base32 "1d2wx1sjny9bhazyld275azk2zl1gs5xvnyy6p3vgxcyljvl94m1"))))
+        (base32 "13lcmrvckj4bv0lywfdpjddwzn6bgi88j9ibrdjrpd5sk8x3z6ny"))))
     (build-system binary-build-system)
     (supported-systems '("x86_64-linux" "i686-linux"))
     (arguments
