@@ -49,6 +49,8 @@
 ;;         (->toml rest)))
 ;;       ('() ""))))
 
+;; NOTE: Use simplest possible decision for now. Refactor all above this note later
+
 (define config*
   (string-append
    "[global]" "\n"
