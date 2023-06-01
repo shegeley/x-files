@@ -20,6 +20,8 @@
   #:use-module (druix packages node)
   #:use-module (druix packages javascript yarn)
 
+  #:use-module (gnu packages tree-sitter)
+
   #:use-module (contrib packages node-xyz)
 
   #:use-module (ice-9 ftw)
@@ -48,6 +50,7 @@
    (("python" python))
    (list bash
          (assoc-ref python-package-matcher python)
+         tree-sitter-typescript
          node-typescript
          node-typescript-language-server
          node-eslint-8.17.0
