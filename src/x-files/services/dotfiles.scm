@@ -62,25 +62,26 @@
    (match-lambda
      ((home-dir-loc config-dir-loc)
       (let ((home-dir-loc (-home- home-dir-loc))
-            (config-dir-loc (storage config-dir-loc)))
+            (config-dir-loc (storage config-dir-loc))
+            (f local-file))
         #~(begin
             (format #t "Symlinking ~a with ~a ~%" #$home-dir-loc #$config-dir-loc)
             (cond ((and (file-exists? #$home-dir-loc)
                         (not (file-exists? #$config-dir-loc)))
                    (begin
                      (rename-file #$home-dir-loc #$config-dir-loc)
-                     (symlink #$config-dir-loc #$home-dir-loc)
+                     (symlink #$config-dir-loc (f #$home-dir-loc))
                      (format #t "Dir ~s was not found. Moving ~s to config dir and symlinking. ~%" #$config-dir-loc #$home-dir-loc)))
                   ((and (file-exists? #$home-dir-loc)
                         (file-exists? #$config-dir-loc))
                    (begin
                      (delete-file-recursively #$home-dir-loc)
-                     (symlink #$config-dir-loc #$home-dir-loc)
+                     (symlink #$config-dir-loc (f #$home-dir-loc))
                      (format #t "File ~s was found. Deleting it and symlinking it to ~s. ~%"  #$home-dir-loc #$config-dir-loc)))
                   ((and (not (file-exists? #$home-dir-loc))
                         (file-exists? #$config-dir-loc))
                    (begin
-                     (symlink #$config-dir-loc #$home-dir-loc)
+                     (symlink #$config-dir-loc (f #$home-dir-loc))
                      (format #t "File ~s was not found. Symlinking it with ~s. ~%"  #$home-dir-loc #$config-dir-loc)))
                   ((and (not (file-exists? #$home-dir-loc))
                         (not (file-exists? #$config-dir-loc)))
