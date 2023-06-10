@@ -51,6 +51,7 @@
    (list bash
          (assoc-ref python-package-matcher python)
          tree-sitter-typescript
+         tree-sitter-javascript
          node-typescript
          node-typescript-language-server
          node-eslint-8.17.0
