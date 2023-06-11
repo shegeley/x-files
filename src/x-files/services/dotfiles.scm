@@ -63,7 +63,7 @@
      ((home-dir-loc config-dir-loc)
       (let ((home-dir-loc (-home- home-dir-loc))
             (config-dir-loc (storage config-dir-loc))
-            (f local-file))
+            (f (lambda (x) (local-file x))))
         #~(begin
             (format #t "Symlinking ~a with ~a ~%" #$home-dir-loc #$config-dir-loc)
             (cond ((and (file-exists? #$home-dir-loc)
