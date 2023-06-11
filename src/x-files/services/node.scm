@@ -12,12 +12,12 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages node)
 
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix records)
 
-  #:use-module (druix packages node)
   #:use-module (druix packages javascript yarn)
 
   #:use-module (gnu packages tree-sitter)
