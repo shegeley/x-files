@@ -12,7 +12,8 @@
   #:use-module (guix tests)
 
   #:export (invoke
-            build))
+            build
+            local-file*))
 
 (define (build g)
   (let* ((c (open-connection))
@@ -24,3 +25,17 @@
   "Builds and invokes a gexp with `'args`'"
   (let* ((r (build x)))
     (apply utils:invoke r args)))
+
+(define (gen-name x)
+  (let ((b (basename x)))
+    (if (equal? "." (string-take b 1))
+        (string-drop b 1)
+        b)))
+
+(define* local-file*
+  (lambda (x)
+    (local-file
+     x (gen-name x)
+     #:recursive?
+     (if (directory-exists? x)
+         #t #f))))
