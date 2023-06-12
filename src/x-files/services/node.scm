@@ -29,11 +29,11 @@
   #:use-module (ice-9 format))
 
 (define python-package-matcher
-  `(("python3" . ,python-3)))
+  `(("python" . ,python)))
 
 (define config
   `(("script-shell" . "bash")
-    ("python" . "python3")
+    ("python" . "python")
     ("prefix" . ,(string-append
                   (getenv "HOME") "/" "npm-packages"))))
 
