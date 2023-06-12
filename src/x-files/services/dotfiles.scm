@@ -65,18 +65,18 @@
         (string-drop b 1)
         b)))
 
-(define* (sync-package-files storage scheme)
+(define (sync-package-files storage scheme)
   (map
    (match-lambda
      ((home-dir-loc config-dir-loc)
-      (let* ((home-dir-loc (-home- home-dir-loc))
-             (config-dir-loc (storage config-dir-loc))
+      (let* ((config-dir-loc (storage config-dir-loc))
              (f (lambda (x) (local-file
                         x (gen-name x)
                         #:recursive?
-                        (if (directory-exists? config-dir-loc)
+                        (if (directory-exists? x)
                             #t #f)))))
-        (list home-dir-loc (f config-dir-loc))))) scheme))
+        (list home-dir-loc (f config-dir-loc)))))
+   scheme))
 
 (define (files config)
   (match-record
