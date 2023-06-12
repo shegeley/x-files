@@ -54,7 +54,7 @@
          tree-sitter-javascript
          node-typescript
          node-typescript-language-server
-         node-eslint-8.17.0
+         ;; node-eslint-8.17.0
          node
          yarn)))
 
