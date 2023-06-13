@@ -55,7 +55,7 @@
          node-typescript
          node-typescript-language-server
          ;; node-eslint-8.17.0
-         node
+         node-lts
          yarn)))
 
 (define (activation config)
