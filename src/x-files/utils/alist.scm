@@ -1,10 +1,4 @@
 (define-module (x-files utils alist)
-  #:use-module (guix build utils)
-
-  #:use-module (gnu services configuration)
-
-  #:use-module (x-files utils base)
-
   #:export-syntax (match-alist))
 
 (define-syntax match-alist-inner
