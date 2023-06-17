@@ -4,6 +4,12 @@
 
   #:use-module (srfi srfi-64))
 
+(test-runner-factory
+ (lambda ()
+   (test-runner*)))
+
+(test-begin "define-record-type!")
+
 (define-record-type! person
   (name)
   (age (default 27)))
@@ -12,12 +18,6 @@
   (person
    (name "Ivan")
    (age 30)))
-
-(test-runner-factory
- (lambda ()
-   (test-runner*)))
-
-(test-begin "define-record-type!")
 
 (test-equal #t (person? i))
 

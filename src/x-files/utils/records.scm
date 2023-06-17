@@ -52,20 +52,3 @@
                     #,@properties))
                #'(field ...)
                #'((properties ...) ...)))])))
-
-
-
-(define-record-type! person
-  (name)
-  (age (default 27)))
-
-(define i
-  (person
-   (name "Ivan")
-   (age 30)))
-
-(person? i)
-
-(person:name i)
-
-(person:age i)
