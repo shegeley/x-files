@@ -34,6 +34,8 @@
     ;;    this-identifier ;; this-thing
     ;;    (field get properties ...) ...)
 
+    ;; TODO: add module-exports for the record name, type and all the record fields by default
+
     (syntax-case s ()
       [(_ record:type:name
           (field properties ...) ...)
@@ -42,6 +44,7 @@
            record:type:name
            #,(id #'record:type:name #'record:type:name #'!)
            #,(id #'record:type:name #'record:type:name  #'?)
+           #,(id #'record:type:name #'record:type:name #'~)
            #,@(map
                (lambda (name properties)
                  #`(#,name
