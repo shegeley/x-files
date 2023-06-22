@@ -1,4 +1,8 @@
 (define-module (x-files utils alist)
+  
+  #:use-module ((rde serializers utils)
+                #:select (alist?))
+  
   #:export-syntax (match-alist))
 
 (define-syntax match-alist-inner
