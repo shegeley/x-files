@@ -1,8 +1,10 @@
 (define-module (x-files utils alist)
-  
-  #:use-module ((rde serializers utils)
+  #:use-module ((gnu services configuration)
                 #:select (alist?))
-  
+
+  #:use-module ((x-files utils base)
+                #:select (ref-in))
+
   #:export-syntax (match-alist))
 
 (define-syntax match-alist-inner
