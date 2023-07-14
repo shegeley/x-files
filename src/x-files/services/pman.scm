@@ -172,7 +172,7 @@
   ;; reduce code duplication
   (template config g-fetch!
             (lambda (x)
-              (scheme-file
+              (program-file
                "project-manager-fetcher-script.scm" x))))
 
 (define (mcron-fetcher config)
