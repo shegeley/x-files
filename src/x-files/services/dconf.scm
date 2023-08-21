@@ -97,4 +97,26 @@
    (default-value (dconf-service-conf))
    (description
     "A simple service to set all the proper dconf keys to manage Gnome desktop (Custom keyboard shortcuts, applications colorschemes and etc).
-     dconf-service-type already exists in (gnu services xorg). But it system (not home) service and too complicated to sucha little job it's should do")))
+     @example
+     (service home-dconf-service-type
+            (dconf-service-conf
+             (entries
+              `((\"org/gnome/GPaste\"
+                 (\"history-name\" . \"'history'\")
+                 (\"track-extension-state\" . \"false\"))
+                (\"org/gnome/shell\"
+                 (\"disable-user-extensions\" . \"false\")
+                 (\"disabled-extensions\" . \"['clipboard-indicator@tudmotu.com']\")
+                 (\"enabled-extensions\" . \"['user-theme@gnome-shell-extensions.gcampax.github.com', 'GPaste@gnome-shell-extensions.gnome.org']\")
+                 (\"remember-mount-password\" . \"true\"))
+                (\"org/gnome/shell/extensions/user-theme\"
+                 (\"name\" . \"'Orchis-dark'\"))
+                (\"org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0\"
+                 (\"binding\" . \"'<Control><Alt>t'\")
+                 (\"command\" . \"'gnome-terminal'\")
+                 (\"name\" . \"'Terminal'\"))
+                (\"org/gnome/settings-daemon/plugins/media-keys\"
+                 (\"custom-keybindings\" . \"['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']\"))))))
+     @end example
+     NOTE: dconf-service-type already exists in (gnu services xorg). But it system (not home) service and too complicated to sucha little job it's should do.
+    ")))
