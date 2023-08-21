@@ -37,5 +37,5 @@
     (local-file
      x (gen-name x)
      #:recursive?
-     (if (directory-exists? x)
+     (if (utils:directory-exists? x)
          #t #f))))
