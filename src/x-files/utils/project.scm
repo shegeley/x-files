@@ -5,7 +5,7 @@
   #:export (git-project-dir))
 
 (define* (git-project-dir
-          #:optional (start-dir (dirname (or (current-filename) "."))))
+          #:optional (start-dir (getcwd)))
   (let* ((up (lambda (x) (string-append x "/../")))
          (start-dir (canonicalize-path start-dir))
          (split (string-split start-dir #\/)))
