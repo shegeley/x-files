@@ -179,9 +179,10 @@
   (match-record
    config <project-manager-conf>
    (period)
-   (list #~(job (lambda (t) (+ t #$period))
-                #$(fetcher-program-file config)
-                "Project manager's fetcher daemon"))))
+   (list (with-modules+exts
+          #~(job (lambda (t) (+ t #$period))
+                 #$(fetcher-program-file config)
+                 "Project manager's fetcher daemon")))))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
