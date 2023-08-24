@@ -237,13 +237,15 @@
                  (list (service-extension home-activation-service-type activation)
                        (service-extension home-mcron-service-type mcron-fetcher)))
                 (description
-                 "Simple service to keep up all your git projects up to date with them git  remotes.
-Example: (project-manager-conf
-              (dir (string-append (getenv \"HOME\") \"/Projects\"))
-              (projects
-               (append
-                (map channel->project (current-channels))
-                (list
-                 (project*
-                  \"https://git.sr.ht/~sircmpwn/wlroots\"
-                  \"wlroots\") ))))")))
+                 "Simple service to keep up all your git projects up to date with their git remotes.
+@example
+(project-manager-conf
+    (dir (string-append (getenv \"HOME\") \"/Projects\"))
+    (projects
+        (append
+        (map channel->project (current-channels))
+        (list
+            (project*
+            \"https://git.sr.ht/~sircmpwn/wlroots\"
+            \"wlroots\") ))))
+@end example")))
