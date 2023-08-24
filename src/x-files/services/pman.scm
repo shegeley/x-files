@@ -219,9 +219,7 @@
       (clone! source realdir auth-method)))))
 
 (define (activation config)
-  (template config
-            (lambda (config project)
-              (g-clone! config project))))
+  (template config g-clone!))
 
 (define-public project-manager-service-type
   (service-type (name 'project-manager)
