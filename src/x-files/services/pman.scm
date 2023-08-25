@@ -149,7 +149,7 @@
             #$realdir
             #:fetch-options opts)
            (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))
-      (format #t "Git-repository fetch failed ~%")))
+      (format #t "Git-repository ~a fetch failed ~%" #$realdir)))
 
 (define (g-fetch! config
                   project)
