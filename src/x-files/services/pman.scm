@@ -9,6 +9,7 @@
 
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages guile)
+  #:use-module (gnu packages ssh)
 
   #:use-module (gnu services configuration)
   #:use-module (gnu home services mcron)
@@ -131,6 +132,20 @@
 
             (libgit2-init!)
 
+            (let ((v "SSH_AUTH_SOCK"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+            (let ((v "SSH_AGENT_PID"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+            (invoke "eval" "`" #+(file-append openssh "/bin/ssh-agent") "`")
+
+            (let ((v "SSH_AUTH_SOCK"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+            (let ((v "SSH_AGENT_PID"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
             #$@(map
                 (lambda (project)
                   (body config project)) projects))))))
@@ -224,20 +239,21 @@
   (template config g-clone!))
 
 (define-public project-manager-service-type
-  (service-type (name 'project-manager)
-                (compose concatenate)
-                (extend (lambda (config projects*)
-                          (match-record
-                           config <project-manager-conf>
-                           (projects)
-                           (project-manager-conf
-                            (inherit config)
-                            (projects (append projects projects*))))))
-                (extensions
-                 (list (service-extension home-activation-service-type activation)
-                       (service-extension home-mcron-service-type mcron-fetcher)))
-                (description
-                 "Simple service to keep up all your git projects up to date with their git remotes.
+  (service-type
+   (name 'project-manager)
+   (compose concatenate)
+   (extend (lambda (config projects*)
+             (match-record
+              config <project-manager-conf>
+              (projects)
+              (project-manager-conf
+               (inherit config)
+               (projects (append projects projects*))))))
+   (extensions
+    (list (service-extension home-activation-service-type activation)
+          (service-extension home-mcron-service-type mcron-fetcher)))
+   (description
+    "Simple service to keep up all your git projects up to date with their git remotes.
 @example
 (project-manager-conf
     (dir (string-append (getenv \"HOME\") \"/Projects\"))
