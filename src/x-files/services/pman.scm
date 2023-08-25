@@ -85,7 +85,7 @@
   (dir project-manager:dir)
   (auth-method project-manager:auth-method
                (default 'agent))
-  (period project-manager:period (default 300))
+  (period project-manager:period (default (* 60 10)))
   ;; project can be a project* a channel or a package
   (projects project-manager:projects))
 
