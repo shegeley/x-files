@@ -139,17 +139,18 @@
 
 (define* (fetch! realdir
                  #:optional auth-method)
-  #~(unless
-        (false-if-exception
-         ;; TODO: add a way to fetch git with credentials
-         (let ((opts (make-fetch-options)))
-           ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
-           (set-fetch-auth-with-ssh-agent! opts)
-           (fetch-remotes
-            #$realdir
-            #:fetch-options opts)
-           (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))
-      (format #t "Git-repository ~a fetch failed ~%" #$realdir)))
+  #~(with-exception-handler
+        (lambda (exn)
+          (format #t "Git-repository ~a fetch failed. Exception: ~a ~%" #$realdir exn))
+      (lambda ()
+        (let ((opts (make-fetch-options)))
+          ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
+          (set-fetch-auth-with-ssh-agent! opts)
+          (fetch-remotes
+           #$realdir
+           #:fetch-options opts)
+          (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))
+      #:unwind? #t))
 
 (define (g-fetch! config
                   project)
