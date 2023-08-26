@@ -71,3 +71,9 @@
 (define* (-storage- #:optional (x ""))
   (false-if-exception
    (string-append (getenv "STORAGE") "/" x)))
+
+(define* (-ssh-key- #:optional (x ""))
+  (false-if-exception
+   (string-append
+    (or (string-append (getenv "HOME") "/.ssh")
+        (getenv "SSH_STORAGE")) "/" x)))
