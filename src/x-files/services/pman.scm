@@ -60,8 +60,12 @@
   this-project
   (source project:source)
   (dir project:dir)
-  (auth-method project:auth-method
-               (default 'agent)))
+  (auth-method
+   project:auth-method
+   ;; (or 'agent
+   ;;     ('credentials public-key private-key))
+   ;; where public-key & private-key are both paths to files
+   (default #f)))
 
 (define (auth-method! x)
   "This is a draft to support other auth-methods later"
@@ -69,6 +73,8 @@
     ('agent
      ;; NOTE: WON'T WORK, USE set-fetch-auth-with-…!
      #~(%make-auth-ssh-agent))
+    (('credentials public private)
+     #~(%make-auth-ssh-credentials #$public #$private))
     ;; NOTE: the only option to make creds work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
     (_
      (throw 'pman:unsupported-auth-method x))))
@@ -85,6 +91,8 @@
   project-manager-conf?
   (dir project-manager:dir)
   (auth-method project-manager:auth-method
+               ;; (or 'agent
+               ;;     ('credentials public-key private-key))
                (default 'agent))
   (period project-manager:period (default (* 60 10)))
   ;; project can be a project* a channel or a package
@@ -118,29 +126,96 @@
     ((_ config body wrapper)
      (match-record
       config <project-manager-conf>
-      (projects)
-      (wrapper
-       (with-modules+exts
-        #~(begin
-            (use-modules
-             (srfi srfi-9)
-             (git)
-             (ice-9 format)
-             (x-files utils git)
-             (guix git)
-             (guix build utils))
+      (projects auth-method)
+      (let ((private-key
+             (match auth-method
+               (('credentials _ k)
+                k))))
+        (wrapper
+         (with-modules+exts
+          #~(begin
+              (use-modules
+               (srfi srfi-9)
+               (git)
+               (ice-9 popen)
+               (ice-9 textual-ports)
+               (ice-9 format)
+               (x-files utils git)
+               (guix git)
+               (ice-9 regex)
+               (ice-9 rdelim)
+               (ice-9 popen)
+               (guix build utils))
 
-            (libgit2-init!)
+              (libgit2-init!)
 
-            (let ((v "SSH_AUTH_SOCK"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (let ((v "SSH_AUTH_SOCK"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-            (let ((v "SSH_AGENT_PID"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (let ((v "SSH_AGENT_PID"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-            #$@(map
-                (lambda (project)
-                  (body config project)) projects))))))
+              ;; (let [(port (open-input-pipe
+              ;;              #$(file-append openssh "/bin/ssh-agent")))]
+              ;;   (format #t "Data from ssh-agent: ~a ~%"
+              ;;           (get-string-all port)))
+
+
+              ;; (define %ssh-agent-sock-env   "SSH_AUTH_SOCK")
+              ;; (define %ssh-agent-dir-regexp (make-regexp "^ssh-[A-Za-z0-9]{12}"))
+              ;; (define %ssh-agent-pid-file-regexp (make-regexp "agent.[0-9]+"))
+              ;; (define %ssh-agent-pid-regexp
+              ;;   (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+
+
+              (let ((%ssh-agent-pid-regexp
+                     (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+                    (%ssh-auth-sock-regexp
+                     (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
+                    (p (open-input-pipe "ssh-agent -s")))
+                (let ((ssh-auth-sock-data (read-line p))
+                      (ssh-agent-pid-data (read-line p)))
+
+                  (when (or (eof-object? ssh-auth-sock-data)
+                            (eof-object? ssh-agent-pid-data))
+                    (error "Could not start a SSH agent"))
+
+                  (close p)
+
+                  (let ((sockm (regexp-exec %ssh-auth-sock-regexp  ssh-auth-sock-data))
+                        (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+
+                    (unless (and sockm pidm)
+                      (error "Could not parse SSH agent response"
+                             ssh-auth-sock-data
+                             ssh-agent-pid-data))
+
+                    (setenv "SSH_AUTH_PID" (match:substring pidm 1))
+                    (setenv "SSH_AUTH_SOCK" (match:substring sockm 1))
+
+                    (format #t "~a ~%"
+                            `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
+                              (SSH_AGENT_PID . ,(match:substring pidm 1)))))))
+
+
+              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
+                (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
+
+              (invoke #$(file-append openssh "/bin/ssh-add")
+                      (string-append (getenv "HOME") "/.ssh/main"))
+
+              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-add") " " "-l"))))
+                (format #t "From /bin/ssh-add: ~a ~%" (get-string-all p)))
+
+              (let ((v "SSH_AUTH_SOCK"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+              (let ((v "SSH_AGENT_PID"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+              #$@(map
+                  (lambda (project)
+                    (body config project)) projects)))))))
     ((_ config body)
      (template config body identity))))
 
