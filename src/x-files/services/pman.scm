@@ -89,6 +89,7 @@
   project-manager-conf!
   project-manager-conf~
   project-manager-conf?
+  (keys project-manager:keys (default '()))
   (dir project-manager:dir)
   (auth-method project-manager:auth-method
                ;; (or 'agent
@@ -126,11 +127,10 @@
     ((_ config body wrapper)
      (match-record
       config <project-manager-conf>
-      (projects auth-method)
+      (projects auth-method keys)
       (let ((private-key
              (match auth-method
-               (('credentials _ k)
-                k))))
+               (('credentials _ k) k))))
         (wrapper
          (with-modules+exts
           #~(begin
@@ -149,25 +149,6 @@
 
               (libgit2-init!)
 
-              (let ((v "SSH_AUTH_SOCK"))
-                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
-              (let ((v "SSH_AGENT_PID"))
-                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
-              ;; (let [(port (open-input-pipe
-              ;;              #$(file-append openssh "/bin/ssh-agent")))]
-              ;;   (format #t "Data from ssh-agent: ~a ~%"
-              ;;           (get-string-all port)))
-
-
-              ;; (define %ssh-agent-sock-env   "SSH_AUTH_SOCK")
-              ;; (define %ssh-agent-dir-regexp (make-regexp "^ssh-[A-Za-z0-9]{12}"))
-              ;; (define %ssh-agent-pid-file-regexp (make-regexp "agent.[0-9]+"))
-              ;; (define %ssh-agent-pid-regexp
-              ;;   (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
-
-
               (let ((%ssh-agent-pid-regexp
                      (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
                     (%ssh-auth-sock-regexp
@@ -182,7 +163,7 @@
 
                   (close p)
 
-                  (let ((sockm (regexp-exec %ssh-auth-sock-regexp  ssh-auth-sock-data))
+                  (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
                         (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
 
                     (unless (and sockm pidm)
@@ -190,32 +171,30 @@
                              ssh-auth-sock-data
                              ssh-agent-pid-data))
 
-                    (setenv "SSH_AUTH_PID" (match:substring pidm 1))
-                    (setenv "SSH_AUTH_SOCK" (match:substring sockm 1))
+                    (let ((ssh-agent-data
+                           `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
+                             (SSH_AGENT_PID . ,(match:substring pidm 1)))))
 
-                    (format #t "~a ~%"
-                            `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
-                              (SSH_AGENT_PID . ,(match:substring pidm 1)))))))
+                      (map
+                       (match-lambda
+                         ((x . y)
+                          (setenv (symbol->keyword x) y))) ssh-agent-data)
 
+                      (map
+                       (lambda (k)
+                         (invoke #$(file-append openssh "/bin/ssh-add") k)) #$keys)
 
-              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
-                (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
+                      #$@(map
+                          (lambda (project)
+                            (body config project)) projects)
 
-              (invoke #$(file-append openssh "/bin/ssh-add")
-                      (string-append (getenv "HOME") "/.ssh/main"))
-
-              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-add") " " "-l"))))
-                (format #t "From /bin/ssh-add: ~a ~%" (get-string-all p)))
-
-              (let ((v "SSH_AUTH_SOCK"))
-                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
-              (let ((v "SSH_AGENT_PID"))
-                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
-              #$@(map
-                  (lambda (project)
-                    (body config project)) projects)))))))
+                      ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
+                      (when (false-if-exception (string->number pidm))
+                        (kill pid SIGTERM)
+                        (catch #t
+                          (lambda ()
+                            (waitpid pid))
+                          (const #t)))))))))))))
     ((_ config body)
      (template config body identity))))
 
