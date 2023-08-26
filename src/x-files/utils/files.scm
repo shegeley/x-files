@@ -13,6 +13,7 @@
             file-format=?
             *symlink*
             icon?
+            -storage-
             desktop-entry?))
 
 (define* (-home-
@@ -66,3 +67,7 @@
         #f
         (map (cut file-format=? x <>)
              '("png" "svg"))))
+
+(define* (-storage- #:optional (x ""))
+  (false-if-exception
+   (string-append (getenv "STORAGE") "/" x)))

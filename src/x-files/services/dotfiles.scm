@@ -39,9 +39,6 @@
 (define %keys-packages
   (map package-name (list gnupg openssh wireguard-tools)))
 
-(define* (-storage- #:optional (x ""))
-  (string-append (getenv "STORAGE") "/" x))
-
 (define-record-type* <dotfile-manager-conf>
   dotfile-manager-conf
   dotfile-manager-conf!
