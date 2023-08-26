@@ -14,6 +14,7 @@
             *symlink*
             icon?
             -storage-
+            -ssh-key-
             desktop-entry?))
 
 (define* (-home-

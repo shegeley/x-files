@@ -138,6 +138,7 @@
                (srfi srfi-9)
                (git)
                (ice-9 popen)
+               (ice-9 match)
                (ice-9 textual-ports)
                (ice-9 format)
                (x-files utils git)
@@ -172,17 +173,20 @@
                              ssh-agent-pid-data))
 
                     (let ((ssh-agent-data
-                           `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
-                             (SSH_AGENT_PID . ,(match:substring pidm 1)))))
+                           `((SSH_AUTH_SOCK ,(match:substring sockm 1))
+                             (SSH_AGENT_PID ,(match:substring pidm 1)))))
 
                       (map
-                       (match-lambda
-                         ((x . y)
-                          (setenv (symbol->keyword x) y))) ssh-agent-data)
+                       (lambda (p)
+                         (let ((x (car p))
+                               (y (cadr p)))
+                          (setenv (symbol->string x) y)))
+                       ssh-agent-data)
 
                       (map
                        (lambda (k)
-                         (invoke #$(file-append openssh "/bin/ssh-add") k)) #$keys)
+                         (invoke #$(file-append openssh "/bin/ssh-add") k))
+                       (quote #$keys))
 
                       #$@(map
                           (lambda (project)
