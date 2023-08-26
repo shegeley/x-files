@@ -26,6 +26,7 @@
          (list (shepherd-service
                 (documentation "User cron jobs.")
                 (provision '(mcron))
+                (requirement '(ssh-agent))
                 (modules `((srfi srfi-1)
                            (srfi srfi-26)
                            (ice-9 popen)         ;for the 'schedule' action
@@ -42,10 +43,7 @@
                                       (or (getenv "XDG_STATE_HOME")
                                           (format #f "~a/.local/state"
                                                   (getenv "HOME")))
-                                      "/log/mcron.log")
-                          #:environment-variables
-                          (cons* (string-append "SSH_AUTH_SOCK=" (getenv "SSH_AUTH_SOCK"))
-                                 (default-environment-variables))))
+                                      "/log/mcron.log")))
                 (stop #~(make-kill-destructor))
                 (actions
                  (list ((@@ (gnu home services mcron) shepherd-schedule-action) mcron files)))))))))
