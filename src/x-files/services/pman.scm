@@ -183,12 +183,14 @@
                   (close p)
 
                   (let ((sockm (regexp-exec %ssh-auth-sock-regexp  ssh-auth-sock-data))
-                        (pidm   (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+                        (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
 
                     (unless (and sockm pidm)
                       (error "Could not parse SSH agent response"
                              ssh-auth-sock-data
                              ssh-agent-pid-data))
+
+                    (setenv "SSH_AUTH_PID" (match:substring pidm 1))
 
                     `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
                       (SSH_AGENT_PID . ,(match:substring pidm 1))))))
@@ -201,8 +203,8 @@
               (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
                 (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
 
-              (invoke  #$(file-append openssh "/bin/ssh-add")
-                       (string-append (getenv "HOME") "/.ssh/main"))
+              (invoke #$(file-append openssh "/bin/ssh-add")
+                      (string-append (getenv "HOME") "/.ssh/main"))
 
               (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-add") " " "-l"))))
                 (format #t "From /bin/ssh-add: ~a ~%" (get-string-all p)))
