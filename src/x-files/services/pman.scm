@@ -6,13 +6,13 @@
   #:use-module (x-files utils files)
   #:use-module (x-files utils git)
   #:use-module (x-files utils project)
+  #:use-module (x-files overrides mcron)
 
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages ssh)
 
   #:use-module (gnu services configuration)
-  #:use-module (gnu home services mcron)
 
   #:use-module (gnu home services)
   #:use-module (gnu home services shepherd)
