@@ -148,10 +148,10 @@
              (let ((v "SSH_AGENT_PID"))
                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-             (let [(port (open-input-pipe
-                          #$(file-append openssh "/bin/ssh-agent")))]
-               (format #t "Data from ssh-agent: ~a ~%"
-                       (get-string-all port)))
+             ;; (let [(port (open-input-pipe
+             ;;              #$(file-append openssh "/bin/ssh-agent")))]
+             ;;   (format #t "Data from ssh-agent: ~a ~%"
+             ;;           (get-string-all port)))
 
              (setenv "SSH_AUTH_SOCK"
                      (string-append "/var/user/"
