@@ -191,14 +191,12 @@
                              ssh-agent-pid-data))
 
                     (setenv "SSH_AUTH_PID" (match:substring pidm 1))
+                    (setenv "SSH_AUTH_SOCK" (match:substring sockm 1))
 
-                    `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
-                      (SSH_AGENT_PID . ,(match:substring pidm 1))))))
+                    (format #t "~a ~%"
+                            `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
+                              (SSH_AGENT_PID . ,(match:substring pidm 1)))))))
 
-              (setenv "SSH_AUTH_SOCK"
-                      (string-append "/var/user/"
-                                     (number->string (getuid))
-                                     "/keyring/ssh"))
 
               (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
                 (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
