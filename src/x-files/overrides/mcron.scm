@@ -26,7 +26,6 @@
          (list (shepherd-service
                 (documentation "User cron jobs.")
                 (provision '(mcron))
-                (requirement '(ssh-agent))
                 (modules `((srfi srfi-1)
                            (srfi srfi-26)
                            (ice-9 popen)         ;for the 'schedule' action
