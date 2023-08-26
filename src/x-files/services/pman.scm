@@ -108,65 +108,68 @@
 
 (define-syntax-rule (with-modules+exts body ...)
   (with-extensions
-      (list guile-git
-            guile-bytestructures
-            guile-gcrypt
-            guile-zlib)
-    (with-imported-modules
-        (source-module-closure
-         '((ice-9 format)
-           (git)
-           (guix build utils)
-           (x-files utils git))
-         #:select? modules-selector)
-      body ...)))
+   (list guile-git
+         guile-bytestructures
+         guile-gcrypt
+         guile-zlib)
+   (with-imported-modules
+    (source-module-closure
+     '((ice-9 format)
+       (git)
+       (guix build utils)
+       (x-files utils git))
+     #:select? modules-selector)
+    body ...)))
 
 (define-syntax template
   (syntax-rules ()
     ((_ config body wrapper)
      (match-record
-         config <project-manager-conf>
-       (projects)
-       (wrapper
-        (with-modules+exts
-         #~(begin
-             (use-modules
-              (srfi srfi-9)
-              (git)
-              (ice-9 popen)
-              (ice-9 textual-ports)
-              (ice-9 format)
-              (x-files utils git)
-              (guix git)
-              (guix build utils))
+      config <project-manager-conf>
+      (projects)
+      (wrapper
+       (with-modules+exts
+        #~(begin
+            (use-modules
+             (srfi srfi-9)
+             (git)
+             (ice-9 popen)
+             (ice-9 textual-ports)
+             (ice-9 format)
+             (x-files utils git)
+             (guix git)
+             (guix build utils))
 
-             (libgit2-init!)
+            (libgit2-init!)
 
-             (let ((v "SSH_AUTH_SOCK"))
-               (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+            (let ((v "SSH_AUTH_SOCK"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-             (let ((v "SSH_AGENT_PID"))
-               (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+            (let ((v "SSH_AGENT_PID"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-             ;; (let [(port (open-input-pipe
-             ;;              #$(file-append openssh "/bin/ssh-agent")))]
-             ;;   (format #t "Data from ssh-agent: ~a ~%"
-             ;;           (get-string-all port)))
+            ;; (let [(port (open-input-pipe
+            ;;              #$(file-append openssh "/bin/ssh-agent")))]
+            ;;   (format #t "Data from ssh-agent: ~a ~%"
+            ;;           (get-string-all port)))
 
-             (setenv "SSH_AUTH_SOCK"
-                     (string-append "/var/user/"
-                                    (number->string (getuid))
-                                    "/keyring/ssh"))
+            (setenv "SSH_AUTH_SOCK"
+                    (string-append "/var/user/"
+                                   (number->string (getuid))
+                                   "/keyring/ssh"))
 
-             (let ((v "SSH_AUTH_SOCK"))
-               (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+            (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
+              (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
 
-             (let ((v "SSH_AGENT_PID"))
-               (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+            (let ((v "SSH_AUTH_SOCK"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-             #$@(map
-                 (lambda (project)
-                   (body config project)) projects))))))
+            (let ((v "SSH_AGENT_PID"))
+              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+            #$@(map
+                (lambda (project)
+                  (body config project)) projects))))))
     ((_ config body)
      (template config body identity))))
 
@@ -188,18 +191,18 @@
 (define (g-fetch! config
                   project)
   (match-record
-      config <project-manager-conf>
-    ((dir project-manager/dir)
-     (auth-method project-manager/auth-method))
-    (match-record
-        project <project>
-      (source
-       (dir project/dir)
-       (auth-method project/auth-method))
-      (let* ((auth-method (or project/auth-method
-                              project-manager/auth-method))
-             (realdir (string-append project-manager/dir "/" project/dir)))
-        (fetch! realdir auth-method)))))
+   config <project-manager-conf>
+   ((dir project-manager/dir)
+    (auth-method project-manager/auth-method))
+   (match-record
+    project <project>
+    (source
+     (dir project/dir)
+     (auth-method project/auth-method))
+    (let* ((auth-method (or project/auth-method
+                            project-manager/auth-method))
+           (realdir (string-append project-manager/dir "/" project/dir)))
+      (fetch! realdir auth-method)))))
 
 (define (fetcher-program-file config)
   ;; TODO: create template from both fetcher and activatoion.
@@ -211,17 +214,17 @@
 
 (define (mcron-fetcher config)
   (match-record
-      config <project-manager-conf>
-    (period)
-    (list (with-modules+exts
-           #~(job (lambda (t) (+ t #$period))
-                  #$(fetcher-program-file config)
-                  "Project manager's fetcher daemon")))))
+   config <project-manager-conf>
+   (period)
+   (list (with-modules+exts
+          #~(job (lambda (t) (+ t #$period))
+                 #$(fetcher-program-file config)
+                 "Project manager's fetcher daemon")))))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
-    (name url)
-    (project* url (symbol->string name))))
+                (name url)
+                (project* url (symbol->string name))))
 
 (define* (clone! source realdir
                  #:optional
@@ -240,18 +243,18 @@
 (define (g-clone! config
                   project)
   (match-record
-      config <project-manager-conf>
-    ((auth-method project-manager/auth-method)
-     (dir project-manager/dir))
-    (match-record
-        project <project>
-      (source
-       (dir project/dir)
-       (auth-method project/auth-method))
-      (let ((realdir (string-append project-manager/dir "/" project/dir))
-            (auth-method (or project-manager/auth-method
-                             project/auth-method)))
-        (clone! source realdir auth-method)))))
+   config <project-manager-conf>
+   ((auth-method project-manager/auth-method)
+    (dir project-manager/dir))
+   (match-record
+    project <project>
+    (source
+     (dir project/dir)
+     (auth-method project/auth-method))
+    (let ((realdir (string-append project-manager/dir "/" project/dir))
+          (auth-method (or project-manager/auth-method
+                           project/auth-method)))
+      (clone! source realdir auth-method)))))
 
 (define (activation config)
   (template config g-clone!))
@@ -262,11 +265,11 @@
    (compose concatenate)
    (extend (lambda (config projects*)
              (match-record
-                 config <project-manager-conf>
-               (projects)
-               (project-manager-conf
-                (inherit config)
-                (projects (append projects projects*))))))
+              config <project-manager-conf>
+              (projects)
+              (project-manager-conf
+               (inherit config)
+               (projects (append projects projects*))))))
    (extensions
     (list (service-extension home-activation-service-type activation)
           (service-extension home-mcron-service-type mcron-fetcher)))
