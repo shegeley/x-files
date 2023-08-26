@@ -142,6 +142,9 @@
                (ice-9 format)
                (x-files utils git)
                (guix git)
+               (ice-9 regex)
+               (ice-9 rdelim)
+               (ice-9 popen)
                (guix build utils))
 
               (libgit2-init!)
@@ -156,6 +159,39 @@
               ;;              #$(file-append openssh "/bin/ssh-agent")))]
               ;;   (format #t "Data from ssh-agent: ~a ~%"
               ;;           (get-string-all port)))
+
+
+              ;; (define %ssh-agent-sock-env   "SSH_AUTH_SOCK")
+              ;; (define %ssh-agent-dir-regexp (make-regexp "^ssh-[A-Za-z0-9]{12}"))
+              ;; (define %ssh-agent-pid-file-regexp (make-regexp "agent.[0-9]+"))
+              ;; (define %ssh-agent-pid-regexp
+              ;;   (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+
+
+              (let ((%ssh-agent-pid-regexp
+                     (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+                    (%ssh-auth-sock-regexp
+                     (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
+                    (p (open-input-pipe "ssh-agent -s")))
+                (let ((ssh-auth-sock-data (read-line p))
+                      (ssh-agent-pid-data (read-line p)))
+
+                  (when (or (eof-object? ssh-auth-sock-data)
+                            (eof-object? ssh-agent-pid-data))
+                    (error "Could not start a SSH agent"))
+
+                  (close p)
+
+                  (let ((sockm (regexp-exec %ssh-auth-sock-regexp  ssh-auth-sock-data))
+                        (pidm   (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+
+                    (unless (and sockm pidm)
+                      (error "Could not parse SSH agent response"
+                             ssh-auth-sock-data
+                             ssh-agent-pid-data))
+
+                    `((SSH_AUTH_SOCK . ,(match:substring sockm 1))
+                      (SSH_AGENT_PID . ,(match:substring pidm 1))))))
 
               (setenv "SSH_AUTH_SOCK"
                       (string-append "/var/user/"
