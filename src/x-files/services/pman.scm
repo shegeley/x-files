@@ -138,14 +138,6 @@
             (let ((v "SSH_AGENT_PID"))
               (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-            (invoke "eval" "`" #+(file-append openssh "/bin/ssh-agent") "`")
-
-            (let ((v "SSH_AUTH_SOCK"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
-            (let ((v "SSH_AGENT_PID"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
-
             #$@(map
                 (lambda (project)
                   (body config project)) projects))))))
