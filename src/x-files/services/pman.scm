@@ -60,8 +60,12 @@
   this-project
   (source project:source)
   (dir project:dir)
-  (auth-method project:auth-method
-               (default 'agent)))
+  (auth-method
+   project:auth-method
+   ;; (or 'agent
+   ;;     ('credentials public-key private-key))
+   ;; where public-key & private-key are both paths to files
+   (default #f)))
 
 (define (auth-method! x)
   "This is a draft to support other auth-methods later"
@@ -69,6 +73,8 @@
     ('agent
      ;; NOTE: WON'T WORK, USE set-fetch-auth-with-…!
      #~(%make-auth-ssh-agent))
+    (('credentials public private)
+     #~(%make-auth-ssh-credentials #$public #$private))
     ;; NOTE: the only option to make creds work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
     (_
      (throw 'pman:unsupported-auth-method x))))
@@ -85,6 +91,8 @@
   project-manager-conf?
   (dir project-manager:dir)
   (auth-method project-manager:auth-method
+  ;; (or 'agent
+  ;;     ('credentials public-key private-key))
                (default 'agent))
   (period project-manager:period (default (* 60 10)))
   ;; project can be a project* a channel or a package
