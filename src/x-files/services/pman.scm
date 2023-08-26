@@ -153,6 +153,11 @@
                (format #t "Data from ssh-agent: ~a ~%"
                        (get-string-all port)))
 
+             (setenv "SSH_AUTH_SOCK"
+                     (string-append "/var/user/"
+                                    (number->string (getuid))
+                                    "/keyring/ssh"))
+
              (let ((v "SSH_AUTH_SOCK"))
                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
