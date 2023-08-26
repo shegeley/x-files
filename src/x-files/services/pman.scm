@@ -165,7 +165,8 @@
               (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
                 (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
 
-              (invoke  #$(file-append openssh "/bin/ssh-add") #$private-key)
+              (invoke  #$(file-append openssh "/bin/ssh-add")
+                       (string-append (getenv "HOME") "/.ssh/main"))
 
               (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-add") " " "-l"))))
                 (format #t "From /bin/ssh-add: ~a ~%" (get-string-all p)))
