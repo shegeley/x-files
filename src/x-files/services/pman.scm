@@ -126,50 +126,59 @@
     ((_ config body wrapper)
      (match-record
       config <project-manager-conf>
-      (projects)
-      (wrapper
-       (with-modules+exts
-        #~(begin
-            (use-modules
-             (srfi srfi-9)
-             (git)
-             (ice-9 popen)
-             (ice-9 textual-ports)
-             (ice-9 format)
-             (x-files utils git)
-             (guix git)
-             (guix build utils))
+      (projects auth-method)
+      (let ((private-key
+             (match auth-method
+               (('credentials _ k)
+                k))))
+        (wrapper
+         (with-modules+exts
+          #~(begin
+              (use-modules
+               (srfi srfi-9)
+               (git)
+               (ice-9 popen)
+               (ice-9 textual-ports)
+               (ice-9 format)
+               (x-files utils git)
+               (guix git)
+               (guix build utils))
 
-            (libgit2-init!)
+              (libgit2-init!)
 
-            (let ((v "SSH_AUTH_SOCK"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (let ((v "SSH_AUTH_SOCK"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-            (let ((v "SSH_AGENT_PID"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (let ((v "SSH_AGENT_PID"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
 
-            ;; (let [(port (open-input-pipe
-            ;;              #$(file-append openssh "/bin/ssh-agent")))]
-            ;;   (format #t "Data from ssh-agent: ~a ~%"
-            ;;           (get-string-all port)))
+              ;; (let [(port (open-input-pipe
+              ;;              #$(file-append openssh "/bin/ssh-agent")))]
+              ;;   (format #t "Data from ssh-agent: ~a ~%"
+              ;;           (get-string-all port)))
 
-            (setenv "SSH_AUTH_SOCK"
-                    (string-append "/var/user/"
-                                   (number->string (getuid))
-                                   "/keyring/ssh"))
+              (setenv "SSH_AUTH_SOCK"
+                      (string-append "/var/user/"
+                                     (number->string (getuid))
+                                     "/keyring/ssh"))
 
-            (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
-              (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
+              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-agent") " " "-s"))))
+                (format #t "From /bin/ssh-agent: ~a ~%" (get-string-all p)))
 
-            (let ((v "SSH_AUTH_SOCK"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (invoke  #$(file-append openssh "/bin/ssh-add") #$private-key)
 
-            (let ((v "SSH_AGENT_PID"))
-              (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+              (let ((p (open-input-pipe (string-append #$(file-append openssh "/bin/ssh-add") " " "-l"))))
+                (format #t "From /bin/ssh-add: ~a ~%" (get-string-all p)))
 
-            #$@(map
-                (lambda (project)
-                  (body config project)) projects))))))
+              (let ((v "SSH_AUTH_SOCK"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+              (let ((v "SSH_AGENT_PID"))
+                (format #t "Var: ~a, env: ~a ~%" v (getenv v)))
+
+              #$@(map
+                  (lambda (project)
+                    (body config project)) projects)))))))
     ((_ config body)
      (template config body identity))))
 
