@@ -110,18 +110,18 @@
        (with-modules+exts
         #~(begin
             (use-modules
-             (srfi srfi-9)
              (git)
-             (ice-9 popen)
-             (ice-9 match)
-             (ice-9 textual-ports)
-             (ice-9 format)
-             (x-files utils git)
+             (guix build utils)
              (guix git)
-             (ice-9 regex)
-             (ice-9 rdelim)
+             (ice-9 format)
+             (ice-9 match)
              (ice-9 popen)
-             (guix build utils))
+             (ice-9 popen)
+             (ice-9 rdelim)
+             (ice-9 regex)
+             (ice-9 textual-ports)
+             (srfi srfi-9)
+             (x-files utils git))
 
             (libgit2-init!)
 
