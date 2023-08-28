@@ -59,25 +59,7 @@
   project?
   this-project
   (source project:source)
-  (dir project:dir)
-  (auth-method
-   project:auth-method
-   ;; (or 'agent
-   ;;     ('credentials public-key private-key))
-   ;; where public-key & private-key are both paths to files
-   (default #f)))
-
-(define (auth-method! x)
-  "This is a draft to support other auth-methods later"
-  (match x
-    ('agent
-     ;; NOTE: WON'T WORK, USE set-fetch-auth-with-…!
-     #~(%make-auth-ssh-agent))
-    (('credentials public private)
-     #~(%make-auth-ssh-credentials #$public #$private))
-    ;; NOTE: the only option to make creds work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
-    (_
-     (throw 'pman:unsupported-auth-method x))))
+  (dir project:dir))
 
 (define-public (project* s d)
   (project
@@ -91,10 +73,6 @@
   project-manager-conf?
   (keys project-manager:keys (default '()))
   (dir project-manager:dir)
-  (auth-method project-manager:auth-method
-               ;; (or 'agent
-               ;;     ('credentials public-key private-key))
-               (default 'agent))
   (period project-manager:period (default (* 60 10)))
   ;; project can be a project* a channel or a package
   (projects project-manager:projects))
@@ -127,83 +105,75 @@
     ((_ config body wrapper)
      (match-record
       config <project-manager-conf>
-      (projects auth-method keys)
-      (let ((private-key
-             (match auth-method
-               (('credentials _ k) k))))
-        (wrapper
-         (with-modules+exts
-          #~(begin
-              (use-modules
-               (srfi srfi-9)
-               (git)
-               (ice-9 popen)
-               (ice-9 match)
-               (ice-9 textual-ports)
-               (ice-9 format)
-               (x-files utils git)
-               (guix git)
-               (ice-9 regex)
-               (ice-9 rdelim)
-               (ice-9 popen)
-               (guix build utils))
+      (projects keys)
+      (wrapper
+       (with-modules+exts
+        #~(begin
+            (use-modules
+             (srfi srfi-9)
+             (git)
+             (ice-9 popen)
+             (ice-9 match)
+             (ice-9 textual-ports)
+             (ice-9 format)
+             (x-files utils git)
+             (guix git)
+             (ice-9 regex)
+             (ice-9 rdelim)
+             (ice-9 popen)
+             (guix build utils))
 
-              (libgit2-init!)
+            (libgit2-init!)
 
-              (let ((%ssh-agent-pid-regexp
-                     (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
-                    (%ssh-auth-sock-regexp
-                     (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
-                    (p (open-input-pipe "ssh-agent -s")))
-                (let ((ssh-auth-sock-data (read-line p))
-                      (ssh-agent-pid-data (read-line p)))
+            (let ((%ssh-agent-pid-regexp
+                   (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+                  (%ssh-auth-sock-regexp
+                   (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
+                  (p (open-input-pipe "ssh-agent -s")))
+              (let ((ssh-auth-sock-data (read-line p))
+                    (ssh-agent-pid-data (read-line p)))
 
-                  (when (or (eof-object? ssh-auth-sock-data)
-                            (eof-object? ssh-agent-pid-data))
-                    (error "Could not start a SSH agent"))
+                (when (or (eof-object? ssh-auth-sock-data)
+                          (eof-object? ssh-agent-pid-data))
+                  (error "Could not start a SSH agent"))
 
-                  (close p)
+                (close p)
 
-                  (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
-                        (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+                (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
+                      (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
 
-                    (unless (and sockm pidm)
-                      (error "Could not parse SSH agent response"
-                             ssh-auth-sock-data
-                             ssh-agent-pid-data))
+                  (unless (and sockm pidm)
+                    (error "Could not parse SSH agent response"
+                           ssh-auth-sock-data
+                           ssh-agent-pid-data))
 
-                    (let ((ssh-agent-data
-                           `((SSH_AUTH_SOCK ,(match:substring sockm 1))
-                             (SSH_AGENT_PID ,(match:substring pidm 1)))))
+                  (let ((ssh-agent-data
+                         `((SSH_AUTH_SOCK ,(match:substring sockm 1))
+                           (SSH_AGENT_PID ,(match:substring pidm 1)))))
 
-                      (map
-                       (lambda (p)
-                         (let ((x (car p))
-                               (y (cadr p)))
-                          (setenv (symbol->string x) y)))
-                       ssh-agent-data)
+                    (map
+                     (lambda (p)
+                       (let ((x (car p))
+                             (y (cadr p)))
+                         (setenv (symbol->string x) y)))
+                     ssh-agent-data)
 
-                      (map
-                       (lambda (k)
-                         (invoke #$(file-append openssh "/bin/ssh-add") k))
-                       (quote #$keys))
+                    (map
+                     (lambda (k)
+                       (invoke #$(file-append openssh "/bin/ssh-add") k))
+                     (quote #$keys))
 
-                      #$@(map
-                          (lambda (project)
-                            (body config project)) projects)
+                    #$@(map
+                        (lambda (project)
+                          (body config project)) projects)
 
-                      ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
-                      (when (false-if-exception (string->number pidm))
-                        (kill pid SIGTERM)
-                        (catch #t
-                          (lambda ()
-                            (waitpid pid))
-                          (const #t)))))))))))))
+                    ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
+                    (when (false-if-exception (string->number pidm))
+                      (kill pid SIGTERM)))))))))))
     ((_ config body)
      (template config body identity))))
 
-(define* (fetch! realdir
-                 #:optional auth-method)
+(define* (fetch! realdir                 )
   #~(with-exception-handler
         (lambda (exn)
           (format #t "Git-repository ~a fetch failed. Exception: ~a ~%" #$realdir exn))
@@ -221,17 +191,13 @@
                   project)
   (match-record
    config <project-manager-conf>
-   ((dir project-manager/dir)
-    (auth-method project-manager/auth-method))
+   ((dir project-manager/dir) )
    (match-record
     project <project>
     (source
-     (dir project/dir)
-     (auth-method project/auth-method))
-    (let* ((auth-method (or project/auth-method
-                            project-manager/auth-method))
-           (realdir (string-append project-manager/dir "/" project/dir)))
-      (fetch! realdir auth-method)))))
+     (dir project/dir))
+    (let* ((realdir (string-append project-manager/dir "/" project/dir)))
+      (fetch! realdir)))))
 
 (define (fetcher-program-file config)
   ;; TODO: create template from both fetcher and activatoion.
@@ -255,9 +221,7 @@
                 (name url)
                 (project* url (symbol->string name))))
 
-(define* (clone! source realdir
-                 #:optional
-                 auth-method)
+(define* (clone! source realdir)
   #~(if (directory-exists? #$realdir)
         (format #t "Directory ~s already exists. Skip cloning. ~%" #$realdir)
         (let ((opts (make-fetch-options)))
@@ -273,17 +237,13 @@
                   project)
   (match-record
    config <project-manager-conf>
-   ((auth-method project-manager/auth-method)
-    (dir project-manager/dir))
+   ((dir project-manager/dir))
    (match-record
     project <project>
     (source
-     (dir project/dir)
-     (auth-method project/auth-method))
-    (let ((realdir (string-append project-manager/dir "/" project/dir))
-          (auth-method (or project-manager/auth-method
-                           project/auth-method)))
-      (clone! source realdir auth-method)))))
+     (dir project/dir)     )
+    (let ((realdir (string-append project-manager/dir "/" project/dir)))
+      (clone! source realdir)))))
 
 (define (activation config)
   (template config g-clone!))
