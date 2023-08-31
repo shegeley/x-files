@@ -108,3 +108,10 @@ Simple and extenable node development environment with basic tools needed for ja
 * Utils
 ** Flatpak
 ~entries~ - finds all entries of currently installed flatpak apps in `dir`. Returns a list of '(icons desktop-entries), where icon := (or .png .svg) file, desktop-entry := .desktop file
+* TODO
+** Fix test and pack all of them as simple procedure :tests:
+** Write texi docs for each service/notable function :texi:doc:
+** Add "public channels" & them keys :channels:
+** Channel-local ~storage~ :channels:storage:
+** List-based ~storage~ access :storage:
+** Pre/post commit/push hooks (testing, docgeneration, etc) :git:
