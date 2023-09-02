@@ -34,10 +34,11 @@
 
 (define* (-home-
           #:optional (x ""))
-  (string-append
-   (or (getenv "HOME")
-       (string-append "/home/" (getlogin)))
-   "/" x))
+  (let [(guess (string-append
+                (or (getenv "HOME")
+                    (string-append "/home/" (getlogin)))
+                "/" x))]
+    (if (directory-exists? guess) guess #f)))
 
 (define (up dir)
   (string-append dir "/.."))
