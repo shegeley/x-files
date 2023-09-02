@@ -15,7 +15,22 @@
             icon?
             -storage-
             -ssh-key-
+            fs-path->symlist
             desktop-entry?))
+
+(define (fs-path->symlist path)
+  "Simple function that splits file-system path to list of symbols
+   @example
+   (fs-path->symlist \"/home/user/documents/doc1.txt\") =>
+     '(home user documents doc1.txt)
+   @end examples"
+  (let [(l (string-split path #\/))]
+    (fold-right
+     (lambda (x acc)
+       (if (equal? "" x)
+           acc
+           (cons (string->symbol x) acc)))
+     '() l)))
 
 (define* (-home-
           #:optional (x ""))
