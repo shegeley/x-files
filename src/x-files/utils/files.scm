@@ -6,6 +6,10 @@
   #:use-module (ice-9 match)
   #:use-module (guix build utils)
 
+  #:use-module ((gnu services configuration)
+                #:select (interpose))
+
+
   #:export (-home-
             %trash-dir
             trash!
@@ -16,6 +20,7 @@
             -storage-
             -ssh-key-
             fs-path->symlist
+            symlist->fs-path
             desktop-entry?))
 
 (define (fs-path->symlist path)
@@ -31,6 +36,16 @@
            acc
            (cons (string->symbol x) acc)))
      '() l)))
+
+(define (symlist->fs-path symlist)
+  "Simple function that concats list of symbols to the file-path
+   @example
+   (symlist->fs-path `(home user Documents)) =>
+     \"/home/shegeley/Documents\"
+   @end examples"
+  (apply
+   string-append "/"
+   (interpose (map symbol->string symlist) "/")))
 
 (define* (-home-
           #:optional (x ""))
