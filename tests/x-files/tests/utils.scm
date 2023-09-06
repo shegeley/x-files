@@ -12,14 +12,16 @@
   #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-64)
+  #:use-module (srfi srfi-64-ext)
   #:use-module (srfi srfi-69)
 
   #:export (%test-dir
-            with-test-dir))
+            with-test-dir
+            run!))
 
 (define %test-dir
   ;; Using project-local directory for tests
-  (string-append (git-project-dir) "/tmp"))
+  (string-append (git-project-dir ".") "/tmp"))
 
 (define-syntax-rule (with-directory-excursion* dir init body ...)
   "Run BODY with DIR as the process's current directory.
@@ -41,3 +43,9 @@
     (with-directory-excursion*
      d (git-project-dir)
      (body d))))
+
+
+(define (run!)
+  (run-project-tests-cli
+   (list
+    (resolve-module '(x-files tests utils alist)))))
