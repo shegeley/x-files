@@ -1,3 +1,3 @@
 check:
 	guile -L ./tests -L ./src -c \
-	'((@ (x-files tests utils) run!))'
+	'((@ (x-files utils tests) run!))'

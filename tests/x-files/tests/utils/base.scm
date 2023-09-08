@@ -1,5 +1,5 @@
 (define-module (x-files tests utils base)
-  #:use-module (x-files tests utils)
+  #:use-module (x-files utils tests)
 
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-17)
