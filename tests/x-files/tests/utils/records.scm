@@ -2,27 +2,22 @@
   #:use-module (x-files utils records)
   #:use-module (x-files utils tests)
 
-  #:use-module (srfi srfi-64))
+  #:use-module (srfi srfi-64)
+  #:use-module (srfi srfi-64-ext test))
 
-(test-runner-factory
- (lambda ()
-   (test-runner*)))
+(define-test define-record-type-
+  (test-group "define-record-type!"
+    (define-record-type! person
+      (name)
+      (age (default 27)))
 
-(test-begin "define-record-type!")
+    (define i
+      (person
+       (name "Ivan")
+       (age 30)))
 
-(define-record-type! person
-  (name)
-  (age (default 27)))
+    (test-equal #t (person? i))
 
-(define i
-  (person
-   (name "Ivan")
-   (age 30)))
+    (test-equal 30 (person:age i))
 
-(test-equal #t (person? i))
-
-(test-equal 30 (person:age i))
-
-(test-equal "Ivan" (person:name i))
-
-(test-end "define-record-type!")
+    (test-equal "Ivan" (person:name i))))
