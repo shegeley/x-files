@@ -9,7 +9,6 @@
   #:use-module (srfi srfi-17)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-64)
-  #:use-module (srfi srfi-64-ext)
   #:use-module (srfi srfi-69)
 
   #:export (results-formatter
@@ -43,16 +42,6 @@
     (with-directory-excursion*
      d (git-project-dir)
      (body d))))
-
-
-(define (run!)
-  (run-project-tests-cli
-   (list
-    (resolve-module '(x-files tests utils base overriding module-2))
-    (resolve-module '(x-files tests utils base overriding module-3))
-    (resolve-module '(x-files tests utils records))
-    (resolve-module '(x-files tests utils alist))
-    (resolve-module '(x-files tests utils base)))))
 
 
 (define* (result-formatter port args)

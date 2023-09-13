@@ -1,3 +1,2 @@
 check:
-	guile -L ./tests -L ./src -c \
-	'((@ (x-files utils tests) run!))'
+	guile -L ./tests -L ./src tests.scm
