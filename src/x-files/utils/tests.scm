@@ -40,9 +40,8 @@
     (unless (directory-exists? d)
       (mkdir-p d))
     (with-directory-excursion*
-     d (git-project-dir)
+     d (git-project-dir ".")
      (body d))))
-
 
 (define* (result-formatter port args)
   (match args
