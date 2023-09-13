@@ -18,9 +18,9 @@
 
   #:export-syntax (define~))
 
-(define %test-dir
+(define (%test-dir)
   ;; Using project-local directory for tests
-  (string-append (git-project-dir ".") "/tmp"))
+  (false-if-exception (string-append (git-project-dir ".") "/tmp")))
 
 (define-syntax-rule (with-directory-excursion* dir init body ...)
   "Run BODY with DIR as the process's current directory.
@@ -36,7 +36,7 @@
 
 (define (with-test-dir dir body)
   ;; body := procedure of one argument (absolutepath in the %test-dir)
-  (let ((d (string-append %test-dir "/" dir)))
+  (let ((d (string-append (%test-dir) "/" dir)))
     (unless (directory-exists? d)
       (mkdir-p d))
     (with-directory-excursion*
