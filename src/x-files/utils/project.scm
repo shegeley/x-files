@@ -19,4 +19,5 @@
          (match scan
            ('(".git") start-dir)
            ('() (git-project-dir
-                 (up start-dir)))))))))
+                 (up start-dir))))))
+      (_ #f))))
