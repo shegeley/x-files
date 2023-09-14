@@ -7,5 +7,5 @@
 
 (define-test variable-rewiring-2
   (test-group "Call module-2 with overrided module-1 from module-3"
-    (test-equal (@@ (x-files tests utils base overriding module-1) a) 2)
-    (test-equal (g 10) 24)))
+    (test-equal 5 (f 3))
+    (test-equal 24 (g 10))))

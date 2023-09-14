@@ -1,2 +1,2 @@
 check:
-	guile -L ./tests -L ./src tests.scm
+	guile --no-auto-compile -L ./tests -L ./src tests/runner.scm

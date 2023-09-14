@@ -4,6 +4,7 @@
 (define (run!)
   (run-project-tests-cli
    (list
+    (resolve-module '(x-files tests utils base overriding module-1))
     (resolve-module '(x-files tests utils base overriding module-2))
     (resolve-module '(x-files tests utils base overriding module-3))
     (resolve-module '(x-files tests utils records))

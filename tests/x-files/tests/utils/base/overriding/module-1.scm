@@ -1,5 +1,6 @@
 (define-module (x-files tests utils base overriding module-1)
-  #:export (f))
+  #:declarative? #f
+  #:export (f a))
 
 (define a 1)
 
