@@ -4,11 +4,15 @@
 
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 match)
+
   #:use-module (guix build utils)
+
+  #:use-module ((guix build syscalls)
+                #:select
+                (free-disk-space))
 
   #:use-module ((gnu services configuration)
                 #:select (interpose))
-
 
   #:export (-home-
             %trash-dir
@@ -21,7 +25,12 @@
             -ssh-key-
             fs-path->symlist
             symlist->fs-path
-            desktop-entry?))
+            desktop-entry?
+            size
+            enough-space?
+            safe-copy-recursively
+            safe-move
+            safe-move&symlink))
 
 (define (fs-path->symlist path)
   "Simple function that splits file-system path to list of symbols
@@ -109,3 +118,45 @@
    (string-append
     (or (string-append (getenv "HOME") "/.ssh")
         (getenv "SSH_STORAGE")) "/" x)))
+
+(define (size src)
+  (if (file-exists? src)
+      (stat:size (stat src)) #f))
+
+(define* (enough-space?
+          where how-much
+          #:key (offset (expt 1024 3)))
+  (>= (+ (free-disk-space where) offset) how-much))
+
+(define* (safe-copy-recursively
+          src dst
+          #:key
+          (port (current-output-port))
+          offset
+          #:allow-other-keys
+          #:rest args)
+  (let [(size* (size src))]
+    (cond
+     ((file-exists? dst)
+      (error (format #f "Can't copy ~a to ~a! ~a already exsits!" src dst dst)))
+     ((not (enough-space? dst size*))
+      (error
+       (format #f "Not enough space on ~a! ~a bytes needed but only ~a avalialiable with offset ~a %~" dst size* (size dst) offset)))
+     (else
+      (apply copy-recursively src dst args)))))
+
+(define (safe-move src dst)
+  (when (file-exists? src)
+    (safe-copy-recursively src dst)
+    (delete-file-recursively src)))
+
+(define* (safe-move&symlink
+          src dst
+          #:key (port (current-output-port)))
+  (cond ((and (symbolic-link? src)
+              (equal? dst (canonicalize-path src)))
+         (format port
+                 "Symlink ~a already exists and it points to ~a%~" src dst))
+        (else
+         (safe-move src dst)
+         (symlink dst src))))
