@@ -27,8 +27,8 @@
         (else #f))))
 
 (define-configuration/no-serialization safe-symlinker-configuration
-  (src string "src")
-  (dst string "dst"))
+  (src string "source")
+  (dst string "destination"))
 
 (define (activation config)
   (match-record
@@ -41,6 +41,14 @@
     #~(safe-move&symlink #$src #$dst))))
 
 (define-public home-safe-symlinker-service-type
+  ;; (shepherd-service
+  ;;  (provision )
+  ;;  (requirement '(udev))
+  ;;  (documentation "Map a device node using Linux's device mapper.")
+  ;;  (start #~(lambda () #$(open source targets)))
+  ;;  (stop #~(lambda _ (not #$(close source targets))))
+  ;;  (respawn? #f))
+
   (service-type
    (name 'home-symlink)
    (extensions
