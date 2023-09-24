@@ -50,7 +50,7 @@
   "Simple function that concats list of symbols to the file-path
    @example
    (symlist->fs-path `(home user Documents)) =>
-     \"/home/shegeley/Documents\"
+     \"/home/user/Documents\"
    @end examples"
   (apply
    string-append "/"
@@ -138,10 +138,10 @@
   (let [(size* (size src))]
     (cond
      ((file-exists? dst)
-      (error (format #f "Can't copy ~a to ~a! ~a already exsits!" src dst dst)))
+      (error (format #f "Can't copy ~a to ~a! ~a already exsits!~%" src dst dst)))
      ((not (enough-space? dst size*))
       (error
-       (format #f "Not enough space on ~a! ~a bytes needed but only ~a avalialiable with offset ~a %~" dst size* (size dst) offset)))
+       (format #f "Not enough space on ~a! ~a bytes needed but only ~a avalialiable with offset ~a ~%" dst size* (size dst) offset)))
      (else
       (apply copy-recursively src dst args)))))
 
@@ -155,8 +155,7 @@
           #:key (port (current-output-port)))
   (cond ((and (symbolic-link? src)
               (equal? dst (canonicalize-path src)))
-         (format port
-                 "Symlink ~a already exists and it points to ~a%~" src dst))
+         (format port "Symlink ~a already exists and it points to ~a~%" src dst))
         (else
          (safe-move src dst)
          (symlink dst src))))
