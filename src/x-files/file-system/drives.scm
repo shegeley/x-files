@@ -38,6 +38,29 @@
                    (mapped-devices)
                    mapped-devices)) drives))
 
+(define (good-fs? fs)
+  (make-parameter
+   (let [(mount-point (file-system-mount-point fs))]
+     (cond
+      ((string=? "/" mount-point) #f)
+      ((string-prefix-ci? mount-point "/boot") #f)
+      (else #t)))))
+
+(define* (drive:fs drive
+                   #:key (mount-point #f))
+  (match-record
+   drive (@@ (x-files file-system drives) <drive>)
+   (file-systems)
+   (let* [(file-systems* (filter (lambda (x) ((good-fs? x))) file-systems))
+          (file-system (if
+                        (string? mount-point)
+                        (first
+                         (filter (lambda (x)
+                                   (string=? mount-point
+                                             (file-system-mount-point x)))
+                                 file-systems*))
+                        (first file-systems*)))]
+     file-system)))
 
 ;; Example:
 ;; (define-public samsung-s4en
