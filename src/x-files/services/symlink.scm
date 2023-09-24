@@ -1,9 +1,11 @@
 (define-module (x-files services symlink)
   #:use-module (gnu)
   #:use-module (gnu system)
+  #:use-module (srfi srfi-1)
 
   #:use-module (x-files utils base)
   #:use-module (x-files utils files)
+  #:use-module (x-files file-system drives)
 
   #:use-module (gnu services configuration)
 
@@ -29,6 +31,13 @@
 (define-configuration/no-serialization safe-symlinker-configuration
   (src string "source")
   (dst string "destination"))
+
+(define* (movelink-drive drive src rel-dst
+                         #:key (mount-point #f))
+  (let* [(fs (drive:fs drive #:mount-point moint-point))
+         (mount-point (file-system-mount-point fs))]
+    (safe-move&symlink
+     src (string-append mount-point "/" rel-dst))))
 
 (define (activation config)
   (match-record
