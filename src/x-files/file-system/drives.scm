@@ -5,13 +5,13 @@
   #:use-module (gnu)
 
   #:use-module (x-files utils records)
+  #:use-module (x-files utils files)
 
   #:use-module (guix records)
 
-  #:export (drives:file-systems
-            drives:mapped-devices
-            <drive>
-            drive))
+  #:export (drives:file-systems drives:mapped-devices
+            <drive> drive good-fs? drive:fs
+            drive:movelink))
 
 ;; NOTE: would be nice to macros out that `mapped-devices` let
 ;; ``define-drive''(?)
@@ -61,6 +61,14 @@
                                  file-systems*))
                         (first file-systems*)))]
      file-system)))
+
+(define* (drive:movelink drive src rel-dst
+                         #:key (mount-point #f))
+  "Moves and symlinks 'src' to the drive's relative destination ('rel-dst'). Does all checks for safety"
+  (let* [(fs (drive:fs drive #:mount-point mount-point))
+         (mount-point (file-system-mount-point fs))]
+    (safe-move&symlink
+     src (string-append mount-point "/" rel-dst))))
 
 ;; Example:
 ;; (define-public samsung-s4en

@@ -32,13 +32,6 @@
   (src string "source")
   (dst string "destination"))
 
-(define* (movelink-drive drive src rel-dst
-                         #:key (mount-point #f))
-  (let* [(fs (drive:fs drive #:mount-point moint-point))
-         (mount-point (file-system-mount-point fs))]
-    (safe-move&symlink
-     src (string-append mount-point "/" rel-dst))))
-
 (define (activation config)
   (match-record
    config <safe-symlinker-configuration>
@@ -57,7 +50,6 @@
   ;;  (start #~(lambda () #$(open source targets)))
   ;;  (stop #~(lambda _ (not #$(close source targets))))
   ;;  (respawn? #f))
-
   (service-type
    (name 'home-symlink)
    (extensions
