@@ -9,7 +9,7 @@
 
   #:use-module ((guix build syscalls)
                 #:select
-                (free-disk-space))
+                (free-disk-space statfs))
 
   #:use-module ((gnu services configuration)
                 #:select (interpose))
@@ -153,9 +153,12 @@
 (define* (safe-move&symlink
           src dst
           #:key (port (current-output-port)))
-  (cond ((and (symbolic-link? src)
-              (equal? dst (canonicalize-path src)))
-         (format port "Symlink ~a already exists and it points to ~a~%" src dst))
-        (else
-         (safe-move src dst)
-         (symlink dst src))))
+  (cond
+   ((eq? #f (false-if-exception (statfs dst)))
+    (error (format port "Destination ~a does not exists. Probably it's not mounted~%" dst)))
+   ((and (symbolic-link? src)
+         (equal? dst (canonicalize-path src)))
+    (format port "Symlink ~a already exists and it points to ~a~%" src dst))
+   (else
+    (safe-move src dst)
+    (symlink dst src))))
