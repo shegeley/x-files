@@ -123,16 +123,18 @@
   (if (file-exists? src)
       (stat:size (stat src)) #f))
 
+(define (GB n)
+  (* n (expt 1024 3)))
+
 (define* (enough-space?
           where how-much
-          #:key (offset (expt 1024 3)))
+          #:key (offset (GB 3)))
   (>= (+ (free-disk-space where) offset) how-much))
 
 (define* (safe-copy-recursively
           src dst
           #:key
           (port (current-output-port))
-          offset
           #:allow-other-keys
           #:rest args)
   (let [(size* (size src))]
@@ -145,14 +147,16 @@
      (else
       (apply copy-recursively src dst args)))))
 
-(define (safe-move src dst)
+(define* (safe-move src dst #:rest args)
   (when (file-exists? src)
-    (safe-copy-recursively src dst)
+    (apply safe-copy-recursively src dst args)
     (delete-file-recursively src)))
 
 (define* (safe-move&symlink
           src dst
-          #:key (port (current-output-port)))
+          #:key
+          (port (current-output-port))
+          offset)
   (cond
    ((eq? #f (false-if-exception (statfs dst)))
     (error (format port "Destination ~a does not exists. Probably it's not mounted~%" dst)))
