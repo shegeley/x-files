@@ -149,8 +149,8 @@
       (apply copy-recursively src dst args)))))
 
 (define* (safe-move src dst #:rest args)
-  (when (file-exists? src)
-    (format #t "moving!")
+  (when (or (file-exists? src)
+            (directory-exists? src))
     (safe-copy-recursively src dst)
     (delete-file-recursively src)))
 

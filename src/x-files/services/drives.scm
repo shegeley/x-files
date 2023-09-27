@@ -99,7 +99,7 @@
              drive user-account
              #:mount-point mount-point)))]
     (list
-     (simple-service
-      (symbol-append 'ensure- drive:name '-home)
-      activation-service-type make-home-dir-gexp)
+     ;; (simple-service
+     ;;  (symbol-append 'ensure- drive:name '-home)
+     ;;  activation-service-type make-home-dir-gexp)
      (service movelinker-service-type confs))))
