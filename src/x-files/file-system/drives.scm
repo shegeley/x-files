@@ -7,6 +7,9 @@
   #:use-module (x-files utils records)
   #:use-module (x-files utils files)
 
+  #:use-module ((guix build utils)
+                #:select (mkdir-p))
+
   #:use-module (guix records)
 
   #:export (drives:file-systems
