@@ -135,13 +135,14 @@
           src dst
           #:key
           (port (current-output-port))
+          (offset (GB 3))
           #:allow-other-keys
           #:rest args)
   (let [(size* (size src))]
     (cond
      ((file-exists? dst)
       (error (format #f "Can't copy ~a to ~a! ~a already exsits!~%" src dst dst)))
-     ((not (enough-space? dst size*))
+     ((not (enough-space? dst size* #:offset offset))
       (error
        (format #f "Not enough space on ~a! ~a bytes needed but only ~a avalialiable with offset ~a ~%" dst size* (size dst) offset)))
      (else
@@ -149,7 +150,8 @@
 
 (define* (safe-move src dst #:rest args)
   (when (file-exists? src)
-    (apply safe-copy-recursively src dst args)
+    (format #t "moving!")
+    (safe-copy-recursively src dst)
     (delete-file-recursively src)))
 
 (define* (safe-move&symlink
@@ -164,5 +166,6 @@
          (equal? dst (canonicalize-path src)))
     (format port "Symlink ~a already exists and it points to ~a~%" src dst))
    (else
+    (format #t "all good!")
     (safe-move src dst)
     (symlink dst src))))

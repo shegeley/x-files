@@ -38,21 +38,21 @@
 (define (activation configs)
   #~(map
      #$(lambda (config)
-         (match-record
-          config <movelinker-configuration>
-          (src dst)
-          (with-imported-modules
-           (source-module-closure
-            '((x-files utils files))
-            #:select? modules-selector)
-           #~(safe-move&symlink #$src #$dst))))
+         (match-record config <movelinker-configuration>
+                       (src dst)
+           (with-imported-modules
+               (source-module-closure
+                '((x-files utils files))
+                #:select? modules-selector)
+             #~(safe-move&symlink #$src #$dst))))
      #$configs))
 
 (define-public movelinker-service-type
   (service-type
-   (name 'symlinker)
+   (name 'movelinker)
    (compose concatenate)
    (extend append)
+   (default-value '())
    (extensions
     (list
      (service-extension home-activation-service-type activation)))
@@ -65,8 +65,7 @@
         (else #f))))
 
 (define* (drive-movelinker-services
-          drive dirs
-          user-account
+          drive dirs user-account
           #:key
           (mount-point #f))
   "Moves @code{dirs} (dir can be file) relative to @code{user-account} home to non-root @code{drive} relative to to @code{drive:home} and symlinks them with original directory. Ensures that drive's directory has correct ownership&permisions for the @code{user-account}"
@@ -74,30 +73,33 @@
                                       (drive:vendor drive) "-"
                                       (drive:serial drive))))
          (src (lambda (src)
-                (string-append (user-account-home-directory user-account)
-                               "/" src)))
+                (string-append
+                 (user-account-home-directory user-account)
+                 "/" src)))
          (srcs (map src dirs))
+         (_ (display srcs))
          (dst (lambda (src)
                 (drive:home drive user-account
                             (string-append "/" src))))
          (dsts (map dst dirs))
+         (_ (display dsts))
          (confs (map
                  (lambda (dst src)
                    (movelinker-configuration
                     (dst dst)
                     (src src)))
                  dsts srcs))
-         (make-home-dir-gexp (with-imported-modules
-                              (source-module-closure
-                               '((x-files file-systems drives))
-                               #:select? modules-selector)
-                              #~(make-drive-home-directory
-                                 #$drive #$user-account
-                                 #:mount-point #$mount-point)))]
+         (make-home-dir-gexp
+          (with-imported-modules
+              (source-module-closure
+               '((x-files file-systems drives)
+                 (gnu system accounts))
+               #:select? modules-selector)
+            (make-drive-home-directory
+             drive user-account
+             #:mount-point mount-point)))]
     (list
      (simple-service
       (symbol-append 'ensure- drive:name '-home)
       activation-service-type make-home-dir-gexp)
-     (simple-service
-      'drive-movelinker-service-type
-      movelinker-service-type confs))))
+     (service movelinker-service-type confs))))
