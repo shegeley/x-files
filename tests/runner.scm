@@ -1,14 +1,17 @@
 (use-modules
- (srfi srfi-64-ext))
+ (srfi srfi-64-ext)
+ (guix modules)
+ (guix build utils))
+
+(define files
+  (let ((prefix "./tests/"))
+    (map (lambda (x)  (string-drop x (string-length prefix)))
+         (find-files (string-append prefix "x-files")))))
+
+(define modules
+  (map (compose resolve-module file-name->module-name) files))
 
 (define (run!)
-  (run-project-tests-cli
-   (list
-    (resolve-module '(x-files tests utils base overriding module-1))
-    (resolve-module '(x-files tests utils base overriding module-2))
-    (resolve-module '(x-files tests utils base overriding module-3))
-    (resolve-module '(x-files tests utils records))
-    (resolve-module '(x-files tests utils alist))
-    (resolve-module '(x-files tests utils base)))))
+  (run-project-tests-cli modules))
 
 (run!)

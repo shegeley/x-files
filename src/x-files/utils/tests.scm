@@ -14,7 +14,8 @@
   #:export (results-formatter
             test-runner*
             define~test-runner
-            run!)
+            run!
+            with-test-dir)
 
   #:export-syntax (define~))
 
