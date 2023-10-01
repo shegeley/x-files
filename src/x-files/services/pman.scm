@@ -34,7 +34,7 @@
   #:use-module (guix packages)
 
   #:use-module (ice-9 match)
-  #:use-module (ice-9 format)
+  #:use-module (ice-9 format)           ;
   #:use-module (ice-9 regex)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 exceptions)
@@ -45,15 +45,8 @@
   #:use-module (srfi srfi-26)
 
   #:export (<project-manager-conf>
-            project-manager-conf
-            <project>
-            channel->project
-            clone!
-            fetch!
-            g-clone!
-            g-fetch!
-            project:dir
-            project:source))
+            <project> project-manager-conf channel->project
+            g-clone! g-fetch! project:dir project:source))
 
 (define-record-type* <project> project make-project
   project?
@@ -87,117 +80,99 @@
 
 (define-syntax-rule (with-modules+exts body ...)
   (with-extensions
-   (list guile-git
-         guile-bytestructures
-         guile-gcrypt
-         guile-zlib)
-   (with-imported-modules
-    (source-module-closure
-     '((ice-9 format)
-       (git)
-       (guix build utils)
-       (x-files utils git))
-     #:select? modules-selector)
-    body ...)))
+      (list guile-git
+            guile-bytestructures
+            guile-gcrypt
+            guile-zlib)
+    (with-imported-modules
+        (source-module-closure
+         '((ice-9 format)
+           (git)
+           (guix build utils)
+           (x-files utils git))
+         #:select? modules-selector)
+      body ...)))
 
 (define-syntax template
   (syntax-rules ()
     ((_ config body wrapper)
      (match-record
-      config <project-manager-conf>
-      (projects keys)
-      (wrapper
-       (with-modules+exts
-        #~(begin
-            (use-modules
-             (git)
-             (guix build utils)
-             (guix git)
-             (ice-9 format)
-             (ice-9 match)
-             (ice-9 popen)
-             (ice-9 popen)
-             (ice-9 rdelim)
-             (ice-9 regex)
-             (ice-9 textual-ports)
-             (srfi srfi-9)
-             (x-files utils git))
+         config <project-manager-conf>
+       (projects keys)
+       (wrapper
+        (with-modules+exts
+         #~(begin
+             (use-modules
+              (git)
+              (guix build utils)
+              (guix git)
+              (ice-9 format)
+              (ice-9 match)
+              (ice-9 popen)
+              (ice-9 popen)
+              (ice-9 rdelim)
+              (ice-9 regex)
+              (ice-9 textual-ports)
+              (srfi srfi-9)
+              (x-files utils git))
 
-            (libgit2-init!)
+             (libgit2-init!)
 
-            (let ((%ssh-agent-pid-regexp
-                   (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
-                  (%ssh-auth-sock-regexp
-                   (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
-                  (p (open-input-pipe "ssh-agent -s")))
-              (let ((ssh-auth-sock-data (read-line p))
-                    (ssh-agent-pid-data (read-line p)))
+             (let ((%ssh-agent-pid-regexp
+                    (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+                   (%ssh-auth-sock-regexp
+                    (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
+                   (p (open-input-pipe "ssh-agent -s")))
+               (let ((ssh-auth-sock-data (read-line p))
+                     (ssh-agent-pid-data (read-line p)))
 
-                (when (or (eof-object? ssh-auth-sock-data)
-                          (eof-object? ssh-agent-pid-data))
-                  (error "Could not start a SSH agent"))
+                 (when (or (eof-object? ssh-auth-sock-data)
+                           (eof-object? ssh-agent-pid-data))
+                   (error "Could not start a SSH agent"))
 
-                (close p)
+                 (close p)
 
-                (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
-                      (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+                 (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
+                       (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
 
-                  (unless (and sockm pidm)
-                    (error "Could not parse SSH agent response"
-                           ssh-auth-sock-data
-                           ssh-agent-pid-data))
+                   (unless (and sockm pidm)
+                     (error "Could not parse SSH agent response"
+                            ssh-auth-sock-data
+                            ssh-agent-pid-data))
 
-                  (let ((ssh-agent-data
-                         `((SSH_AUTH_SOCK ,(match:substring sockm 1))
-                           (SSH_AGENT_PID ,(match:substring pidm 1)))))
+                   (let ((ssh-agent-data
+                          `((SSH_AUTH_SOCK ,(match:substring sockm 1))
+                            (SSH_AGENT_PID ,(match:substring pidm 1)))))
 
-                    (map
-                     (lambda (p)
-                       (let ((x (car p))
-                             (y (cadr p)))
-                         (setenv (symbol->string x) y)))
-                     ssh-agent-data)
+                     (map
+                      (lambda (p)
+                        (let ((x (car p))
+                              (y (cadr p)))
+                          (setenv (symbol->string x) y)))
+                      ssh-agent-data)
 
-                    (map
-                     (lambda (k)
-                       (invoke #$(file-append openssh "/bin/ssh-add") k))
-                     (quote #$keys))
+                     (map
+                      (lambda (k)
+                        (invoke #$(file-append openssh "/bin/ssh-add") k))
+                      (quote #$keys))
 
-                    #$@(map
-                        (lambda (project)
-                          (body config project)) projects)
+                     #$@(map
+                         (lambda (project)
+                           (body config project)) projects)
 
-                    ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
-                    (when (false-if-exception (string->number pidm))
-                      (kill pid SIGTERM)))))))))))
+                     ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
+                     (when (false-if-exception (string->number pidm))
+                       (kill pid SIGTERM)))))))))))
     ((_ config body)
      (template config body identity))))
 
-(define* (fetch! realdir                 )
-  #~(with-exception-handler
-        (lambda (exn)
-          (format #t "Git-repository ~a fetch failed. Exception: ~a ~%" #$realdir exn))
-      (lambda ()
-        (let ((opts (make-fetch-options)))
-          ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
-          (set-fetch-auth-with-ssh-agent! opts)
-          (fetch-remotes
-           #$realdir
-           #:fetch-options opts)
-          (format #t "Git-repository ~a was successfully fetched. ~%" #$realdir)))
-      #:unwind? #t))
-
-(define (g-fetch! config
-                  project)
-  (match-record
-   config <project-manager-conf>
-   ((dir project-manager/dir) )
-   (match-record
-    project <project>
-    (source
-     (dir project/dir))
-    (let* ((realdir (string-append project-manager/dir "/" project/dir)))
-      (fetch! realdir)))))
+(define (g-fetch! config project)
+  (match-record config <project-manager-conf>
+    ((dir project-manager/dir))
+    (match-record project <project>
+      (source (dir project/dir))
+      (let* ((realdir (string-append project-manager/dir "/" project/dir)))
+        (fetch! realdir)))))
 
 (define (fetcher-program-file config)
   ;; TODO: create template from both fetcher and activatoion.
@@ -208,42 +183,28 @@
                "project-manager-fetcher-script.scm" x))))
 
 (define (mcron-fetcher config)
-  (match-record
-   config <project-manager-conf>
-   (period)
-   (list (with-modules+exts
-          #~(job (lambda (t) (+ t #$period))
-                 #$(fetcher-program-file config)
-                 "Project manager's fetcher daemon")))))
+  (match-record config <project-manager-conf>
+    (period)
+    (list (with-modules+exts
+           #~(job (lambda (t) (+ t #$period))
+                  #$(fetcher-program-file config)
+                  "Project manager's fetcher daemon")))))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
-                (name url)
-                (project* url (symbol->string name))))
+    (name url)
+    (project* url (symbol->string name))))
 
-(define* (clone! source realdir)
-  #~(if (directory-exists? #$realdir)
-        (format #t "Directory ~s already exists. Skip cloning. ~%" #$realdir)
-        (let ((opts (make-fetch-options)))
-          ;; NOTE: the only option to make it work properly is to call set-fetch-auth-with-…! explicitly, (%make-auth-ssh-agent) won't be interned to the store properly :(
-          (set-fetch-auth-with-ssh-agent! opts)
-          (clone #$source #$realdir
-                 (make-clone-options
-                  #:fetch-options
-                  opts))
-          (format #t "Directory ~a was clonned into ~a. ~%" #$source #$realdir))))
-
-(define (g-clone! config
-                  project)
+(define (g-clone! config project)
   (match-record
-   config <project-manager-conf>
-   ((dir project-manager/dir))
-   (match-record
-    project <project>
-    (source
-     (dir project/dir)     )
-    (let ((realdir (string-append project-manager/dir "/" project/dir)))
-      (clone! source realdir)))))
+      config <project-manager-conf>
+    ((dir project-manager/dir))
+    (match-record
+        project <project>
+      (source
+       (dir project/dir)     )
+      (let ((realdir (string-append project-manager/dir "/" project/dir)))
+        (clone! source realdir)))))
 
 (define (activation config)
   (template config g-clone!))
@@ -254,11 +215,11 @@
    (compose concatenate)
    (extend (lambda (config projects*)
              (match-record
-              config <project-manager-conf>
-              (projects)
-              (project-manager-conf
-               (inherit config)
-               (projects (append projects projects*))))))
+                 config <project-manager-conf>
+               (projects)
+               (project-manager-conf
+                (inherit config)
+                (projects (append projects projects*))))))
    (extensions
     (list (service-extension home-activation-service-type activation)
           (service-extension home-mcron-service-type mcron-fetcher)))

@@ -10,12 +10,8 @@
   #:use-module (git auth)
   #:use-module (git fetch)
 
-  #:export (refs
-            remotes
-            with-repository
-            with-remote
-            with-repo-remotes
-            fetch-remotes))
+  #:export (refs remotes fetch-remotes clone! fetch!
+                 with-repository with-remotewith-repo-remotes))
 
 (define (with-remote remote thunk)
   (let* ((r (remote-connect remote))
@@ -65,6 +61,26 @@
   (with-repo-remotes
    repo*
    (lambda (x)
-     (remote-fetch x
-                   #:fetch-options fetch-options))
+     (remote-fetch x #:fetch-options fetch-options))
    #:remote-pred remote-pred))
+
+(define (fetch! realdir)
+  (with-exception-handler
+      (lambda (exn)
+        (format (current-error-port) "Git-repository ~a fetch failed. Exception: ~a ~%" realdir exn))
+    (lambda ()
+      (let ((opts (make-fetch-options)))
+        (set-fetch-auth-with-ssh-agent! opts)
+        (fetch-remotes realdir #:fetch-options opts)
+        (format (current-output-port) "Git-repository ~a was successfully fetched. ~%" realdir)))
+    #:unwind? #t))
+
+(define (clone! source realdir)
+  (cond ((and (directory-exists? realdir)
+              (member source (remotes realdir)))
+         (format (current-error-port) "Directory ~s already exists. Skip cloning. Fetching instead ~%" realdir)
+         (fetch! realdir))
+        (else (let ((opts (make-fetch-options)))
+                (set-fetch-auth-with-ssh-agent! opts)
+                (clone source realdir (make-clone-options #:fetch-options opts))
+                (format (current-output-port) "Directory ~a was clonned into ~a. ~%" source realdir)))))
