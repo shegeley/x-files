@@ -3,7 +3,8 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages compression)
 
-  #:use-module ((guix licenses) #:select (public-domain))
+  #:use-module ((guix licenses)
+                #:select (expat))
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
@@ -38,5 +39,5 @@
       (home-page "https://github.com/shegeley/jrm-syntax-rules")
       (synopsis "JRM’s Syntax-rules Primer for the Merely Eccentric")
       (description "Tutorial for syntax-rules system in R5RS standard.")
-      ;; NOTE: coudn't find any info on licensing. seems like public domain. fix me if I'm wrong
-      (license public-domain))))
+      ;; https://funcall.blogspot.com/2023/10/syntax-rules-primer.html
+      (license expat))))
