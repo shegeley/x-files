@@ -46,7 +46,10 @@
 
   #:export (<project-manager-conf>
             <project> project-manager-conf channel->project
-            g-clone! g-fetch! project:dir project:source))
+            g-clone! g-fetch! project:dir project:source
+            with-ssh-agent with-modules+exts fetcher-program-file
+            project-manager:keys project-manager:dir
+            project-manager:period project-manager:projects))
 
 (define-record-type* <project> project make-project
   project?

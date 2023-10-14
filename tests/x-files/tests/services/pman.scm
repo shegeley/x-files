@@ -45,16 +45,19 @@
     (with-test-dir
      "pman"
      (lambda (d)
-       (let* ((%manager
+       (let* ((projects (list (%project)))
+              (%manager
                (project-manager-conf
                 (dir d)
-                (projects (list (%project)))))
+                (projects projects)))
               (d** (string-append d "/"
                                   (project:dir (%project)))))
-         (g:invoke ((@@ (x-files services pman) template)
-                    %manager
-                    (@@ (x-files services pman)
-                        g-clone!)))
+         (g:invoke
+          (with-ssh-agent (project-manager:keys %manager)
+                          #$@(map
+                              (lambda (project)
+                                (g-clone! %manager project))
+                              projects)))
          (test-equal #t (directory-exists? d**))
          (test-assert
              (member (project:source (%project))
@@ -62,8 +65,7 @@
 
          (let* ((timestamp (lambda () (stat:ctime (stat (string-append d** "/.git/FETCH_HEAD")))))
                 (t1 (timestamp))
-                (fetcher-file ((@@ (x-files services pman)
-                                   fetcher-program-file) %manager)))
+                (fetcher-file (fetcher-program-file %manager (first projects))))
            (g:build fetcher-file)
            (g:invoke fetcher-file)
            (test-assert (> (timestamp) t1))
