@@ -82,7 +82,7 @@
     (lambda ()
       (cond ((and (directory-exists? realdir)
                   ;; NOTE: line below won't work as expected
-                  (member source (remotes realdir)))
+                  (false-if-exception (member source (map remote-url (remotes realdir)))))
              (format (current-error-port) "Directory ~s already exists. Skip cloning. ~%" realdir))
             (else (let ((opts (make-fetch-options)))
                     (set-fetch-auth-with-ssh-agent! opts)

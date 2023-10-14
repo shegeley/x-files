@@ -33,41 +33,44 @@
 
 (define project-dir "notes")
 
-(define %project
+(define %keys
   (make-parameter
-   (project*
-    ;; NOTE: Here you should have your private repo to test
-    "git@gitlab.com:shegeley/notes.git"
-    project-dir)))
+   (list (string-append (getenv "HOME")
+                        "/.ssh/main"))))
+(define %projects
+  (make-parameter
+   (list (project*
+          ;; NOTE: Here you should have your private repo to test
+          "git@gitlab.com:shegeley/notes.git"
+          project-dir))))
 
 (define-test pman
   (test-group "pman"
     (with-test-dir
      "pman"
      (lambda (d)
-       (let* ((projects (list (%project)))
-              (%manager
+       (let* ((%manager
                (project-manager-conf
                 (dir d)
-                (projects projects)))
+                (period 2)
+                (keys (%keys))
+                (projects (%projects))))
+              (%project (first (%projects)))
               (d** (string-append d "/"
-                                  (project:dir (%project)))))
+                                  (project:dir %project))))
          (g:invoke
-          (with-ssh-agent (project-manager:keys %manager)
-                          #$@(map
-                              (lambda (project)
-                                (g-clone! %manager project))
-                              projects)))
+          (with-ssh-agent
+           (project-manager:keys %manager)
+           (map (lambda (project) (g-clone! %manager project)) (%projects))))
          (test-equal #t (directory-exists? d**))
          (test-assert
-             (member (project:source (%project))
+             (member (project:source %project)
                      (map remote-url (remotes d**))))
-
-         (let* ((timestamp (lambda () (stat:ctime (stat (string-append d** "/.git/FETCH_HEAD")))))
-                (t1 (timestamp))
-                (fetcher-file (fetcher-program-file %manager (first projects))))
-           (g:build fetcher-file)
-           (g:invoke fetcher-file)
+         (let* [(timestamp (lambda () (stat:ctime (stat (string-append d** "/.git/FETCH_HEAD")))))
+                (t1 (timestamp))]
+           (g:invoke
+            (with-ssh-agent (project-manager:keys %manager)
+                            (list (g-fetch! %manager %project))))
            (test-assert (> (timestamp) t1))
            ;; (let* [(files ((@@ (gnu services mcron) job-files) mcron
            ;;                (list (with-modules+exts

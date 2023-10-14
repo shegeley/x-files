@@ -29,20 +29,14 @@
   #:use-module (guix git)
   #:use-module (guix channels)
   #:use-module (guix modules)
+  #:use-module (guix gexp)
   #:use-module (guix records)
   #:use-module (guix build utils)
   #:use-module (guix packages)
 
   #:use-module (ice-9 match)
-  #:use-module (ice-9 format)           ;
-  #:use-module (ice-9 regex)
-  #:use-module (ice-9 ftw)
-  #:use-module (ice-9 exceptions)
-
-  #:use-module (oop goops)
 
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-26)
 
   #:export (<project-manager-conf>
             <project> project-manager-conf channel->project
@@ -90,76 +84,74 @@
     (with-imported-modules
         (source-module-closure
          '((ice-9 format)
+           (ice-9 popen)
            (git)
            (guix build utils)
            (x-files utils git))
          #:select? modules-selector)
       body ...)))
 
-(define-syntax with-ssh-agent
-  (syntax-rules ()
-    ((_ keys body ...)
-     (with-modules+exts
-      #~(begin
-          (use-modules
-           (git)
-           (guix build utils)
-           (guix git)
-           (ice-9 format)
-           (ice-9 match)
-           (ice-9 popen)
-           (ice-9 popen)
-           (ice-9 rdelim)
-           (ice-9 regex)
-           (ice-9 textual-ports)
-           (srfi srfi-9)
-           (x-files utils git))
+(define (with-ssh-agent keys gexp*)
+  (with-modules+exts
+   #~(begin
+       (use-modules
+        (git)
+        (guix build utils)
+        (guix git)
+        (ice-9 format)
+        (ice-9 match)
+        (ice-9 popen)
+        (ice-9 rdelim)
+        (ice-9 regex)
+        (ice-9 textual-ports)
+        (srfi srfi-9)
+        (x-files utils git))
 
-          (libgit2-init!)
+       (libgit2-init!)
 
-          (let ((%ssh-agent-pid-regexp
-                 (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
-                (%ssh-auth-sock-regexp
-                 (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
-                (p (open-input-pipe "ssh-agent -s")))
-            (let ((ssh-auth-sock-data (read-line p))
-                  (ssh-agent-pid-data (read-line p)))
+       (let ((%ssh-agent-pid-regexp
+              (make-regexp "SSH_AGENT_PID=(.*); export SSH_AGENT_PID;"))
+             (%ssh-auth-sock-regexp
+              (make-regexp "SSH_AUTH_SOCK=(.*); export SSH_AUTH_SOCK;"))
+             (p (open-input-pipe "ssh-agent -s")))
+         (let ((ssh-auth-sock-data (read-line p))
+               (ssh-agent-pid-data (read-line p)))
 
-              (when (or (eof-object? ssh-auth-sock-data)
-                        (eof-object? ssh-agent-pid-data))
-                (error "Could not start a SSH agent"))
+           (when (or (eof-object? ssh-auth-sock-data)
+                     (eof-object? ssh-agent-pid-data))
+             (error "Could not start a SSH agent"))
 
-              (close p)
+           (close p)
 
-              (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
-                    (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
+           (let ((sockm (regexp-exec %ssh-auth-sock-regexp ssh-auth-sock-data))
+                 (pidm  (regexp-exec %ssh-agent-pid-regexp ssh-agent-pid-data)))
 
-                (unless (and sockm pidm)
-                  (error "Could not parse SSH agent response"
-                         ssh-auth-sock-data
-                         ssh-agent-pid-data))
+             (unless (and sockm pidm)
+               (error "Could not parse SSH agent response"
+                      ssh-auth-sock-data
+                      ssh-agent-pid-data))
 
-                (let ((ssh-agent-data
-                       `((SSH_AUTH_SOCK ,(match:substring sockm 1))
-                         (SSH_AGENT_PID ,(match:substring pidm 1)))))
+             (let ((ssh-agent-data
+                    `((SSH_AUTH_SOCK ,(match:substring sockm 1))
+                      (SSH_AGENT_PID ,(match:substring pidm 1)))))
 
-                  (map
-                   (lambda (p)
-                     (let ((x (car p))
-                           (y (cadr p)))
-                       (setenv (symbol->string x) y)))
-                   ssh-agent-data)
+               (map
+                (lambda (p)
+                  (let ((x (car p))
+                        (y (cadr p)))
+                    (setenv (symbol->string x) y)))
+                ssh-agent-data)
 
-                  (map
-                   (lambda (k)
-                     (invoke #$(file-append openssh "/bin/ssh-add") k))
-                   (quote #$keys))
+               (map
+                (lambda (k)
+                  (invoke (string-append #$openssh "/bin/ssh-add") k))
+                (quote #$keys))
 
-                  body ...
+               #$@gexp*
 
-                  ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
-                  (when (false-if-exception (string->number pidm))
-                    (kill (- 1 pid) SIGTERM)))))))))))
+               ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
+               (when (false-if-exception (string->number pidm))
+                 (kill (- 1 pid) SIGTERM)))))))))
 
 (define (g-fetch! config project)
   (match-record config <project-manager-conf>
@@ -170,19 +162,19 @@
         #~(fetch! #$realdir)))))
 
 (define (fetcher-program-file config project)
-  (program-file "project-manager-fetcher-script.scm"
-                (with-ssh-agent (project-manager:keys config)
-                                (g-fetch! config project))))
-
+  (program-file
+   "project-manager-fetcher-script.scm"
+   (with-ssh-agent (project-manager:keys config)
+                   (list (g-fetch! config project)))))
 
 (define (mcron-fetcher config)
   (match-record config <project-manager-conf>
     (period projects)
     (map (lambda (project)
-           (with-modules+exts
-            #~(job (lambda (t) (+ t #$period))
-                   #$(fetcher-program-file config project)
-                   "Project manager's fetcher mcron job"))) projects)))
+           #~(job (lambda (t) (+ t #$period))
+                  #$(fetcher-program-file config project)
+                  "Project manager's fetcher mcron job"))
+         projects)))
 
 (define (channel->project channel)
   (match-record channel (@@ (guix channels) <channel>)
@@ -202,18 +194,16 @@
     (projects)
     (with-ssh-agent
      (project-manager:keys config)
-     #~(begin
-         #$@(map
-             (lambda (project)
-               (g-clone! config project)) projects)))))
+     (map
+      (lambda (project)
+        (g-clone! config project)) projects))))
 
 (define-public project-manager-service-type
   (service-type
    (name 'project-manager)
    (compose concatenate)
    (extend (lambda (config projects*)
-             (match-record
-                 config <project-manager-conf>
+             (match-record config <project-manager-conf>
                (projects)
                (project-manager-conf
                 (inherit config)
