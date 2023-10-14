@@ -172,7 +172,7 @@
 (define (fetcher-program-file config project)
   (program-file "project-manager-fetcher-script.scm"
                 (with-ssh-agent (project-manager:keys config)
-                                #$(g-fetch! config project))))
+                                #~(begin #$(g-fetch! config project)))))
 
 
 (define (mcron-fetcher config)
@@ -202,9 +202,10 @@
     (projects)
     (with-ssh-agent
      (project-manager:keys config)
-     #$@(map
-         (lambda (project)
-           (g-clone! config project)) projects))))
+     #~(begin
+         #$@(map
+             (lambda (project)
+               (g-clone! config project)) projects)))))
 
 (define-public project-manager-service-type
   (service-type
