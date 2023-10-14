@@ -200,10 +200,11 @@
 (define (activation config)
   (match-record config <project-manager-conf>
     (projects)
-    (with-ssh-agent (project-manager:keys config)
-                    #$@(map
-                        (lambda (project)
-                          (g-clone! config project)) projects))))
+    (with-ssh-agent
+     (project-manager:keys config)
+     #$@(map
+         (lambda (project)
+           (g-clone! config project)) projects))))
 
 (define-public project-manager-service-type
   (service-type
