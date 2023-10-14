@@ -167,7 +167,7 @@
     (match-record project <project>
       (source (dir project/dir))
       (let* ((realdir (string-append project-manager/dir "/" project/dir)))
-        #~(fetch! realdir)))))
+        #~(fetch! #$realdir)))))
 
 (define (fetcher-program-file config project)
   (program-file "project-manager-fetcher-script.scm"
@@ -195,7 +195,7 @@
     (match-record project <project>
       (source (dir project/dir))
       (let ((realdir (string-append project-manager/dir "/" project/dir)))
-        #~(clone! source realdir)))))
+        #~(clone! #$source #$realdir)))))
 
 (define (activation config)
   (match-record config <project-manager-conf>
