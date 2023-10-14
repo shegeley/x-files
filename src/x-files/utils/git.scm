@@ -81,6 +81,7 @@
         (format (current-error-port) "Git-repository ~a clone failed. Exception: ~a ~%" realdir exn))
     (lambda ()
       (cond ((and (directory-exists? realdir)
+                  ;; NOTE: line below won't work as expected
                   (member source (remotes realdir)))
              (format (current-error-port) "Directory ~s already exists. Skip cloning. ~%" realdir))
             (else (let ((opts (make-fetch-options)))
