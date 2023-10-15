@@ -82,6 +82,8 @@
     (lambda ()
       (cond ((and (directory-exists? realdir)
                   ;; NOTE: line below won't work as expected
+                  ;; because some remotes in real directories are in ssh format (git@github.com:/user/repo) and some are in http (https://github.com/user/project)
+                  ;; TODO: find a way to check equivalence
                   (false-if-exception (member source (map remote-url (remotes realdir)))))
              (format (current-error-port) "Directory ~s already exists. Skip cloning. ~%" realdir))
             (else (let ((opts (make-fetch-options)))
