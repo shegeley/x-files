@@ -92,6 +92,7 @@
       body ...)))
 
 (define (with-ssh-agent keys gexp*)
+  "Evaluates @code{gexp*} with local (host-machine) ssh-agent running. Gets it @code{PID} and @code{AUTH_SOCK} and kill the process afterwards."
   (with-modules+exts
    #~(begin
        (use-modules

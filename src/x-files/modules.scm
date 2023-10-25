@@ -11,9 +11,11 @@
 
   #:use-module (ice-9 match)
 
+  #:use-module (x-files utils project)
   #:use-module (geiser doc)
 
   #:export (%classifiers
+            modules
             classify-module-object
             module-entities))
 
@@ -26,9 +28,10 @@
     procedure?)))
 
 (define files
-  (let ((prefix "./src/"))
-    (map (lambda (x) (string-drop x (string-length prefix)))
-         (find-files (string-append prefix "x-files")))))
+  (let* [(prefix "/src/")
+         (absolute-path (string-append (git-project-dir ".") prefix))]
+    (map (lambda (x) (string-drop x (string-length absolute-path)))
+         (find-files absolute-path))))
 
 (define modules
   (map (compose resolve-module file-name->module-name) files))
