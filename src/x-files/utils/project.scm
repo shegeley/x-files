@@ -6,6 +6,7 @@
 
 (define* (git-project-dir
           #:optional (start-dir (getcwd)))
+  "Returns an absolute path: first upmost directory contaning \".git\" directory relative to the current process [via @code{cwd}]. Or false if one not found going too far up the filetree"
   (let* ((up (lambda (x) (string-append x "/../")))
          (start-dir (canonicalize-path start-dir))
          (split (string-split start-dir #\/)))

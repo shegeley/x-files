@@ -3,7 +3,6 @@
 
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
-
   #:use-module (ice-9 match)
 
   #:export (->xtable))
@@ -14,12 +13,18 @@
                    (tab "\t")
                    (start "{")
                    (end "}"))
-  ;; params := '("table" "ip" "filter"
-  ;;                ("chain" "output"
-  ;;                   ("type" "filter" ...)
-  ;;                   ("iffname" ... ...))
-  ;;                ("chain" "forward"
-  ;;                  (...) ...))
+  "@code{params} expected to be (ip/nf)tables tree-like data structure like:
+   @example
+    '(\"table\" \"ip\" \"filter\"
+        (\"chain\" \"output\"
+        (\"type\" \"filter\" ...)
+        (\"iffname\" ... ...))
+        (\"chain\" \"forward\"
+        (...) ...))
+   @end example
+   @code{level} is a base identation level (whole number)
+   @code{tab} is a tabulation/spacing symbol
+   @code{start} and @code{end} are form opening/closing symbols respectfully"
   (let* ((tab* (apply string-append (make-list level tab))))
     (call-with-values
         (lambda () (span (lambda (x) (not (list? x))) params))

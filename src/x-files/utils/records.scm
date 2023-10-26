@@ -24,18 +24,17 @@
        (age 30)))
     (person? i) => #t
     (person:age i) => 30
-    (person:name i) => \"Ivan\""
+    (person:name i) => \"Ivan\"
 
-    ;; NOTE: original syntax for define-record-type* is :
-    ;; (_ type ;; <thing>
-    ;;    syntactic-ctor ;; thing
-    ;;    ctor ;; make-thing
-    ;;    pred ;; thing?
-    ;;    this-identifier ;; this-thing
-    ;;    (field get properties ...) ...)
+    NOTE: original syntax for define-record-type* is :
+    (_ type ;; <thing>
+       syntactic-ctor ;; thing
+       ctor ;; make-thing
+       pred ;; thing?
+       this-identifier ;; this-thing
+       (field get properties ...) ...)
 
-    ;; TODO: add module-exports for the record name, type and all the record fields by default
-
+    TODO: add module-exports for the record name, type and all the record fields by default"
     (syntax-case s ()
       [(_ record:type:name
           (field properties ...) ...)
