@@ -1,3 +1,4 @@
+
 (define-module (x-files utils tests)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 match)
@@ -12,6 +13,7 @@
   #:use-module (srfi srfi-69)
 
   #:export (results-formatter
+            %test-dir
             test-runner*
             define~test-runner
             run!
