@@ -25,19 +25,10 @@
   (mapped-devices))
 
 (define (drives:file-systems drives)
-  (append-map
-   (lambda (d)
-     (match-record d <drive>
-                   (file-systems)
-                   file-systems)) drives))
+  (append-map drive:file-systems drives))
 
 (define (drives:mapped-devices drives)
-  (append-map
-   (lambda (d)
-     (match-record d <drive>
-                   (mapped-devices)
-                   mapped-devices)) drives))
-
+  (append-map drive:mapped-devices drives))
 
 ;; Example:
 ;; (define-public samsung-s4en
