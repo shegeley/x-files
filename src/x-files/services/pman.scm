@@ -131,9 +131,12 @@
                       ssh-auth-sock-data
                       ssh-agent-pid-data))
 
-             (let ((ssh-agent-data
-                    `((SSH_AUTH_SOCK ,(match:substring sockm 1))
-                      (SSH_AGENT_PID ,(match:substring pidm 1)))))
+             (let* [(sock (match:substring sockm 1))
+                    (pid (match:substring pidm 1))
+                    (pid* (string->number pid))
+                    (ssh-agent-data
+                     `((SSH_AUTH_SOCK ,sock)
+                       (SSH_AGENT_PID ,pid)))]
 
                (map
                 (lambda (p)
@@ -150,8 +153,8 @@
                #$@gexp*
 
                ;; safe kill? (stolen from (guile-git tests sssd-ssshd))
-               (when (false-if-exception (string->number pidm))
-                 (kill (- 1 pid) SIGTERM)))))))))
+               (when (false-if-exception pid*)
+                 (kill pid* SIGTERM)))))))))
 
 (define (g-fetch! config project)
   (match-record config <project-manager-conf>
