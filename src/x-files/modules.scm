@@ -12,7 +12,6 @@
   #:use-module (ice-9 match)
 
   #:use-module (x-files utils project)
-  #:use-module (geiser doc)
 
   #:export (%classifiers
             modules
