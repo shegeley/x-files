@@ -11,7 +11,7 @@
   #:use-module (srfi srfi-26)
 
   #:export (interpose
-            variable-rewire!
+            with-variable-rewire
             ref-in))
 
 (define~ (interpose lst
@@ -27,14 +27,28 @@
      (string-append a token (interpose rest token)))))
 
 (define (variable-rewire! module-name var val)
-  "«Rewires» a variable in module. Sets it to the val in current context (module/buffer/file).
-   - Note: will only change values that are not «static».
-    - Example:
-        - (define x 1) (define-public y (+ x 10)). y won't be rewired.
-        - (define x 1) (define-public (y) (+ x 10)). y will re rewired"
+  "«Rewires» a variable (@code{var}, symbol) in module (@code{module-name}, symbol). Sets it to the @code{val} in current context (module/buffer/file).
+   - Notes:
+    - Will only change values that are not «static»
+      - Example:
+          - (define x 1) (define-public y (+ x 10)). y won't be rewired.
+          - (define x 1) (define-public (y) (+ x 10)). y will re rewired"
   (variable-set!
    (module-variable
     (resolve-module module-name) var) val))
+
+(define-syntax-rule (with-variable-rewire module-name var val body ...)
+  (let* [(var* (module-variable
+                (resolve-module module-name) var))
+         (old-val (variable-ref var*))]
+    (dynamic-wind
+      (lambda () (variable-rewire! module-name var val))
+      (lambda () body ...)
+      (lambda () (variable-rewire! module-name var old-val)))))
+
+;; (define-syntax-rule (with-variables-rewire ((module-name var val) ...) body ...)
+;;   TODO: add
+;;   )
 
 (define~ (ref-in x path)
   `(((((a . 1)
