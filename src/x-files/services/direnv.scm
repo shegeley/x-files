@@ -67,4 +67,6 @@
    (extensions
     (append
      (list (service-extension home-files-service-type files))
-     (service-type-extensions home-bash-direnv-service-type)))))
+     (service-type-extensions home-bash-direnv-service-type)))
+   (description
+    "A little overried on base @code{bash-direnv-service-type} to allow toml configuration. For now only expose static configuration with «load_dotenv = true». TODO: extend")))
