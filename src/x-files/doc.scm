@@ -60,7 +60,7 @@
            (var (module-variable module* name))
            (object (and (variable-bound? var)
                         (variable-ref var)))
-           (documentation ((try-set-documentation) object))]
+           (documentation ((%try-set-documentation) object))]
       (if documentation
           ((%default-formatter) name object)
           def))))
