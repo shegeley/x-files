@@ -34,7 +34,7 @@
          (find-files absolute-path))))
 
 (define (%modules)
-  (map (compose resolve-module file-name->module-name) (files)))
+  (map (compose resolve-module file-name->module-name) (%files)))
 
 (define* (classify-module-object name var elts)
   "Applies @code{classifier} on @code{var}. Returns list of three (@code{type} @code{name} @code{obj}) (predicate from @code{%classifiers}, object's (var) symbolic name, and the @code{obj} itself)"

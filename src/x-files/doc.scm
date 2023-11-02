@@ -24,11 +24,14 @@
             export-documentation
             %exporters))
 
-(define <package> (@@ (guix packages) <package>))
+(define <package>
+  (@@ (guix packages) <package>))
 
-(define <service-type> (@@ (gnu services) <service-type>))
+(define <service-type>
+  (@@ (gnu services) <service-type>))
 
-(define <shepherd-service> (@@ (gnu services shepherd) <shepherd-service>))
+(define <shepherd-service>
+  (@@ (gnu services shepherd) <shepherd-service>))
 
 (define %doc-resolvers
   (make-parameter
@@ -40,7 +43,8 @@
   (make-parameter
    (lambda (name object)
      `(defspec (% (name ,(symbol->string name)))
-        (para ,(object-documentation object))))))
+        (para ,(or (object-property object 'documentation)
+                   (object-documentation object)))))))
 
 (define %try-set-documentation
   (make-parameter
@@ -51,7 +55,10 @@
                    (%doc-resolvers)))
             (documentation (if pair ((cdr pair) object) #f))]
        (if documentation
-           (begin (set-object-property! object 'documentation documentation) #t)
+           (begin
+             (format #t "doc: ~a ~%" documentation)
+             (set-object-property! object 'documentation documentation)
+             #t)
            #f)))))
 
 (define* (resolver module-name)
@@ -65,18 +72,20 @@
           ((%default-formatter) name object)
           def))))
 
-
-(variable-rewire!
- `(texinfo reflection) 'module-stexi-documentation
- (lambda (module-name)
-   (module-stexi-documentation module-name #:docs-resolver (resolver module-name))))
-
 (define doc:dir
   (string-append (git-project-dir ".") "/doc"))
 
+(define (module-stexi-documentation* module-name)
+  (module-stexi-documentation
+   module-name
+   #:docs-resolver (resolver module-name)))
+
 (define (generate-documentation modules)
-  (package-stexi-documentation
-   modules "x-files:doc" "" '() '()))
+  (with-variable-rewire
+   `(texinfo reflection) 'module-stexi-documentation
+   module-stexi-documentation*
+   (package-stexi-documentation
+    modules "x-files:doc" "" '() '())))
 
 (define %exporters
   (make-parameter
