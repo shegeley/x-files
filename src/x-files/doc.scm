@@ -72,7 +72,7 @@
           ((%default-formatter) name object)
           def))))
 
-(define doc:dir
+(define (doc:dir)
   (string-append (git-project-dir ".") "/doc"))
 
 (define (module-stexi-documentation* module-name)
@@ -95,9 +95,9 @@
 (define (export-documentation documentation format)
   "@code{documentation} is an @code{stexi} tree. @code{format} is 'html or 'info"
   (let [(exporter (assoc-ref (%exporters) format))]
-    (mkdir-p doc:dir)
+    (mkdir-p (doc:dir))
     (call-with-output-file
         (string-append
-         doc:dir "/x-files"
+         (doc:dir) "/x-files"
          "." (symbol->string format))
       (lambda (p) (exporter documentation p)))))
