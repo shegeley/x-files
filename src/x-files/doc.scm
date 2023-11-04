@@ -56,7 +56,6 @@
             (documentation (if pair ((cdr pair) object) #f))]
        (if documentation
            (begin
-             (format #t "doc: ~a ~%" documentation)
              (set-object-property! object 'documentation documentation)
              #t)
            #f)))))
