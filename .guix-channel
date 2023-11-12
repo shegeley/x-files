@@ -3,6 +3,7 @@
 (channel
  (version 0)
  (directory "src")
+ (news-file "./news.scm")
  (dependencies
   (channel
    (name rde)
