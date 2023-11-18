@@ -51,7 +51,10 @@
 
 (define-method (get (storage <git-subdir-storage>) path options)
   "Returns just the string (path) to the file in troage"
-  ((resolver storage) path))
+  (let [(path* ((resolver storage) path))]
+    (if (file-exists? path*)
+        path*
+        (error (format #f "File ~a from path ~a does not exists in a storage.~%" path* path)))))
 
 (define-method (add (storage <git-subdir-storage>) uri path options)
   "Uri is the source-uri. If no uri given, just the file-system path, it will append 'file://' automatically"

@@ -6,6 +6,8 @@
   #:use-module (gnu packages)
 
   #:use-module (x-files utils base)
+  #:use-module (x-files storage)
+
   #:use-module (x-files utils files)
 
   #:use-module (ice-9 match)
@@ -45,8 +47,7 @@
   dotfile-manager-conf~
   dotfile-manager-conf?
   (schemes dotfile-manager-conf:schemes)
-  (storage dotfile-manager-conf:storage
-           (default -storage-)))
+  (storage dotfile-manager-conf:storage))
 
 (define (normalize-schemes schemes)
   (map
@@ -65,30 +66,29 @@
 (define (sync-package-files storage scheme)
   (map
    (match-lambda
-     ((home-dir-loc config-dir-loc)
-      (let* ((config-dir-loc (storage config-dir-loc))
-             (f (lambda (x) (local-file
-                        x (gen-name x)
-                        #:recursive?
-                        (if (directory-exists? x)
-                            #t #f)))))
+     ((home-dir-loc storage-query)
+      (let* ((config-dir-loc (get storage storage-query '()))
+             (f (lambda (x)
+                  (local-file
+                   x (gen-name config-dir-loc)
+                   #:recursive? #t))))
         (list home-dir-loc (f config-dir-loc)))))
    scheme))
 
 (define (files config)
   (match-record
-   config <dotfile-manager-conf>
-   (storage schemes)
-   (let* ((schemes (normalize-schemes schemes))
-          (acc '()))
-     (map
-      (match-lambda
-        ((package scheme)
-         (if (member package %keys-packages)
-             (format #t "Don't know how to synchronize keys yet. TODO: Think about it. ~%")
-             (set! acc (append acc (sync-package-files storage scheme))))))
-      schemes)
-     acc)))
+      config <dotfile-manager-conf>
+    (storage schemes)
+    (let* ((schemes (normalize-schemes schemes))
+           (acc '()))
+      (map
+       (match-lambda
+         ((package scheme)
+          (if (member package %keys-packages)
+              (format #t "Don't know how to synchronize keys yet. TODO: Think about it. ~%")
+              (set! acc (append acc (sync-package-files storage scheme))))))
+       schemes)
+      acc)))
 
 (define-public dotfile-manager-service-type
   (service-type
