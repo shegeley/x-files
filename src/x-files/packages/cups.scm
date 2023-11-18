@@ -1,6 +1,7 @@
 (define-module (x-files packages cups)
   #:use-module (x-files utils base)
   #:use-module (x-files utils list)
+  #:use-module (x-files packages cups drivers samsung)
 
   #:use-module (gnu packages)
   #:use-module (gnu packages cups)
@@ -20,13 +21,15 @@
   (package
     (inherit cups-minimal)
     (inputs
-     (map specification->package
-          (list "avahi"
-                "coreutils"
-                "cups-filters"
-                "gnutls"
-                "linux-pam"
-                "zlib")))
+     (cons
+      samsung-drivers
+      (map specification->package
+           (list "avahi"
+                 "coreutils"
+                 "cups-filters"
+                 "gnutls"
+                 "linux-pam"
+                 "zlib"))))
     (arguments
      (substitute-keyword-arguments
          (strip-keyword-arguments
@@ -98,7 +101,8 @@
             (add-after 'install 'install-cups-filters-symlinks
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (let ((out (assoc-ref outputs "out"))
-                      (cups-filters #$(this-package-input "cups-filters")))
+                      (cups-filters #$(this-package-input "cups-filters"))
+                      (samsung-drivers (this-package-input "samsung-filters")))
                   ;; Charsets.
                   (symlink
                    (string-append cups-filters "/share/cups/charsets")
@@ -111,8 +115,14 @@
                               (string-append out f)))
                    '("/share/cups/mime/cupsfilters.types"
                      "/share/cups/mime/cupsfilters.convs"
-                     "/share/cups/drv/cupsfilters.drv"
-                     "/share/ppd"))
+                     "/share/cups/drv/cupsfilters.drv"))
+
+                  (for-each
+                   (lambda (f)
+                     ;; NOTE: symlink = very dirty
+                     (symlink (string-append samsung-drivers f)
+                              (string-append out f)))
+                   '("/share/ppd"))
 
                   ;; Filters.
                   (for-each
