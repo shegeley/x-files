@@ -102,7 +102,7 @@
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (let ((out (assoc-ref outputs "out"))
                       (cups-filters #$(this-package-input "cups-filters"))
-                      (samsung-drivers (this-package-input "samsung-filters")))
+                      (samsung-drivers #$(this-package-input "samsung-drivers")))
                   ;; Charsets.
                   (symlink
                    (string-append cups-filters "/share/cups/charsets")
