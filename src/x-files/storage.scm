@@ -8,8 +8,8 @@
   #:use-module (web uri)
   #:use-module (oop goops)
 
-  #:export (<storage> <git-subdir-storage>
-                      init get add resolver))
+  #:export (<storage> <git-subdir>
+            <local-directory>  init get add resolver))
 
 (define-class <storage> ()
 #| <storage> is a goops-class associated with entity that can store data and has some query-interface: file-system folder, database, current project's git subdirectory, IPFS and etc.
@@ -27,7 +27,7 @@
   uri
   resolver)
 
-(define-class <git-subdir-storage> (<storage>)
+(define-class <local-directory> (<storage>)
   (directory
    #:init-keyword #:directory
    #:getter directory)
@@ -40,23 +40,23 @@
 
 (define (init x directory)
   (match x
-    (<git-subdir-storage>
+    (<local-directory>
      (let* [(directory* (canonicalize-path directory))
             (uri (string->uri (string-append "file://" (canonicalize-path directory))))
             (path (uri-path uri))]
-       (make <git-subdir-storage>
+       (make <local-directory>
          #:directory directory*
          #:uri uri
          #:resolver (lambda (path) (string-append directory* (symlist->fs-path path))))))))
 
-(define-method (get (storage <git-subdir-storage>) path options)
+(define-method (get (storage <local-directory>) path options)
   "Returns just the string (path) to the file in troage"
   (let [(path* ((resolver storage) path))]
     (if (file-exists? path*)
         path*
         (error (format #f "File ~a from path ~a does not exists in a storage.~%" path* path)))))
 
-(define-method (add (storage <git-subdir-storage>) uri path options)
+(define-method (add (storage <local-directory>) uri path options)
   "Uri is the source-uri. If no uri given, just the file-system path, it will append 'file://' automatically"
   (when (or (string? uri)
             (equal? 'file:// (uri-scheme uri)))
@@ -68,6 +68,18 @@
                    (directory-exists? up))
         (mkdir-p up))
       (copy-recursively source destination))))
+
+(define-class <git-subdir> (<local-directory>)
+  (directory
+   #:init-keyword #:directory
+   #:getter directory)
+  (uri
+   #:init-keyword #:uri
+   #:getter uri)
+  (resolver
+   #:init-keyword #:resolver
+   #:getter resolver))
+
 
 ;; NOTE: add argument-checking with (system vm program)?
 

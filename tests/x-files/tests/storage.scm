@@ -14,7 +14,7 @@
        (let* [(test-file (string-append (%test-dir) "/file.txt"))
               (_ (with-output-to-file test-file
                    (lambda () (display "test"))))
-              (storage (init <git-subdir-storage> d))
+              (storage (init <git-subdir> d))
               (path `(a b.txt))]
          (add storage test-file path #f)
          (test-equal
