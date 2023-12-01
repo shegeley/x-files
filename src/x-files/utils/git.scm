@@ -1,6 +1,8 @@
 (define-module (x-files utils git)
   #:use-module (srfi srfi-1)
 
+  #:use-module (ice-9 peg)
+
   #:use-module (guix build utils)
 
   #:use-module (git repository)
@@ -11,7 +13,41 @@
   #:use-module (git fetch)
 
   #:export (refs remotes fetch-remotes clone! fetch!
-                 with-repository with-remotewith-repo-remotes))
+                 with-repository with-remotewith-repo-remotes
+                 parse-git-url))
+
+;; "git@github.com:guile-wayland/guile-wayland.git"
+(define-peg-pattern scheme all "git")
+
+(define-peg-pattern at body "@")
+
+(define-peg-pattern host all
+  (* (and (not-followed-by colons) peg-any)))
+
+(define-peg-pattern colons body ":")
+
+(define-peg-pattern account all
+  (* (and (not-followed-by slash) peg-any)))
+
+(define-peg-pattern slash all "/")
+
+(define-peg-pattern repo all (+ (and (not-followed-by ".git") peg-any)))
+
+(define-peg-pattern git all
+  (and scheme at host colons account slash repo))
+
+(define (parse-git-url uri)
+  (match-pattern git uri))
+
+;; "ssh://github.com/sas/kek.git"
+;; NOTE: parse path for (string->uri "ssh://github.com/sas/kek.git")
+;; #<<uri> scheme: ssh userinfo: #f host: "github.com" port: #f path: "/sas/kek.git" query: #f fragment: #f>
+
+(begin
+  (define-peg-pattern account all
+    (* (and (not-followed-by slash) peg-any)))
+  (define-peg-pattern path all (and slash account slash repo))
+  (match-pattern path "/sas/kek.git"))
 
 (define (with-remote remote thunk)
   (let* ((r (remote-connect remote))

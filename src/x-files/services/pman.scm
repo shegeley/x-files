@@ -45,6 +45,12 @@
             project-manager:keys project-manager:dir
             project-manager:period project-manager:projects))
 
+;; sources
+(list
+ `((provider . "github.com")
+   (account . "guile-wlroots")
+   (repo . "wlroots")))
+
 (define-record-type* <project> project make-project
   project?
   this-project
