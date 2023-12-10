@@ -67,6 +67,13 @@
       (invoke "chattr" "+C" file) ;; NOTE: only works on cow-supporting file-systems. I don't know if it the invoke will fail on non-cows
       (invoke "fallocate" "-l" (number->string size) file)
       (invoke "mkswap" file)
-      (chmod file 600)
+      (chmod file #o600)
       (invoke "chown" "root" file)
       (invoke "swapon" file)))))
+
+;; (create-swapfile! (file-system
+;;                     (mount-point "/")
+;;                     (device "/dev/mapper/basecrypt")
+;;                     (type "btrfs"))
+;;                   (* 8 (expt 2 30))
+;;                   "swapfile")
