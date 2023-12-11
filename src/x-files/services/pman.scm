@@ -4,6 +4,7 @@
 
   #:use-module (x-files utils base)
   #:use-module (x-files utils files)
+  #:use-module (x-files utils records)
   #:use-module (x-files utils git)
   #:use-module (x-files utils project)
 
@@ -34,44 +35,46 @@
   #:use-module (guix build utils)
   #:use-module (guix packages)
 
+  #:use-module (gnu services configuration)
+
   #:use-module (ice-9 match)
 
   #:use-module (srfi srfi-1)
 
-  #:export (<project-manager-conf>
-            <project> project-manager-conf channel->project
+  #:export (<project-manager-configuration>
+            <project-confgiration>
+            project-manager-conf channel->project
             g-clone! g-fetch! project:dir project:source
             with-ssh-agent with-modules+exts fetcher-program-file
             project-manager:keys project-manager:dir
             project-manager:period project-manager:projects))
 
-;; sources
-(list
- `((provider . "github.com")
-   (account . "guile-wlroots")
-   (repo . "wlroots")))
+(define list-of-remotes?
+  (list-of remote?))
 
-(define-record-type* <project> project make-project
-  project?
-  this-project
-  (source project:source)
-  (dir project:dir))
+(define-configuration/no-serialization project-configuration
+  (remotes list-of-remotes "Remotes")
+  (tags list-of-strings "Tags")
+  (git-config list-of-symbols "Custom project-specifig git config: pre/post hooks")
+  (workdir string "Working directory. Path in a filesystem the project will be placed for (dirty) work"))
 
-(define-public (project* s d)
-  (project
-   (source s)
-   (dir d)))
+(define list-of-projects?
+  (list-of project-configuration?))
 
-(define-record-type* <project-manager-conf>
-  project-manager-conf
-  project-manager-conf!
-  project-manager-conf~
-  project-manager-conf?
-  (keys project-manager:keys (default '()))
-  (dir project-manager:dir)
-  (period project-manager:period (default (* 60 10)))
+(define* (project* s d
+                   #:key (tags '()))
+  (project-configuration
+   (git-config '())
+   (remotes (list (parse-standart-uri s)))
+   (tags tags)
+   (workdir d)))
+
+(define-configuration/no-serialization project-manager-configuration
+  (keys list-of-strings "List of filtpaths to the ssh keys")
+  (dir string "Project manager directory (will keep all the projects there)")
+  (period number "Seconds between fetch")
   ;; project can be a project* a channel or a package
-  (projects project-manager:projects))
+  (projects list-of-projects '()))
 
 (define (modules-selector name)
   (or ((@@ (guix modules) guix-module-name?) name)
@@ -164,7 +167,7 @@
                  (kill pid* SIGTERM)))))))))
 
 (define (g-fetch! config project)
-  (match-record config <project-manager-conf>
+  (match-record config <project-manager-configuration>
     ((dir project-manager/dir))
     (match-record project <project>
       (source (dir project/dir))
@@ -178,7 +181,7 @@
                    (list (g-fetch! config project)))))
 
 (define (mcron-fetcher config)
-  (match-record config <project-manager-conf>
+  (match-record config <project-manager-configuration>
     (period projects)
     (map (lambda (project)
            #~(job (lambda (t) (+ t #$period))
@@ -192,7 +195,7 @@
     (project* url (symbol->string name))))
 
 (define (g-clone! config project)
-  (match-record config <project-manager-conf>
+  (match-record config <project-manager-configuration>
     ((dir project-manager/dir))
     (match-record project <project>
       (source (dir project/dir))
@@ -200,7 +203,7 @@
         #~(clone! #$source #$realdir)))))
 
 (define (activation config)
-  (match-record config <project-manager-conf>
+  (match-record config <project-manager-configuration>
     (projects)
     (with-ssh-agent
      (project-manager:keys config)
@@ -213,9 +216,9 @@
    (name 'project-manager)
    (compose concatenate)
    (extend (lambda (config projects*)
-             (match-record config <project-manager-conf>
+             (match-record config <project-manager-configuration>
                (projects)
-               (project-manager-conf
+               (project-manager-configuration
                 (inherit config)
                 (projects (append projects projects*))))))
    (extensions
@@ -224,7 +227,7 @@
    (description
     "Simple service to keep up all your git projects up to date with their git remotes.
 @example
-(project-manager-conf
+(project-manager-configuration
     (dir (string-append (getenv \"HOME\") \"/Projects\"))
     (projects
         (append
