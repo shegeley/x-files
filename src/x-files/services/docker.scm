@@ -19,7 +19,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
 
-  #:use-module (x-files packages docker)
+  #:use-module (gnu packages docker)
 
   #:export (docker-configuration
             docker-service-type))
@@ -34,16 +34,16 @@
 
 (define-configuration docker-configuration
   (docker
-   (file-like docker/latest)
+   (file-like docker)
    "Docker daemon package.")
   (docker-compose
-   (file-like docker-compose/latest)
+   (file-like docker-compose)
    "Docker-compose package.")
   (docker-cli
-   (file-like docker-cli/latest)
+   (file-like docker-cli)
    "Docker client package.")
   (containerd
-   (file-like containerd/latest)
+   (file-like containerd)
    "containerd package.")
   (key
    maybe-file-like
