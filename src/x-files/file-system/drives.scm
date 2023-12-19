@@ -6,8 +6,6 @@
 
   #:use-module (x-files utils records)
 
-  #:use-module (guix records)
-
   #:export (drives:file-systems
             drives:mapped-devices
             <drive>
