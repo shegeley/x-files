@@ -83,7 +83,7 @@
                     (string-append
                      #$(file-append dconf "/bin/dconf")
                      " " "load" " " "/")))]
-            (scm->ini (quote #$entries) #:port p)
+            (scm->ini #$entries #:port p)
             (close-port p))))))
 
 (define-public home-dconf-service-type
@@ -101,19 +101,19 @@
      (service home-dconf-service-type
             (dconf-service-conf
              (entries
-              `((\"org/gnome/GPaste\"
-                 (\"history-name\" . \"'history'\")
-                 (\"track-extension-state\" . \"false\"))
+            #~`((\"org/gnome/GPaste\"
+                  (\"history-name\" . \"'history'\")
+                  (\"track-extension-state\" . \"false\"))
                 (\"org/gnome/shell\"
-                 (\"disable-user-extensions\" . \"false\")
-                 (\"disabled-extensions\" . \"['clipboard-indicator@tudmotu.com']\")
-                 (\"enabled-extensions\" . \"['user-theme@gnome-shell-extensions.gcampax.github.com', 'GPaste@gnome-shell-extensions.gnome.org']\")
-                 (\"remember-mount-password\" . \"true\"))
+                  (\"disable-user-extensions\" . \"false\")
+                  (\"disabled-extensions\" . \"['clipboard-indicator@tudmotu.com']\")
+                  (\"enabled-extensions\" . \"['user-theme@gnome-shell-extensions.gcampax.github.com', 'GPaste@gnome-shell-extensions.gnome.org']\")
+                  (\"remember-mount-password\" . \"true\"))
                 (\"org/gnome/shell/extensions/user-theme\"
-                 (\"name\" . \"'Orchis-dark'\"))
+                  (\"name\" . \"'Orchis-dark'\"))
                 (\"org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0\"
-                 (\"binding\" . \"'<Control><Alt>t'\")
-                 (\"command\" . \"'gnome-terminal'\")
+                  (\"binding\" . \"'<Control><Alt>t'\")
+                  (\"command\" . ,(string-append \"'\" #$gnome-terminal \"/bin/gnome-terminal\" \"'\"))
                  (\"name\" . \"'Terminal'\"))
                 (\"org/gnome/settings-daemon/plugins/media-keys\"
                  (\"custom-keybindings\" . \"['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']\"))))))
