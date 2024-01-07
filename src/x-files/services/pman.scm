@@ -42,37 +42,45 @@
   #:use-module (srfi srfi-1)
 
   #:export (<project-manager-configuration>
-            <project-confgiration>
+            <project-configuration>
             project-manager-conf channel->project
             g-clone! g-fetch! project:dir project:source
             with-ssh-agent with-modules+exts fetcher-program-file
-            project-manager:keys project-manager:dir
+            project-manager:ssh-keys project-manager:dir
             project-manager:period project-manager:projects))
 
 (define list-of-remotes?
   (list-of remote?))
 
 (define-configuration/no-serialization project-configuration
-  (remotes list-of-remotes "Remotes")
-  (tags list-of-strings "Tags")
-  (git-config list-of-symbols "Custom project-specifig git config: pre/post hooks")
-  (workdir string "Working directory. Path in a filesystem the project will be placed for (dirty) work"))
+  (remotes (list-of-remotes '()) "Remotes")
+  (tags (list-of-strings '()) "Tags")
+  (git-config (alist '()) "Custom project-specifig git config: pre/post hooks")
+  (workdir (string "") "Working directory. Path in a filesystem the project will be placed for (dirty) work"))
 
 (define list-of-projects?
   (list-of project-configuration?))
 
-(define* (project* s d
-                   #:key (tags '()))
+(define* (project*
+          remotes ;; list-of remote-configuration
+          workdir
+          #:key
+          (tags '())
+          (git-config `()))
   (project-configuration
    (git-config '())
-   (remotes (list (parse-standart-uri s)))
+   (remotes (cond
+             ((string? remotes)
+              (list (parse-standart-uri remotes)))
+             (else remotes)))
    (tags tags)
-   (workdir d)))
+   (workdir workdir)))
 
 (define-configuration/no-serialization project-manager-configuration
-  (keys list-of-strings "List of filtpaths to the ssh keys")
-  (dir string "Project manager directory (will keep all the projects there)")
-  (period number "Seconds between fetch")
+  (ssh-keys list-of-strings "List of filepaths to the ssh keys")
+  (dir (string (string-append (getenv "HOME") "/" "Projects"))
+       "Project manager directory (will keep all the projects there)")
+  (period (number 600) "Seconds between fetch")
   ;; project can be a project* a channel or a package
   (projects list-of-projects '()))
 
@@ -168,16 +176,16 @@
 
 (define (g-fetch! config project)
   (match-record config <project-manager-configuration>
-    ((dir project-manager/dir))
-    (match-record project <project>
-      (source (dir project/dir))
-      (let* ((realdir (string-append project-manager/dir "/" project/dir)))
+    (dir)
+    (match-record project <project-configuration>
+      (remotes workdir)
+      (let* ((realdir (string-append dir "/" workdir)))
         #~(fetch! #$realdir)))))
 
 (define (fetcher-program-file config project)
   (program-file
    "project-manager-fetcher-script.scm"
-   (with-ssh-agent (project-manager:keys config)
+   (with-ssh-agent (project-manager:ssh-keys config)
                    (list (g-fetch! config project)))))
 
 (define (mcron-fetcher config)
@@ -196,17 +204,19 @@
 
 (define (g-clone! config project)
   (match-record config <project-manager-configuration>
-    ((dir project-manager/dir))
-    (match-record project <project>
-      (source (dir project/dir))
-      (let ((realdir (string-append project-manager/dir "/" project/dir)))
-        #~(clone! #$source #$realdir)))))
+    (dir)
+    (match-record project <project-configuration>
+      (remotes workdir)
+      (let ((realdir (string-append dir "/" workdir)))
+        #~(map
+           (clone! #$source #$realdir)
+           (remotes))))))
 
 (define (activation config)
   (match-record config <project-manager-configuration>
     (projects)
     (with-ssh-agent
-     (project-manager:keys config)
+     (project-manager:ssh-keys config)
      (map
       (lambda (project)
         (g-clone! config project)) projects))))

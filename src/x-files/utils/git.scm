@@ -27,8 +27,7 @@
   (or (boolean? x) (string x)))
 
 (define-configuration/no-serialization remote-configuration
-  (scheme boolean-or-string ""
-           (default #f))
+  (scheme (boolean-or-string #f) "RFC 3986 scheme")
   (host string "")
   (account string "")
   (repository string ""))
@@ -55,21 +54,24 @@
 
 (define (parse-git-scheme-uri git-uri)
   "Parses git-scheme scp/ssh-based uri (example: code@{git@github.com:account/repo.git}) and returns @code{remote} record instance"
-  (match (peg:tree (match-pattern git git-uri))
-    (('git ('scheme scheme)
-           "@" ('host host) ":"
-           ('account account) "/"
-           ('repository repository))
-     (remote-configuration
-      (host host)
-      (account account)
-      (repository repository)))))
+  (let [(pattern (match-pattern git git-uri))]
+    (match (peg:tree pattern)
+      (('git ('scheme scheme)
+             "@" ('host host) ":"
+             ('account account) "/"
+             ('repository repository))
+       (list
+        pattern
+        (remote-configuration
+         (host host)
+         (account account)
+         (repository repository)))))))
 
-;; "ssh://github.com/sas/kek.git"
+;; "ssh://github.com/lorem/ipsum.git"
 ;; NOTE: parse path for (string->uri "ssh://github.com/sas/kek.git")
 ;; #<<uri> scheme: ssh userinfo: #f host: "github.com" port: #f path: "/sas/kek.git" query: #f fragment: #f>
 (define (parse-standart-uri uri)
-  "Parses standart RFC 3986 uri and returns @code{remote} record instance"
+  "Parses standart RFC 3986 uri OR scp-format uri and returns @code{remote} record instance"
 
   (define-peg-pattern account all
     (* (and (not-followed-by slash) peg-any)))
@@ -77,14 +79,16 @@
   (define-peg-pattern path all (and slash account slash repository))
 
   (let* [(uri (string->uri uri))
-         (path (match-pattern path (uri-path uri)))]
-    (match (peg:tree path)
+         (pattern (match-pattern path (uri-path uri)))]
+    (match (peg:tree pattern)
       (('path "/" ('account account)
               "/" ('repository repository))
-       (remote-configuration
-        (host host)
-        (account account)
-        (repository repository))))))
+       (list
+        pattern
+        (remote-configuration
+         (host host)
+         (account account)
+         (repository repository)))))))
 
 (define (with-remote remote thunk)
   (let* ((r (remote-connect remote))
