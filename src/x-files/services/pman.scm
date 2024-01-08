@@ -1,6 +1,7 @@
 (define-module (x-files services pman)
   #:use-module (gnu)
   #:use-module (gnu system)
+  #:use-module (gnu services)
 
   #:use-module (x-files utils base)
   #:use-module (x-files utils files)
@@ -50,7 +51,7 @@
             project-manager:period project-manager:projects))
 
 (define list-of-remotes?
-  (list-of remote?))
+  (list-of remote-configuration?))
 
 (define-configuration/no-serialization project-configuration
   (remotes (list-of-remotes '()) "Remotes")
@@ -62,7 +63,7 @@
   (list-of project-configuration?))
 
 (define* (project*
-          remotes ;; list-of remote-configuration
+          remotes ;; list-of <remote-configuration>
           workdir
           #:key
           (tags '())

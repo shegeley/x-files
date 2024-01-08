@@ -19,7 +19,7 @@
   #:use-module (x-files utils records)
 
   #:export (refs remotes fetch-remotes clone! fetch!
-                 remote remote:scheme remote:host remote:account remote:repository remote?
+                 remote-configuration remote-configuration?
                  with-repository with-remotewith-repo-remotes
                  parse-git-scheme-uri parse-standart-uri))
 
@@ -27,7 +27,7 @@
   (or (boolean? x) (string x)))
 
 (define-configuration/no-serialization remote-configuration
-  (scheme (boolean-or-string #f) "RFC 3986 scheme")
+  (scheme (boolean-or-string "git") "RFC 3986 scheme")
   (host string "")
   (account string "")
   (repository string ""))
