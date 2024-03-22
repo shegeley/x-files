@@ -1,6 +1,7 @@
 ((scheme-mode ;; completely copied from rde
   .
   ((indent-tabs-mode . nil)
+   (geiser-mode-auto-p . nil)
    (eval . (put 'with-eval-after-load 'scheme-indent-function 1))
 
    (eval . (put 'eval-when 'scheme-indent-function 1))
