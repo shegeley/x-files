@@ -3,7 +3,7 @@ tests :=$(root)/tests
 src := $(root)/src
 tmp := $(root)/tmp
 
-repl:
+nrepl:
 	guix shell guile-next guile-ares-rs \
 	-- guile \
 	-c "((@ (nrepl server) run-nrepl-server) #:port 7888)"
