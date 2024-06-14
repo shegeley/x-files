@@ -15,7 +15,6 @@
             trash!
             file-format
             file-format=?
-            *symlink*
             icon?
             -storage-
             -ssh-key-
@@ -69,27 +68,6 @@
 
 (define (file-format=? path x)
   (equal? (file-format path) x))
-
-(define* (*symlink* source dir
-                    #:key (logging-port #t))
-  (let ((o (string-append
-            dir "/" (basename source))))
-    (cond [(and (file-exists? o)
-                (symbolic-link? o)
-                (equal? (readlink o) source))
-           ;; everything's fine
-           (begin
-             (format logging-port "No link replacement needed for ~s ~%" o)
-             #t)]
-          [(file-exists? o)
-           ;; broken link
-           (begin
-             (format logging-port "The link ~s is broken. Removing ~%" o)
-             (delete-file o))]
-          [else
-           (begin
-             (format logging-port "The link ~s was not found. Symlinking with ~s ~%" o source)
-             (symlink source o))])))
 
 (define (desktop-entry? x)
   (file-format=? x "desktop"))
