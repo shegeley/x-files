@@ -4,9 +4,11 @@ src := $(root)/src
 tmp := $(root)/tmp
 
 nrepl:
-	guix shell guile-next guile-ares-rs \
+	guix shell \
+	guile-next \
+	guile-ares-rs \
 	-- guile \
-	-c "((@ (nrepl server) run-nrepl-server) #:port 7888)"
+	-l nrepl.scm
 
 check:
 	if [ -d $(tmp) ]; then rm -rf $(tmp); fi
