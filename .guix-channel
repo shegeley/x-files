@@ -15,5 +15,4 @@
    (branch "9f20e57bbcc837746df6d039e1c3f8b087e84e4f"))
   (channel
    (name nonguix)
-   (url "https://gitlab.com/nonguix/nonguix")
-   (commit "7081518be7d2dbb58f3fbfeb1785254a6f0059c8"))))
+   (url "https://gitlab.com/nonguix/nonguix"))))
