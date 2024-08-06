@@ -19,10 +19,8 @@
   `(((("hello" "world")) . "hello world")
     ((("1" "2" "3") "-o-") . "1-o-2-o-3"))
   (match lst
-    ('()
-     "")
-    ((a)
-     a)
+    ('() "")
+    ((a) a)
     ((a rest ...)
      (string-append a token (interpose rest token)))))
 
