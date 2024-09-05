@@ -10,9 +10,5 @@
    (url "https://git.sr.ht/~abcdw/rde")
    (commit "7842b464435b0ce22548e91aa7e3abe9322ebb6c"))
   (channel
-   (name druix)
-   (url "https://github.com/drewc/druix.git")
-   (branch "9f20e57bbcc837746df6d039e1c3f8b087e84e4f"))
-  (channel
    (name nonguix)
    (url "https://gitlab.com/nonguix/nonguix"))))
