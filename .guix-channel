@@ -6,9 +6,5 @@
  (news-file "./news.scm")
  (dependencies
   (channel
-   (name rde)
-   (url "https://git.sr.ht/~abcdw/rde")
-   (commit "7842b464435b0ce22548e91aa7e3abe9322ebb6c"))
-  (channel
    (name nonguix)
    (url "https://gitlab.com/nonguix/nonguix"))))
