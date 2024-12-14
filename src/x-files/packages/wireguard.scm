@@ -17,7 +17,13 @@
            ("x86_64-linux"  "amd64")
            ("i686-linux"    "386")
            ("armv7-linux"   "arm")
-           ("aarch64-linux" "arm64"))))]
+           ("aarch64-linux" "arm64"))))
+        (hash
+         (match target
+          ("x86_64-linux"  "1zlp9zvwfslbs8iannxn5qc6lvlswmkc6xmn5w66van7vv6ynyj4")
+          ("i686-linux"    "16x74x7xxpna7wchsl2wgpvmcj1drpv5zy4vcd1sv27hyxlm31sn")
+          ("armv7-linux"   "0n4xanjwc7n0qn3yv8gkiq1j4pflpn1dfqxassg934j5g0fbdkgs")
+          ("aarch64-linux" "10p32acf2r57nh2xqaki618hadnzpc4hnh93vy3l71h335nawvp")))]
   (package
    (name "wg-fake")
    (version "0.0.1")
@@ -25,7 +31,7 @@
     (origin
      (method url-fetch)
      (uri (string-append "https://github.com/lastbyte32/wg-fake/releases/download/v" version "/" wg-fake.bin-name))
-     (sha256 (base32 "1zlp9zvwfslbs8iannxn5qc6lvlswmkc6xmn5w66van7vv6ynyj4"))))
+     (sha256 (base32 hash))))
    (build-system copy-build-system)
    (arguments (list
                #:phases #~(modify-phases %standard-phases
