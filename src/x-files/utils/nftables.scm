@@ -25,23 +25,29 @@
    @code{level} is a base identation level (whole number)
    @code{tab} is a tabulation/spacing symbol
    @code{start} and @code{end} are form opening/closing symbols respectfully"
-  (let* ((tab* (apply string-append (make-list level tab))))
+  (let* [(tab* (apply string-append (make-list level tab)))
+         (newl (if (eq? level 0) "" "\n"))
+         (tabs (string-append newl tab*))]
     (call-with-values
-        (lambda () (span (lambda (x) (not (list? x))) params))
+      (lambda () (span (lambda (x) (not (list? x))) params))
       (lambda (a b)
-        (string-append
-         (string-append "\n" tab*)
-         (interpose a)
-         (match b
-           (() "")
-           (else
-            (string-append
-             " " start
-             (apply
-              string-append
-              (map
-               (cut ->xtable <>
-                    #:level (+ level 1)
-                    #:start start
-                    #:end end) b))
-             "\n" tab* end))))))))
+        (let* [(subtables     (map (cut ->xtable <>
+                                        #:level (+ level 1)
+                                        #:start start
+                                        #:end end) b))
+               (subtables-str (apply string-append subtables))
+               (rules-str     (string-append " " start
+                                             subtables-str
+                                             "\n" tab* end))
+               (content      (match b
+                               (() "")
+                               (else rules-str)))]
+          (string-append tabs (interpose a) content))))))
+
+#|
+(->xtable '("table" "ip" "filter"
+            ("chain" "output"
+             ("type" "filter")
+             ("iffname"))
+            ("chain" "forward")))
+|#
