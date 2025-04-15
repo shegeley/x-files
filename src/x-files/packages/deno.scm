@@ -43,7 +43,7 @@
             (add-after 'unpack 'chmod
               (lambda _ (chmod "./deno" #o755))))))
       (inputs (list `(,gcc "lib")))
-      (supported-systems '("x86_64-linux"))
+      (supported-systems '("x86_64-linux" "aarch64-linux"))
       (home-page "https://deno.com/")
       (synopsis "A modern runtime for JavaScript and TypeScript")
       (description "Deno (/ˈdiːnoʊ/, pronounced dee-no) is a JavaScript, TypeScript, and WebAssembly runtime with secure defaults and a great developer experience. It's built on V8, Rust, and Tokio.")
