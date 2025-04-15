@@ -24,7 +24,7 @@
             ("aarch64-linux" "0g9mjz4gg5igwr3l50kxk55mrz1jrxranrbcr02mapmx2jk63may")))]
     (package
       (name "deno")
-      (version "v2.1.9")
+      (version "v2.2.1")
       (source (origin
                 (method url-fetch/zipbomb)
                 (uri (string-append "https://github.com/denoland/"
