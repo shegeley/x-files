@@ -7,6 +7,8 @@
   #:use-module ((gnu packages networking) #:select (blueman))
   #:use-module (gnu home services xdg)
 
+  #:use-module (x-files packages gpaste)
+
   #:export (feature-gnome-desktop
             themes
             packages))
@@ -27,27 +29,28 @@
     "orchis-theme")))
 
 (define packages
-  (map
-   specification->package
-   (list
-    "nautilus"
-    "evince"
-    ;; "glib" ;; gsettings
-    "seahorse" ;; Gnome GUI key management
-    "shotwell"
-    "gpaste"
-    "glade"
-    "xdg-utils"
-    "xdg-dbus-proxy"
-    "system-config-printer"
-    "dconf"
-    "dconf-editor"
-    "gnome-terminal"
-    "gnome-bluetooth"
-    "bluez"
-    "gnome-tweaks"
-    "gnome-shell-extensions"
-    "blueman")))
+  (append
+   (list gpaste)
+   (map
+    specification->package
+    (list
+     "nautilus"
+     "evince"
+     ;; "glib" ;; gsettings
+     "seahorse" ;; Gnome GUI key management
+     "shotwell"
+     "glade"
+     "xdg-utils"
+     "xdg-dbus-proxy"
+     "system-config-printer"
+     "dconf"
+     "dconf-editor"
+     "gnome-terminal"
+     "gnome-bluetooth"
+     "bluez"
+     "gnome-tweaks"
+     "gnome-shell-extensions"
+     "blueman"))))
 
 (define extensions
   (map specification->package (list "gnome-shell-extension-blur-my-shell")))
