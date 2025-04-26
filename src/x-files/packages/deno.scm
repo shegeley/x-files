@@ -20,16 +20,16 @@
            "-unknown-linux-gnu.zip"))
          (hash
           (match target
-            ("x86_64-linux" "11kdmk3jk2rfsljg6rid6d65blcl51r6qpq1997h3ipmafy469g4")
-            ("aarch64-linux" "0g9mjz4gg5igwr3l50kxk55mrz1jrxranrbcr02mapmx2jk63may")))]
+            ("x86_64-linux"  "1mb6vn1srwqlp4dlyky6lp433kfgb4srrrq76ngjzq6h6fxghzmv")
+            ("aarch64-linux" "0x1062r0m5xg950l0zgpibkmz16fbppgv7s6ixgc2dkjjikg6m8p")))]
     (package
       (name "deno")
-      (version "v2.2.1")
+      (version "2.2.12")
       (source (origin
                 (method url-fetch/zipbomb)
                 (uri (string-append "https://github.com/denoland/"
                                     "deno/releases/download/"
-                                    version
+                                    "v" version
                                     "/" deno.bin-name))
                 (sha256 (base32 hash))))
       (build-system binary-build-system)
