@@ -10,7 +10,6 @@
 
  #:use-module (rde features)
  #:use-module (rde features emacs)
- #:use-module (rde features predicates)
 
  #:use-module (rde packages emacs-xyz)
 
@@ -49,10 +48,6 @@
 
   "Stolen from RDE and refactored to use with deno and deno-ts-mode. A lot removed.
    Only dape + eglot left. Add deno settings"
-
-  (ensure-pred file-like? deno)
-  (ensure-pred file-like? emacs-deno-mode)
-  (ensure-pred file-like? node-vscode-js-debug)
 
  (define deno-exe  (file-append deno "/bin/deno"))
  (define debug-exe (file-append node-vscode-js-debug
