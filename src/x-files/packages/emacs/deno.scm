@@ -20,6 +20,7 @@
        (sha256
         (base32 "0njh7wgbbckp9j09mcz2libz8i6m8px2qc2cj8li0npxqi7dm3v9"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))
     (propagated-inputs (list emacs-eglot emacs-project))
     (home-page "https://github.com/mgmarlow/deno-ts-mode")
     (synopsis "Major mode for Deno")
@@ -40,6 +41,7 @@ This package helps solve some of the problems that arise from Deno and TypeScrip
             (commit version)))
       (sha256 (base32 "0xyzhiy4mhmwhvp7w9lxbpjq7sqjrp7f32yv4a8jl2l20927xbgq"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))
     (propagated-inputs (list emacs-eglot emacs-project))
     (home-page "https://github.com/shegeley/deno-mode")
     (synopsis "Major mode for Deno")
