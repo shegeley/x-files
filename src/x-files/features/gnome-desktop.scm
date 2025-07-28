@@ -42,6 +42,7 @@
      "glade"
      "xdg-utils"
      "xdg-dbus-proxy"
+     "xdg-desktop-portal-gnome" ;; needed for screenshare
      "system-config-printer"
      "dconf"
      "dconf-editor"
