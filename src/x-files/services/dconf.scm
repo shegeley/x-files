@@ -53,6 +53,7 @@
          (serialize-ini-gexp entries))))))
 
 (define (activation config)
+  ;; TODO: make one-shot shepherd service from this script
   (let ((entries (dconf-service-conf:entries config)))
     (with-extensions guile-ini:extensions
       #~(begin
