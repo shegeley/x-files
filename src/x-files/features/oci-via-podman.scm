@@ -1,12 +1,15 @@
 (define-module (x-files features oci-via-podman)
   #:use-module (rde features)
   #:use-module (guix gexp)
+  #:use-module ((gnu packages containers) #:select (podman
+                                                    podman-compose))
   #:use-module ((gnu services containers) #:select (oci-service-type
                                                     oci-configuration
                                                     rootless-podman-service-type
                                                     rootless-podman-configuration))
   #:use-module ((gnu home services containers) #:select (home-oci-service-type))
-
+  #:use-module ((gnu home services) #:select (home-profile-service-type))
+  #:use-module ((gnu packages tree-sitter) #:select (tree-sitter-dockerfile))
   #:use-module ((gnu services) #:select (simple-service service for-home))
 
   #:use-module ((gnu services networking) #:select (iptables-service-type))
@@ -30,6 +33,8 @@ driver = \"btrfs\"
 
   (define (get-home-services _)
     (list
+     (simple-service 'podman-packages home-profile-service-type
+                     (list podman podman-compose tree-sitter-dockerfile))
      (service home-oci-service-type
               (for-home (oci-configuration
                          (runtime 'podman)
