@@ -36,8 +36,7 @@ driver = \"btrfs\"
                          (verbose? #t))))))
 
   (define storage-driver
-    (or (assoc-ref storage-drivers
-                   'podman-container-storage-driver)
+    (or (assoc-ref storage-drivers podman-container-storage-driver)
         (plain-file "storage.conf"
                     "[storage]")))
 
