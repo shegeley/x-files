@@ -68,6 +68,7 @@
                              (string-append fish "/task"))))))))
       (supported-systems targets)
       (home-page "https://taskfile.dev")
-      (synopsis "")
-      (description "")
+      (synopsis "Task is a task runner / build tool that aims to be simpler and easier to use than, for example, GNU Make")
+      ;#"I've only has to pack it because it's used at work, so I could experiment with it a little. This software is just a piece of shit"
+      (description "A fast, cross-platform build tool inspired by Make, designed for modern workflows")
       (license license:expat))))
