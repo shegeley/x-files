@@ -2,9 +2,11 @@
   ;; note: i don't use it anymore. only emacs for terminal multiplexing
   #:use-module ((rde features) #:select (feature))
   #:use-module ((gnu services) #:select (simple-service))
-  #:use-module (gnu home services)
+  #:use-module ((gnu home services) #:select (home-environment-variables-service-type
+                                              home-xdg-configuration-files-service-type
+                                              home-profile-service-type))
   #:use-module ((guix gexp) #:select (mixed-text-file))
-  #:use-module (x-files packages zellij)
+  #:use-module ((x-files packages zellij) #:select (zellij))
 
   #:export (feature-zellij))
 
@@ -35,7 +37,7 @@
                      home-xdg-configuration-files-service-type
                      `(("zellij" ,zellij-kdl)))
 
-     (simple-service 'add-zellij-packages -profile-service-type
+     (simple-service 'add-zellij-packages home-profile-service-type
                      (list zellij))))
 
   (feature
