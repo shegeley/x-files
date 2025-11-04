@@ -9,7 +9,7 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
 
-  #:use-module (x-files packages srfi srfi-125))
+  #:use-module ((gnu packages guile-xyz) #:select (guile-srfi-125)))
 
 (define-public clojureism
  (let [(version "0.0.2")
