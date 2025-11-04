@@ -7,22 +7,21 @@
   #:use-module (guix download))
 
 (define hashes
-  `(("amd64" . "0pn3q8nmr97shxj4dxyczdcrpbr39padj1x0d6f75q6ppknplyf8")
-    ("386" . "1x7jyvjx0q3x018yyy0cbfshsncw98743j802mxm90pf9rahf56r")
-    ("arm64" . "0y2jyfsr9b39y1hq2r6ada81d0ky641qydsspbphz1sxv3bmzyrd")))
+  `(("amd64" . "1fxkvp7d42kcs79ms8vzh31bmac5hapmz74hz86jba2s7my8bw0n")
+    ("386"   . "1j9ilrwrmdzmai2f27ma1hnaak9fkx3ah1988f8bl42ddfx3b9lq")
+    ("arm64" . "0i3812lgxdh247cfyiv34ijcfpkrw1f7242rv7f8kykd97229bv4")))
+
+(define target->arch
+  `(("x86_64-linux"  . "amd64")
+    ("i686-linux"    . "386")
+    ("aarch64-linux" . "arm64")))
 
 (define-public yandex-cloud-cli
-  ;; https://yandex.cloud/en/docs/cli/release-notes#version0i.146.1
-  (let* [(arch-match (lambda (arch)
-                       (match arch
-                         ((or "x86_64-linux") "amd64")
-                         ((or "i686-linux") "386")
-                         ((or "aarch64-linux") "arm64"))))
-         (arch (arch-match (or (%current-target-system)
-                               (%current-system))))]
+  (let* [(target (or (%current-target-system) (%current-system)))
+         (arch   (assoc-ref target->arch target))]
     (package
       (name "yandex-cloud-cli")
-      (version "0.146.1")
+      (version "0.173.0")
       (source
        (origin
          (method url-fetch)
@@ -32,13 +31,11 @@
          (sha256 (base32 (assoc-ref hashes arch)))))
       (build-system binary-build-system)
       (arguments
-       (list #:install-plan
-             #~'(("yc" "/bin/"))
-                #:phases
-                #~(modify-phases %standard-phases
-                    (add-after 'unpack 'chmod
-                      (lambda _ (chmod "yc" #o755))))))
-      (inputs `())
+       (list
+        #:install-plan #~'(("yc" "/bin/"))
+        #:phases #~(modify-phases %standard-phases
+                     (add-after 'unpack 'chmod
+                       (lambda _ (chmod "yc" #o755))))))
       (supported-systems '("x86_64-linux" "i686-linux" "aarch64-linux"))
       (synopsis "Yandex Cloud CLI interface")
       (description "YC provides downloadable software for managing your cloud resources from the command line")
