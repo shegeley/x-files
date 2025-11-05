@@ -107,7 +107,7 @@
   `((port     . "4334")
     (log-dir  . "/var/log/datomic")))
 
-(define-public datomic-transactor-service-type
+(define-public datomic-dev-transactor-service-type
   (service-type
    (name 'datomic-transactor)
    (description "Datomic Transactor Service")
@@ -118,3 +118,100 @@
      (service-extension activation-service-type    datomic-transactor-activation)
      (service-extension shepherd-root-service-type datomic-shepherd-services)))
    (default-value datomic-default-value)))
+
+;; POSTGRES [DRAFT]
+
+(define (transactor/postgres-config config)
+  `(("protocol" . "sql")
+    ("sql-url" . ,(assoc-ref config 'sql-url))
+    ("sql-user" . ,(assoc-ref config 'sql-user))
+    ("sql-password" . ,(assoc-ref config 'sql-password))
+    ("host" . "localhost")
+    ("port" . ,(assoc-ref config 'port))
+    ("data-dir" . ,(data-dir config))
+    ("log-dir" . ,(assoc-ref config 'log-dir))
+    ("memory-index-threshold" . "32m")
+    ("memory-index-max" . "256m")
+    ("object-cache-max" . "128m")))
+
+(define datomic-postgres-role
+  (postgresql-role
+   (name "datomic")
+   (permissions '(createdb login))
+   (create-database? #t)))
+
+(define (datomic-postgres-init-gexp config)
+  ;; TODO: modify all schemas: ADD CREATE IF NOT EXISTS
+  ;; TODO: pass schemas as config
+  #~(begin
+      (use-modules (ice-9 popen)
+                   (ice-9 rdelim))
+
+      ;; Find the create-schema.sql file in the datomic package
+      (let* ((datomic-home #$datomic)
+             (sql-file (string-append datomic-home "/sql/create-schema.sql"))
+             (psql #$(file-append postgresql "/bin/psql"))
+             (db-uri #$(getenv "DATOMIC_DB_URI")))
+
+        (when (file-exists? sql-file)
+          (let ((port (open-pipe* OPEN_READ psql "-d" db-uri "-f" sql-file)))
+            (let loop ()
+              (let ((line (read-line port)))
+                (when (not (eof-object? line))
+                  (display line)
+                  (newline)
+                  (loop))))
+            (close-pipe port))))))
+
+(define (datomic-postgres-init-script config)
+  (program-file "datomic-postgres-init"
+                (datomic-postgres-init-gexp config)))
+
+(define (datomic-postgres-init-services _)
+  (list
+   (shepherd-service
+     (provision '(datomic-postgres-init))
+     (requirement '(postgres postgres-roles))
+     (one-shot? #t)
+     (documentation "Initialize Datomic PostgreSQL schema")
+     (start #~(make-forkexec-constructor
+               (list #$(datomic-postgres-init-script))
+               #:environment-variables
+               (list (string-append "DATOMIC_DB_URI=postgresql://datomic@localhost/datomic")))))))
+
+;; Updated Datomic configuration for PostgreSQL
+(define (transactor/postgres-config config)
+  `(("protocol" . "sql")
+    ("sql-url"  . ,(or (assoc-ref config 'sql-url) "datomic"))
+    ("sql-user" . ,(or (assoc-ref config 'sql-user) "datomic"))
+    ("sql-password" . ,(or (assoc-ref config 'sql-password) "datomic"))
+    ("host" . "localhost")
+    ("port" . ,(assoc-ref config 'port))
+    ("data-dir" . ,(data-dir config))
+    ("log-dir" . ,(assoc-ref config 'log-dir))
+    ("memory-index-threshold" . "32m")
+    ("memory-index-max" . "256m")
+    ("object-cache-max" . "128m")))
+
+(define (datomic-postgres-shepherd-services config)
+  (cons
+   (datomic-transactor-shepherd-service config)
+   (datomic-postgres-init-services      config)))
+
+(define-public datomic-postgres-transactor-service-type
+  (service-type
+    (name 'datomic-transactor)
+    (description "Datomic Transactor Service")
+    (extensions
+     (list
+      (service-extension postgresql-role-service-type
+                         (const (list datomic-postgres-role)))
+      (service-extension profile-service-type
+                         (const (list datomic)))
+      (service-extension account-service-type
+                         datomic-accounts)
+      (service-extension activation-service-type
+                         datomic-transactor-activation)
+      (service-extension shepherd-root-service-type
+                         datomic-postgres-shepherd-services)))
+    (default-value datomic-default-value)))
