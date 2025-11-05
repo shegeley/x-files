@@ -2,6 +2,11 @@
   #:use-module (gnu)
   #:use-module (gnu services)
   #:use-module (gnu services configuration)
+  #:use-module ((gnu packages databases) #:select (postgresql))
+  #:use-module ((gnu services databases) #:select (postgresql-role
+                                                   postgresql-role-service-type
+                                                   postgresql-service-type
+                                                   postgresql-configuration))
   #:use-module ((gnu services shepherd) #:select (shepherd-service
                                                   shepherd-root-service-type))
   #:use-module ((gnu system shadow) #:select (account-service-type
@@ -20,6 +25,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
 
+  #:use-module ((nongnu packages databases) #:select (datomic-cli-tools))
   #:use-module ((x-files packages datomic) #:select (datomic)))
 
 (define str string-append)
@@ -107,7 +113,7 @@
   `((port     . "4334")
     (log-dir  . "/var/log/datomic")))
 
-(define-public datomic-transactor-service-type
+(define-public datomic-dev-transactor-service-type
   (service-type
    (name 'datomic-transactor)
    (description "Datomic Transactor Service")
@@ -118,3 +124,101 @@
      (service-extension activation-service-type    datomic-transactor-activation)
      (service-extension shepherd-root-service-type datomic-shepherd-services)))
    (default-value datomic-default-value)))
+
+;; POSTGRES [DRAFT]
+
+(define (transactor/postgres-config config)
+  `(("protocol"          . "sql")
+    ("sql-url"           . ,(assoc-ref config 'sql-url))
+    ("sql-user"          . ,(assoc-ref config 'sql-user))
+    ("sql-password-file" . ,(assoc-ref config 'sql-password-file))
+    ("host"              . "localhost")
+    ("port"              . ,(assoc-ref config 'port))
+    ;; not sure if "data-dir" is still actual when using sql protocol
+    ("data-dir"          . ,(data-dir config))
+    ("log-dir"           . ,(assoc-ref config 'log-dir))))
+
+(define (datomic-postgres-roles config)
+ (let* [(username      (assoc-ref config "sql-user"))
+        (password-file (assoc-ref config "sql-password-file"))]
+  (list
+   (postgresql-role
+    (name username)
+    (permissions '(createdb login))
+    (password-file password-file)
+    (create-database? #t)))))
+
+;; probably not needed, can be replaced with datomic-postgres-role
+#;(define datomic-sql-migration:create-db
+   (plain-file "create-datomic-db.sql"
+    "CREATE DATABASE IF NOT EXISTS datomic
+ WITH OWNER = postgres
+        TEMPLATE template0
+        ENCODING = 'UTF8'
+        TABLESPACE = pg_default
+        LC_COLLATE = 'en_US.UTF-8'
+        LC_CTYPE = 'en_US.UTF-8'
+        CONNECTION LIMIT = -1;"))
+
+(define datomic-sql-migration-create-table
+ (plain-file "create-datomic-table.sql"
+  "CREATE TABLE IF NOT EXISTS datomic_kvs
+(
+ id text NOT NULL,
+ rev integer,
+ map text,
+ val bytea,
+ CONSTRAINT pk_id PRIMARY KEY (id )
+)
+WITH (
+ OIDS=FALSE
+);
+ALTER TABLE datomic_kvs
+ OWNER TO postgres;
+GRANT ALL ON TABLE datomic_kvs TO postgres;
+GRANT ALL ON TABLE datomic_kvs TO public;"))
+
+(define (datomic-postgres-init-gexp config)
+ #~(begin
+    (use-modules (guix build utils))
+    (let ((psql #$(file-append postgresql "/bin/psql")))
+     (invoke
+      psql "-U" "datomic" "-d" "datomic" "-f"
+      #$datomic-sql-migration-create-table))))
+
+(define (datomic-postgres-init-script config)
+  (program-file "datomic-postgres-init"
+                (datomic-postgres-init-gexp config)))
+
+(define (datomic-postgres-init-services config)
+  (list
+   (shepherd-service
+     (provision '(datomic-postgres-init))
+     (requirement '(postgres postgres-roles))
+     (one-shot? #t)
+     (documentation "Initialize Datomic PostgreSQL schema")
+     (start #~(make-forkexec-constructor
+               (list #$(datomic-postgres-init-script config)))))))
+
+(define (datomic-postgres-shepherd-services config)
+  (cons
+   (datomic-transactor-shepherd-service config)
+   (datomic-postgres-init-services      config)))
+
+(define-public datomic-postgres-transactor-service-type
+  (service-type
+    (name 'datomic-transactor)
+    (description "Datomic Transactor Service")
+    (extensions
+     (list
+      (service-extension postgresql-role-service-type
+                         datomic-postgres-roles)
+      (service-extension profile-service-type
+                         (const (list datomic datomic-cli-tools)))
+      (service-extension account-service-type
+                         datomic-accounts)
+      (service-extension activation-service-type
+                         datomic-transactor-activation)
+      (service-extension shepherd-root-service-type
+                         datomic-postgres-shepherd-services)))
+    (default-value datomic-default-value)))
