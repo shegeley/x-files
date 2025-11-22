@@ -9,25 +9,25 @@
   #:use-module (gnu packages))
 
 (define-public emacs-gptel-got
-  ;; TODO: change url as merged https://codeberg.org/bajsicki/gptel-got/pulls/1/files
-  (let [(c "9d45a77f9c593a295de58d798df5ae6cb1effb8c")
+  (let [(url "https://codeberg.org/bajsicki/gptel-got")
+        (commit "f25c56c4b3fae3bf435e3a82723438b49ac6878b")
         (version "0.0.2")
-        (hash "16jfk84vgs7dsgsac3iysm445nd7ldwfjsg5fgzd04i8x5ni4a8s")]
+        (hash "1n0gpzi1liz38xxy2l3cp2jwcw5j2qf1vfz5i29pvhvffqxsz4kh")]
     (package
       (name "emacs-gptel-got")
-      (version (git-version "0.0.2" "1" c))
+      (version (git-version version "1" commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://codeberg.org/shegeley/gptel-got")
-               (commit c)))
+                (url url)
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256 (base32 hash))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f)) ;; no tests
       (propagated-inputs (list emacs-gptel emacs-org-ql))
-      (home-page "https://codeberg.org/bajsicki/gptel-got")
+      (home-page url)
       (synopsis "LLM Tools for org-mode interaction")
       (description "This is a package which expands the functionality of gptel for interacting with org-mode")
       (license license:gpl3+))))
