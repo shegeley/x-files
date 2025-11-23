@@ -1,0 +1,1190 @@
+:PROPERTIES:
+:GPTEL_MODEL: deepseek-reasoner
+:GPTEL_BACKEND: deepseek
+:GPTEL_SYSTEM: You are a large language model living in Emacs and a helpful assistant. Respond concisely.
+:GPTEL_BOUNDS: ((response (573 15431) (15449 19977) (20089 36505) (36523 46561)))
+:END:
+
+*** Please help me setting up datomic with postgresql on my guix system as a service. See the attached context
+
+1. I want to modify all datomic's postgresql scripts to CREATE <DATABASE/TABLE> IF NOT EXISTS insted of just CREATE. See how to integreate it into datomic-postgres-init-gexp
+
+
+
+#+begin_reasoning
+We are going to modify the =datomic-postgres-init-gexp= to use the =create-schema.sql= file from the datomic package, but we want to change the SQL statements to use =CREATE ... IF NOT EXISTS= for the database and table.
+
+ However, note that the current code in =datomic-postgres-init-gexp= uses the =create-schema.sql= from the datomic package. We cannot change that file because it is part of the package. Instead, we can create a modified version of the SQL script.
+
+ Steps:
+
+ 1. We'll create a new SQL file (let's call it =create-schema-if-not-exists.sql=) that uses =CREATE ... IF NOT EXISTS= for the database and table.
+
+ 2. We'll replace the =sql-file= in the =datomic-postgres-init-gexp= to use our new SQL file.
+
+ 3. We'll create the new SQL file by modifying the original one.
+
+ Let's look at the original SQL from the context:
+
+ In =postgres-db.sql=:
+   CREATE DATABASE datomic ...
+
+ In =postgres-table.sql=:
+   CREATE TABLE datomic_kvs ...
+
+ We want to change these to:
+
+   CREATE DATABASE IF NOT EXISTS datomic ...
+   CREATE TABLE IF NOT EXISTS datomic_kvs ...
+
+ However, note that the original =create-schema.sql= in the datomic package might have more than one table. We should change every CREATE TABLE to use IF NOT EXISTS.
+
+ Also, note that the original script might have the database creation and then the table creation. But in our setup, we are using a separate role and we are creating the database and role via the postgresql-role service. So we might not need to create the database in the SQL script.
+
+ Let's reassess:
+
+ In the current code, we have:
+
+   (define datomic-postgres-role
+     (postgresql-role
+      (name "datomic")
+      (permissions '(createdb login))
+      (password-file (default #f))
+      (create-database? #t)))
+
+ This will create the role and the database (because of =create-database? #t=). So we don't need to create the database in the SQL script.
+
+ But note: the SQL script we are using (from the datomic package) might be creating the table. We only need to change the table creation to use IF NOT EXISTS.
+
+ However, the provided context shows two SQL files: one for the user, one for the database, and one for the table. But the code in =datomic-postgres-init-gexp= uses the =create-schema.sql= from the datomic package, which we don't see in the context.
+
+ Let's assume the =create-schema.sql= in the datomic package is the one that creates the table. We want to change that to use =IF NOT EXISTS=.
+
+ Since we cannot modify the package, we can create a new file in the store that contains the modified SQL.
+
+ We can do:
+
+   (define (modified-create-schema)
+     (computed-file "create-schema-if-not-exists.sql"
+                    #~(begin
+                        (use-modules (ice-9 textual-ports))
+                        (let ((original (string-append #$datomic "/sql/create-schema.sql")))
+                          (call-with-input-file original
+                            (lambda (port)
+                              (let ((content (get-string-all port)))
+                                (call-with-output-file #$output
+                                  (lambda (port-out)
+                                    (display
+                                     (string-replace-substring
+                                      content
+                                      "CREATE TABLE"
+                                      "CREATE TABLE IF NOT EXISTS")
+                                     port-out))))))))))
+
+ But note: the original might have multiple tables? We want to replace every "CREATE TABLE" with "CREATE TABLE IF NOT EXISTS".
+
+ However, the provided context only shows one table. But to be safe, we can do a global replace.
+
+ Also, note that the original might have the database creation? We are not sure. But since we are creating the database via the role, we don't want to create it again. So we can remove the database creation from the SQL if it exists.
+
+ Alternatively, we can note that the =create-schema.sql= in the datomic package might be designed to be run on an existing database. So it might only create the table.
+
+ Let's assume the worst: the original =create-schema.sql= might have:
+
+   CREATE DATABASE ...;
+   \c ...;
+   CREATE TABLE ...;
+
+ We want to remove the database creation and change the table creation to use IF NOT EXISTS.
+
+ But note: we are running the SQL script on the already created database (via the role). So we don't want to create the database again.
+
+ We can do:
+
+   - Remove any lines that create the database (if present).
+   - Change every "CREATE TABLE" to "CREATE TABLE IF NOT EXISTS".
+
+ However, without knowing the exact content of the original =create-schema.sql=, we can try to be safe.
+
+ Alternatively, we can use the SQL files we have in the context and ignore the one from the datomic package.
+
+ But note: the code in =datomic-postgres-init-gexp= uses the one from the datomic package.
+
+ Let's change the approach:
+
+ We are going to create a new SQL script that:
+
+   - Creates the table if not exists.
+
+ And we are going to use that instead of the one from the datomic package.
+
+ We can create a new SQL file that is a combination of the user, database, and table creation but with IF NOT EXISTS.
+
+ However, note:
+
+   - The user (role) and database are already created by the postgresql-role service.
+
+   - We only need to create the table.
+
+ So we can write a new SQL file that only creates the table if not exists.
+
+ We can do:
+
+   (define create-table-sql
+     (plain-file "create-datomic-table.sql"
+                 "CREATE TABLE IF NOT EXISTS datomic_kvs (
+                    id text NOT NULL,
+                    rev integer,
+                    map text,
+                    val bytea,
+                    CONSTRAINT pk_id PRIMARY KEY (id )
+                  );"))
+
+ Then use this file in the init script.
+
+ But wait, the original =create-schema.sql= might have more than one table? The context only shows one table, but the datomic documentation might require more.
+
+ Let's check the datomic documentation for the SQL schema. According to the provided context, the table is named =datomic_kvs=. I don't know if there are more.
+
+ Since we don't have the original =create-schema.sql= from the datomic package, we must rely on the provided context or the datomic documentation.
+
+ Alternatively, we can look at the datomic package definition to see what the =create-schema.sql= contains.
+
+ But since we don't have that, let's assume the provided context (the three SQL files) is what we need.
+
+ We can create a new SQL file that does:
+
+   - Create the table if not exists.
+
+ And we can also include the GRANT and ALTER statements, but note that the role and database are already created.
+
+ Let's create a new SQL file that does:
+
+   CREATE TABLE IF NOT EXISTS datomic_kvs ...;
+
+   ALTER TABLE datomic_kvs OWNER TO datomic;
+
+   GRANT ALL ON TABLE datomic_kvs TO datomic;
+
+   -- and maybe public? We can follow the original.
+
+ But note: the original table was owned by postgres and then granted to postgres and public. We are now using the datomic role.
+
+ We can change the owner to the datomic role.
+
+ Let's write the SQL:
+
+   CREATE TABLE IF NOT EXISTS datomic_kvs ( ... );
+   ALTER TABLE datomic_kvs OWNER TO datomic;
+   GRANT ALL ON TABLE datomic_kvs TO datomic;
+
+ We don't need to grant to public if we don't want to.
+
+ Now, we can change the =datomic-postgres-init-gexp= to use this new SQL file.
+
+ Alternatively, we can modify the existing =create-schema.sql= from the datomic package to use IF NOT EXISTS and remove the database creation if it exists.
+
+ Since we don't know the exact content, I propose we use the following:
+
+   We'll create a new SQL file that is a modified version of the original =create-schema.sql= from the datomic package, with:
+
+     - All "CREATE TABLE" replaced by "CREATE TABLE IF NOT EXISTS"
+     - Remove any lines that create the database (if any) because we are using the role to create the database.
+
+ But note: the original might have multiple statements and might be more complex.
+
+ Alternatively, we can run the original script and ignore errors if the table already exists? But that might not be safe.
+
+ Since we are in control, let's change the code to use our own SQL file that we know.
+
+ We can define:
+
+   (define (datomic-create-table-sql config)
+     (plain-file "create-datomic-table.sql"
+                 (string-append
+                  "CREATE TABLE IF NOT EXISTS datomic_kvs (\n"
+                  "  id text NOT NULL,\n"
+                  "  rev integer,\n"
+                  "  map text,\n"
+                  "  val bytea,\n"
+                  "  CONSTRAINT pk_id PRIMARY KEY (id)\n"
+                  ");\n"
+                  "ALTER TABLE datomic_kvs OWNER TO datomic;\n"
+                  "GRANT ALL ON TABLE datomic_kvs TO datomic;\n")))
+
+ Then use this file in the init script.
+
+ Let's change the =datomic-postgres-init-gexp= to use this file.
+
+ We'll replace:
+
+   (sql-file (string-append datomic-dir "/sql/create-schema.sql"))
+
+ with:
+
+   (sql-file #$(datomic-create-table-sql config))
+
+ But note: the =datomic-postgres-init-gexp= is defined inside a function that takes =config=. We can pass the config to =datomic-create-table-sql= if needed, but currently we don't use any config.
+
+ Alternatively, we can define =datomic-create-table-sql= without config.
+
+ Let's do:
+
+   (define (datomic-create-table-sql)
+     ...)
+
+ and then use it.
+
+ However, note that the table name and structure are fixed.
+
+ Let's update the code accordingly.
+
+ Alternatively, we can keep the original approach of modifying the existing script, but since we don't know the exact content, I think it's safer to use our own SQL.
+
+ Let's do:
+
+   (define (datomic-create-table-sql)
+     (plain-file "create-datomic-table.sql"
+                 "CREATE TABLE IF NOT EXISTS datomic_kvs (
+                    id text NOT NULL,
+                    rev integer,
+                    map text,
+                    val bytea,
+                    CONSTRAINT pk_id PRIMARY KEY (id)
+                  );
+                  ALTER TABLE datomic_kvs OWNER TO datomic;
+                  GRANT ALL ON TABLE datomic_kvs TO datomic;"))
+
+ Then in the =datomic-postgres-init-gexp=:
+
+   (let/ ((datomic-dir #$datomic)
+          (sql-file #$(datomic-create-table-sql))
+          ...)
+
+ But note: the original code also had a =postgres-user.sql= and =postgres-db.sql=. We are now handling the user and database via the role service, so we don't need them.
+
+ We are only concerned with the table.
+
+ Let's update the =datomic-postgres-init-gexp= to use our new SQL file.
+
+ We'll remove the dependency on the datomic package's =create-schema.sql= and use our own.
+
+ Alternatively, we can also note that the datomic package might have more than one table? I don't know. The provided context only shows one.
+
+ Since we are not sure, we can stick to the provided context and hope that the datomic transactor only needs the =datomic_kvs= table.
+
+ If we encounter issues, we might have to adjust.
+
+ Let's change the code:
+
+   (define (datomic-create-table-sql)
+     (plain-file "create-datomic-table.sql"
+                 "CREATE TABLE IF NOT EXISTS datomic_kvs (
+                    id text NOT NULL,
+                    rev integer,
+                    map text,
+                    val bytea,
+                    CONSTRAINT pk_id PRIMARY KEY (id)
+                  );
+                  ALTER TABLE datomic_kvs OWNER TO datomic;
+                  GRANT ALL ON TABLE datomic_kvs TO datomic;"))
+
+   (define (datomic-postgres-init-gexp config)
+     #~(begin
+         (use-modules (ice-9 popen)
+                      (ice-9 rdelim))
+
+         (let/ ((sql-file #$(datomic-create-table-sql))
+                (psql #$(file-append postgresql "/bin/psql"))
+                (db-uri #$(getenv "DATOMIC_DB_URI")))
+           (when (file-exists? sql-file)
+             (let ((port (open-pipe/ OPEN_READ psql "-d" db-uri "-f" sql-file)))
+               (let loop ()
+                 (let ((line (read-line port)))
+                   (when (not (eof-object? line))
+                     (display line)
+                     (newline)
+                     (loop))))
+               (close-pipe port))))))
+
+ This way, we are using our own SQL file that creates the table if not exists and sets the owner and grants.
+
+ Let's update the code accordingly.
+
+ However, note: the =datomic-create-table-sql= function is defined without config and we are using =plain-file= to create a file in the store.
+
+ We must ensure that the SQL is correct.
+
+ Let's write the SQL in a more readable way:
+
+   (define (datomic-create-table-sql)
+     (plain-file "create-datomic-table.sql"
+                 (string-append
+                  "CREATE TABLE IF NOT EXISTS datomic_kvs (\n"
+                  "  id text NOT NULL,\n"
+                  "  rev integer,\n"
+                  "  map text,\n"
+                  "  val bytea,\n"
+                  "  CONSTRAINT pk_id PRIMARY KEY (id)\n"
+                  ");\n"
+                  "ALTER TABLE datomic_kvs OWNER TO datomic;\n"
+                  "GRANT ALL ON TABLE datomic_kvs TO datomic;\n")))
+
+ This should work.
+
+ Now, we must also note that the =datomic-postgres-init-gexp= is used in the =datomic-postgres-init-script= and then in the shepherd service.
+
+ We are now set.
+
+ Let's update the code in the =datomic.scm= file accordingly.
+
+ However, note that the original =datomic-postgres-init-gexp= was using the =create-schema.sql= from the datomic package. We are now replacing it with our own.
+
+ We must make sure that the rest of the code is adjusted.
+
+ We are going to remove the dependency on the datomic package's SQL file.
+
+ Alternatively, we can keep the original and just change the SQL file we use.
+
+ We are replacing:
+
+   (sql-file (string-append datomic-dir "/sql/create-schema.sql"))
+
+ with:
+
+   (sql-file #$(datomic-create-table-sql))
+
+ So the code becomes:
+
+   (let/ ((sql-file #$(datomic-create-table-sql))
+          ...)
+
+ We are done.
+
+ Let's write the code accordingly.
+
+ But note: the =datomic-create-table-sql= is a function that returns a file-like object. We are using =#$= to insert it into the gexp.
+
+ This should work.
+
+ We must also note that the =datomic-postgres-init-script= is defined as:
+
+   (define (datomic-postgres-init-script config)
+     (program-file "datomic-postgres-init"
+                   (datomic-postgres-init-gexp config)))
+
+ We are passing the config to =datomic-postgres-init-gexp=, but in our new version, we don't use the config. We can remove it or leave it.
+
+ We'll leave it for consistency.
+
+ Now, let's update the code in the =datomic.scm= file.
+
+ We are going to:
+
+   - Remove the old way of getting the SQL file from the datomic package.
+   - Use our new =datomic-create-table-sql= function.
+
+ We'll define =datomic-create-table-sql= and then use it.
+
+ Let's do it.
+#+end_reasoning
+
+Looking at your code, you need to modify the PostgreSQL initialization to use =CREATE IF NOT EXISTS=. Here's how to update the =datomic-postgres-init-gexp=:
+
+#+begin_src scheme
+(define (datomic-postgres-init-gexp config)
+  #~(begin
+      (use-modules (ice-9 popen)
+                   (ice-9 rdelim)
+                   (ice-9 regex)
+                   (ice-9 textual-ports))
+
+      ;; Find the create-schema.sql file in the datomic package
+      (let* ((datomic-dir #$datomic)
+             (sql-file (string-append datomic-dir "/sql/create-schema.sql"))
+             (psql #$(file-append postgresql "/bin/psql"))
+             (db-uri #$(getenv "DATOMIC_DB_URI")))
+
+        (when (file-exists? sql-file)
+          ;; Read and modify the SQL file to use CREATE IF NOT EXISTS
+          (let ((modified-sql (call-with-input-file sql-file
+                                (lambda (port)
+                                  (let ((content (get-string-all port)))
+                                    ;; Replace CREATE DATABASE with CREATE DATABASE IF NOT EXISTS
+                                    (string-replace-substring
+                                     (string-replace-substring
+                                      content
+                                      "CREATE DATABASE"
+                                      "CREATE DATABASE IF NOT EXISTS")
+                                     "CREATE TABLE"
+                                     "CREATE TABLE IF NOT EXISTS"))))))
+
+            ;; Write modified SQL to temporary file
+            (call-with-output-file "/tmp/datomic-schema-modified.sql"
+              (lambda (port)
+                (display modified-sql port)))
+
+            ;; Execute the modified SQL
+            (let ((port (open-pipe* OPEN_READ psql "-d" db-uri "-f" "/tmp/datomic-schema-modified.sql")))
+              (let loop ()
+                (let ((line (read-line port)))
+                  (when (not (eof-object? line))
+                    (display line)
+                    (newline)
+                    (loop))))
+              (close-pipe port)
+
+              ;; Clean up temporary file
+              (delete-file "/tmp/datomic-schema-modified.sql")))))))
+#+end_src
+
+However, a cleaner approach would be to create modified SQL files directly. Here's an alternative implementation:
+
+#+begin_src scheme
+(define (create-modified-sql-files)
+  (list
+   (plain-file "create-datomic-db.sql"
+               "CREATE DATABASE IF NOT EXISTS datomic
+ WITH OWNER = postgres
+      TEMPLATE template0
+      ENCODING = 'UTF8'
+      TABLESPACE = pg_default
+      LC_COLLATE = 'en_US.UTF-8'
+      LC_CTYPE = 'en_US.UTF-8'
+      CONNECTION LIMIT = -1;")
+
+   (plain-file "create-datomic-table.sql"
+               "CREATE TABLE IF NOT EXISTS datomic_kvs
+(
+ id text NOT NULL,
+ rev integer,
+ map text,
+ val bytea,
+ CONSTRAINT pk_id PRIMARY KEY (id )
+)
+WITH (
+ OIDS=FALSE
+);
+ALTER TABLE datomic_kvs
+ OWNER TO postgres;
+GRANT ALL ON TABLE datomic_kvs TO postgres;
+GRANT ALL ON TABLE datomic_kvs TO public;")))
+
+(define (datomic-postgres-init-gexp config)
+  #~(begin
+      (use-modules (ice-9 popen)
+                   (ice-9 rdelim))
+
+      (let ((psql #$(file-append postgresql "/bin/psql"))
+            (db-uri #$(getenv "DATOMIC_DB_URI")))
+
+        ;; Execute database creation
+        (let ((port (open-pipe* OPEN_READ psql "-d" "postgres" "-f"
+                               #$(first (create-modified-sql-files)))))
+          (let loop ()
+            (let ((line (read-line port)))
+              (when (not (eof-object? line))
+                (display line)
+                (newline)
+                (loop))))
+          (close-pipe port))
+
+        ;; Execute table creation in datomic database
+        (let ((port (open-pipe* OPEN_READ psql "-d" "datomic" "-f"
+                               #$(second (create-modified-sql-files)))))
+          (let loop ()
+            (let ((line (read-line port)))
+              (when (not (eof-object? line))
+                (display line)
+                (newline)
+                (loop))))
+          (close-pipe port)))))
+#+end_src
+
+The second approach is more robust as it:
+1. Creates separate SQL files with =IF NOT EXISTS= clauses
+2. Separates database creation (run against =postgres= database) from table creation (run against =datomic= database)
+3. Avoids runtime string manipulation of SQL files
+
+Choose the approach that better fits your needs. The first approach modifies the existing datomic SQL files on-the-fly, while the second creates clean, modified versions from scratch.
+
+*** Please write me guix test for the current datomic service-type. See attached context
+
+
+
+#+begin_reasoning
+We are going to write a test for the Datomic service. We have two service types: one for the dev transactor and one for the PostgreSQL-backed transactor. We will focus on testing the PostgreSQL-backed one because it is more complex and requires a database.
+
+ Steps:
+
+ 1. We need to set up an operating system that includes:
+    - The PostgreSQL service (with roles and databases for Datomic)
+    - The Datomic service (using the PostgreSQL backend)
+
+ 2. We will write a test that:
+    - Starts the PostgreSQL service and waits for it to be ready.
+    - Starts the Datomic service and waits for it to be ready.
+    - Checks that the Datomic transactor is running (by checking the log or by connecting to the transactor port).
+
+ 3. We can also try to use the Datomic client to connect and perform basic operations, but that might be complex and require a Java environment and the Datomic client library.
+
+ Alternatively, we can check that the transactor process is running and that it has created the necessary tables in the database.
+
+ However, note that the Datomic service we are testing is the transactor, which is the server. We can check that it is listening on the configured port.
+
+ Let's look at the existing tests in =databases.scm= for inspiration.
+
+ We see that the PostgreSQL test:
+   - Starts the service.
+   - Checks that the service is running.
+   - Checks that the database is created.
+   - Checks that roles are created.
+
+ Similarly, we can:
+
+   - Start the PostgreSQL service and the Datomic service.
+   - Check that the Datomic transactor is running (by checking the shepherd service or by checking the process).
+   - Check that the necessary tables are created in the database (by querying the PostgreSQL database).
+
+ We can also check that the transactor is listening on the expected port (4334 by default).
+
+ However, note that the Datomic transactor for PostgreSQL might take some time to start because it depends on PostgreSQL and the initialization of the database.
+
+ We can structure the test similarly to the TimescaleDB test.
+
+ Let's write the test:
+
+   (define %datomic-os
+     ...)
+
+   (define (run-datomic-test)
+     ...)
+
+   (define %test-datomic
+     (system-test ...))
+
+ We will create an operating system that includes:
+
+   - The PostgreSQL service (with the necessary roles and databases for Datomic)
+   - The Datomic service (with the PostgreSQL configuration)
+
+ We have to define the roles and databases for Datomic in the PostgreSQL service.
+
+ We can use the =postgresql-role-service-type= to create the role and database for Datomic.
+
+ We also need to set up the Datomic service to use the PostgreSQL backend.
+
+ Let's define the operating system:
+
+   (define %datomic-os
+     (simple-operating-system
+      (service postgresql-service-type
+               (postgresql-configuration
+                (postgresql postgresql)))
+      (service postgresql-role-service-type
+               (postgresql-role-configuration
+                (roles
+                 (list (postgresql-role
+                        (name "datomic")
+                        (create-database? #t))))))
+      (service datomic-postgres-transactor-service-type
+               (datomic-configuration
+                (sql-url "jdbc:postgresql://localhost:5432/datomic")
+                (sql-user "datomic")
+                (sql-password (plain-file "datomic-password" "datomic"))
+                (port "4334")
+                (log-dir "/var/log/datomic")))))
+
+ However, note that the =datomic-postgres-transactor-service-type= requires a configuration that includes the SQL connection details.
+
+ We also need to make sure that the PostgreSQL service is started before the Datomic service.
+
+ We can use the =requirement= field in the shepherd service to ensure that.
+
+ But note: the =datomic-postgres-transactor-service-type= we defined already requires the PostgreSQL service because it uses the =postgresql-role-service-type= and the =shepherd= service for the transactor requires =postgres=.
+
+ Now, let's write the test procedure:
+
+   (define (run-datomic-test)
+     "Run tests in %DATOMIC-OS."
+     (define os
+       (marionette-operating-system
+        %datomic-os
+        #:imported-modules '((gnu services herd)
+                             (guix combinators))))
+
+     (define vm
+       (virtual-machine
+        (operating-system os)
+        (memory-size 512)))
+
+     (define test
+       (with-imported-modules '((gnu build marionette))
+         #~(begin
+             (use-modules (srfi srfi-64)
+                          (gnu build marionette))
+
+             (define marionette
+               (make-marionette (list #$vm)))
+
+             (test-runner-current (system-test-runner #$output))
+             (test-begin "datomic")
+
+             ;; Wait for PostgreSQL to be running.
+             (test-assert "PostgreSQL running"
+               (marionette-eval
+                '(begin
+                   (use-modules (gnu services herd))
+                   (start-service 'postgres))
+                marionette))
+
+             ;; Wait for the Datomic transactor to be running.
+             (test-assert "Datomic transactor running"
+               (marionette-eval
+                '(begin
+                   (use-modules (gnu services herd))
+                   (start-service 'datomic-transactor))
+                marionette))
+
+             ;; Check that the transactor is listening on the expected port.
+             (test-assert "Datomic transactor listening on port 4334"
+               (wait-for-tcp-port 4334 marionette))
+
+             ;; Check that the database has the required table.
+             (test-assert "Datomic table exists"
+               (marionette-eval
+                '(begin
+                   (use-modules (ice-9 popen)
+                                (ice-9 rdelim))
+                   (let/ ((port (open-pipe/
+                                 OPEN_READ
+                                 #$(file-append postgresql "/bin/psql")
+                                 "-d" "datomic" "-U" "datomic" "-c"
+                                 "SELECT COUNT(*) FROM datomic_kvs;"))
+                          (output (get-string-all port)))
+                     (close-pipe port)
+                     (string-contains output "0")))
+                marionette))
+
+             (test-end))))
+
+     (gexp->derivation "datomic-test" test))
+
+   (define %test-datomic
+     (system-test
+      (name "datomic")
+      (description "Connect to a running Datomic transactor with PostgreSQL backend.")
+      (value (run-datomic-test))))
+
+ However, note that the Datomic transactor might take some time to create the table. We might need to wait for the table to be created.
+
+ We can use a loop to wait for the table to exist.
+
+ Alternatively, we can check the log of the transactor to see if it has started successfully.
+
+ But note: the transactor will not start until the database is initialized and the table is created. We have an initialization script that runs after the database is created.
+
+ We can wait for the transactor to be running and then wait for the table to be created.
+
+ We can also check the transactor log for a message indicating that it has started.
+
+ Let's adjust the test:
+
+   - We wait for the transactor to be running (shepherd service).
+   - We wait for the transactor to be listening on the port.
+   - We then check the table.
+
+ We might need to wait a bit for the table to be created.
+
+ We can use =wait-for-file= or =wait-for-unix-socket= for the port, but for the table we can do a loop.
+
+ Alternatively, we can wait for the transactor log to have a message that indicates the transactor has started.
+
+ But note: the transactor log is in the log directory, and we don't know the exact message.
+
+ We can check for the existence of the table and retry until it exists.
+
+ Let's write a helper to wait for the table:
+
+   (define (wait-for-datomic-table marionette)
+     (let loop ((i 10))
+       (unless (or (zero? i)
+                   (marionette-eval
+                    '(begin
+                       (use-modules (ice-9 popen)
+                                    (ice-9 rdelim))
+                       (let/ ((port (open-pipe/
+                                     OPEN_READ
+                                     #$(file-append postgresql "/bin/psql")
+                                     "-d" "datomic" "-U" "datomic" "-c"
+                                     "SELECT COUNT(*) FROM datomic_kvs;"))
+                              (output (get-string-all port)))
+                         (close-pipe port)
+                         (string-contains output "0")))
+                    marionette))
+         (sleep 1)
+         (loop (- i 1)))))
+
+ But note: the table might be empty, so we are checking for the presence of the string "0" (the count of rows). We are not checking for the table existence.
+
+ Alternatively, we can check for the table existence by querying the PostgreSQL system tables.
+
+ We can change the query to:
+
+   "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'datomic_kvs';"
+
+ Then we check for the string "1".
+
+ Let's do that instead.
+
+ We can write:
+
+   (test-assert "Datomic table exists"
+     (marionette-eval
+      '(begin
+         (use-modules (ice-9 popen)
+                      (ice-9 rdelim))
+         (let/ ((port (open-pipe/
+                       OPEN_READ
+                       #$(file-append postgresql "/bin/psql")
+                       "-d" "datomic" "-U" "datomic" "-c"
+                       "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'datomic_kvs';"))
+                (output (get-string-all port)))
+           (close-pipe port)
+           (string-contains output "1")))
+      marionette))
+
+ But note: we are using the user =datomic= to connect to the database =datomic=. We must ensure that the role =datomic= exists and has the necessary permissions.
+
+ We are creating the role and database in the =postgresql-role-service-type=, so it should be there.
+
+ We are also using the =postgresql-role= with =create-database? #t= so the database =datomic= should be created.
+
+ Now, let's put it all together.
+
+ We must also note that the test might require more memory because we are running two services (PostgreSQL and Datomic). We set the VM memory to 512 MB, but we might need more.
+
+ We can increase the memory if we see issues.
+
+ Let's write the test.
+
+ However, note that the =datomic-postgres-transactor-service-type= is defined in the same module. We must export it and the test.
+
+ We are going to assume that the test is in the same module as the service.
+
+ We must also note that the service configuration for Datomic requires a password file. We are using a plain-file for the password.
+
+ We are going to use the same password in the test when connecting to the database.
+
+ But note: the =postgresql-role= we created does not have a password? We set the password via the =password-file= in the =postgresql-role=? In our =%datomic-os= we did not set a password for the role.
+
+ We must set the password for the role. We can do:
+
+   (postgresql-role
+    (name "datomic")
+    (password-file (plain-file "datomic-password" "datomic"))
+    (create-database? #t))
+
+ Then we use the same password in the Datomic configuration and in the test when connecting with =psql=.
+
+ We must update the =%datomic-os= to include the password for the role.
+
+ Let's adjust the operating system definition.
+
+ We are going to create a plain-file for the password and use it in both the role and the Datomic service.
+
+ We can define:
+
+   (define datomic-password
+     (plain-file "datomic-password" "datomic"))
+
+   (define %datomic-os
+     (simple-operating-system
+      (service postgresql-service-type
+               (postgresql-configuration
+                (postgresql postgresql)))
+      (service postgresql-role-service-type
+               (postgresql-role-configuration
+                (roles
+                 (list (postgresql-role
+                        (name "datomic")
+                        (password-file datomic-password)
+                        (create-database? #t))))))
+      (service datomic-postgres-transactor-service-type
+               (datomic-configuration
+                (sql-url "jdbc:postgresql://localhost:5432/datomic")
+                (sql-user "datomic")
+                (sql-password datomic-password)
+                (port "4334")
+                (log-dir "/var/log/datomic")))))
+
+ Now, in the test, we can use the same password when connecting with =psql= by setting the =PGPASSWORD= environment variable.
+
+ Alternatively, we can use a password file for =psql= or use the =-W= option and hope that it reads from the environment. But note: the =psql= command in the test might not have the password.
+
+ We can set the environment variable =PGPASSWORD= in the test.
+
+ Let's adjust the test for the table existence:
+
+   (test-assert "Datomic table exists"
+     (marionette-eval
+      '(begin
+         (use-modules (ice-9 popen)
+                      (ice-9 rdelim))
+         (setenv "PGPASSWORD" "datomic")
+         (let/ ((port (open-pipe/
+                       OPEN_READ
+                       #$(file-append postgresql "/bin/psql")
+                       "-d" "datomic" "-U" "datomic" "-c"
+                       "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'datomic_kvs';"))
+                (output (get-string-all port)))
+           (close-pipe port)
+           (string-contains output "1")))
+      marionette))
+
+ Alternatively, we can use the =-W= option and hope that =psql= reads the password from the environment, but note that =psql= might not read the environment variable if we don't set the =PGPASSWORD=? Actually, the =psql= command does read =PGPASSWORD=.
+
+ We are setting the environment variable in the marionette eval, so it should be available.
+
+ Now, let's write the complete test.
+
+ We must also note that the Datomic transactor might take some time to start and create the table. We might need to wait for the table after starting the transactor.
+
+ We can do:
+
+   (test-assert "Datomic table exists"
+     (begin
+       (wait-for-datomic-table marionette)
+       ...))
+
+ But we already have a loop in the test-assert? We can use =wait-for-tcp-port= to wait for the transactor port and then wait for the table.
+
+ Alternatively, we can do:
+
+   (test-assert "Datomic transactor running"
+     (marionette-eval
+      '(begin
+         (use-modules (gnu services herd))
+         (start-service 'datomic-transactor))
+      marionette))
+
+   (test-assert "Datomic transactor listening on port 4334"
+     (wait-for-tcp-port 4334 marionette))
+
+   (test-assert "Datomic table exists"
+     (wait-for-datomic-table marionette))
+
+   (define (wait-for-datomic-table marionette)
+     (let loop ((i 20))
+       (if (zero? i)
+           #f
+           (or (marionette-eval
+                '(begin
+                   (use-modules (ice-9 popen)
+                                (ice-9 rdelim))
+                   (setenv "PGPASSWORD" "datomic")
+                   (let/ ((port (open-pipe/
+                                 OPEN_READ
+                                 #$(file-append postgresql "/bin/psql")
+                                 "-d" "datomic" "-U" "datomic" "-c"
+                                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'datomic_kvs';"))
+                          (output (get-string-all port)))
+                     (close-pipe port)
+                     (string-contains output "1")))
+                marionette)
+               (begin
+                 (sleep 1)
+                 (loop (- i 1)))))))
+
+ We are going to wait up to 20 seconds for the table to be created.
+
+ Now, let's write the test.
+
+ We must also note that the test might require the =postgresql= package to be available in the test environment. We are using =(file-append postgresql "/bin/psql")= so we must make sure that the =postgresql= package is in the scope.
+
+ We are using =postgresql= from the =(gnu packages databases)= module, so we must import that.
+
+ We are going to assume that the test module imports the necessary packages.
+
+ Let's write the test and then export it.
+
+ We are going to export =%test-datomic= and the =run-datomic-test= procedure.
+
+ We must also note that the test might be long-running, so we must set the timeout appropriately.
+
+ We are going to set the VM memory to 512 MB and hope that it is enough.
+
+ Let's write the test.
+#+end_reasoning
+
+Based on the context from the database tests, here's a comprehensive test for your Datomic service:
+
+#+begin_src scheme
+(define-module (gnu tests datomic)
+  #:use-module (gnu tests)
+  #:use-module (gnu system)
+  #:use-module (gnu system file-systems)
+  #:use-module (gnu system shadow)
+  #:use-module (gnu system vm)
+  #:use-module (gnu services)
+  #:use-module (gnu services databases)
+  #:use-module (gnu services networking)
+  #:use-module (x-files services datomic)
+  #:use-module (guix gexp)
+  #:use-module (guix store)
+  #:use-module (srfi srfi-1)
+  #:export (%test-datomic-dev
+            %test-datomic-postgres))
+
+;;;
+;;; Datomic Dev Transactor Test
+;;;
+
+(define %datomic-dev-os
+  (simple-operating-system
+   (service dhcpcd-service-type)
+   (service datomic-dev-transactor-service-type
+            (datomic-configuration
+             (port "4334")
+             (log-dir "/var/log/datomic")))))
+
+(define* (run-datomic-dev-test #:optional (port 4334))
+  "Run tests in %DATOMIC-DEV-OS, forwarding PORT."
+  (define os
+    (marionette-operating-system
+     %datomic-dev-os
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define vm
+    (virtual-machine
+     (operating-system os)
+     (port-forwardings `((4334 . ,port)))
+     (memory-size 1024)))  ; Datomic needs more memory
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          (use-modules (srfi srfi-11) (srfi srfi-64)
+                       (gnu build marionette)
+                       (ice-9 rdelim))
+
+          (define marionette
+            (make-marionette (list #$vm)))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "datomic-dev")
+
+          ;; Wait for datomic transactor to be up and running
+          (test-assert "service running"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                (match (start-service 'datomic-transactor)
+                  (#f #f)
+                  (('service response-parts ...)
+                   (match (assq-ref response-parts 'running)
+                     ((pid) pid)))))
+             marionette))
+
+          ;; Check that log directory and files are created
+          (test-assert "log directory exists"
+            (marionette-eval
+             '(file-exists? "/var/log/datomic")
+             marionette))
+
+          ;; Wait for transactor to start listening
+          (test-assert "transactor listening on port"
+            (wait-for-tcp-port #$port marionette))
+
+          ;; Check that data directory is created with correct ownership
+          (test-assert "data directory with correct ownership"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu build install))
+                (let ((stat (stat "/var/lib/datomic/data")))
+                  (and (file-exists? "/var/lib/datomic/data")
+                       (eq? (stat:uid stat) (passwd:uid (getpwnam "datomic")))
+                       (eq? (stat:gid stat) (group:gid (getgrnam "datomic"))))))
+             marionette))
+
+          ;; Check transactor log for successful startup
+          (test-assert "transactor started successfully"
+            (begin
+              (sleep 5) ; Give transactor time to start
+              (marionette-eval
+               '(begin
+                  (use-modules (rnrs io ports))
+                  (let ((log-file "/var/log/datomic/transactor.log"))
+                    (and (file-exists? log-file)
+                         (let ((content (call-with-input-file log-file get-string-all)))
+                           (string-contains content "Launching with Java options")))))
+               marionette)))
+
+          (test-end))))
+
+(define %test-datomic-dev
+  (system-test
+   (name "datomic-dev")
+   (description "Connect to a running Datomic dev transactor.")
+   (value (run-datomic-dev-test))))
+
+;;;
+;;; Datomic PostgreSQL Transactor Test
+;;;
+
+(define %datomic-postgres-os
+  (simple-operating-system
+   (service dhcpcd-service-type)
+   (service postgresql-service-type)
+   (service postgresql-role-service-type
+            (postgresql-role-configuration
+             (roles
+              (list (postgresql-role
+                     (name "datomic")
+                     (create-database? #t)
+                     (password (plain-file "datomic-password" "datomic")))))))
+   (service datomic-postgres-transactor-service-type
+            (datomic-configuration
+             (port "4334")
+             (log-dir "/var/log/datomic")
+             (sql-url "jdbc:postgresql://localhost:5432/datomic")
+             (sql-user "datomic")
+             (sql-password (plain-file "datomic-password" "datomic"))))))
+
+(define* (run-datomic-postgres-test #:optional (port 4334))
+  "Run tests in %DATOMIC-POSTGRES-OS, forwarding PORT."
+  (define os
+    (marionette-operating-system
+     %datomic-postgres-os
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define vm
+    (virtual-machine
+     (operating-system os)
+     (port-forwardings `((4334 . ,port)))
+     (memory-size 1024)))  ; Datomic + PostgreSQL need more memory
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          (use-modules (srfi srfi-11) (srfi srfi-64)
+                       (gnu build marionette)
+                       (ice-9 rdelim)
+                       (ice-9 popen))
+
+          (define marionette
+            (make-marionette (list #$vm)))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "datomic-postgres")
+
+          ;; Start PostgreSQL first
+          (test-assert "postgresql service running"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                (start-service 'postgres))
+             marionette))
+
+          ;; Wait for PostgreSQL to be ready
+          (test-assert "postgresql ready"
+            (wait-for-unix-socket "/var/run/postgresql/.s.PGSQL.5432" marionette))
+
+          ;; Wait for datomic postgres init to complete
+          (test-assert "datomic postgres initialization"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                (start-service 'datomic-postgres-init))
+             marionette))
+
+          ;; Start datomic transactor
+          (test-assert "datomic transactor service running"
+            (marionette-eval
+             '(begin
+                (use-modules (gnu services herd))
+                (start-service 'datomic-transactor))
+             marionette))
+
+          ;; Check that PostgreSQL schema was created
+          (test-assert "datomic table exists in postgresql"
+            (marionette-eval
+             '(begin
+                (use-modules (ice-9 popen)
+                             (rnrs io ports))
+                (setenv "PGPASSWORD" "datomic")
+                (let* ((port (open-pipe*
+                              OPEN_READ
+                              #$(file-append postgresql "/bin/psql")
+                              "-U" "datomic" "-d" "datomic" "-tA" "-c"
+                              "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'datomic_kvs';"))
+                       (output (get-string-all port)))
+                  (close-pipe port)
+                  (string=? output "1\n")))
+             marionette))
+
+          ;; Wait for transactor to start listening
+          (test-assert "transactor listening on port"
+            (wait-for-tcp-port #$port marionette))
+
+          ;; Check transactor log for successful startup with PostgreSQL
+          (test-assert "transactor started successfully with postgresql"
+            (begin
+              (sleep 5) ; Give transactor time to start
+              (marionette-eval
+               '(begin
+                  (use-modules (rnrs io ports))
+                  (let ((log-file "/var/log/datomic/transactor.log"))
+                    (and (file-exists? log-file)
+                         (let ((content (call-with-input-file log-file get-string-all)))
+                           (or (string-contains content "protocol=sql")
+                               (string-contains content "Starting datomic transactor"))))))
+               marionette)))
+
+          ;; Verify data directory structure
+          (test-assert "datomic directories created"
+            (marionette-eval
+             '(begin
+                (and (file-exists? "/var/lib/datomic")
+                     (file-exists? "/var/lib/datomic/data")
+                     (file-exists? "/var/log/datomic")))
+             marionette))
+
+          (test-end))))
+
+(define %test-datomic-postgres
+  (system-test
+   (name "datomic-postgres")
+   (description "Test Datomic transactor with PostgreSQL backend.")
+   (value (run-datomic-postgres-test))))
+#+end_src
+
+This test suite provides:
+
+1. *Dev Transactor Test* (=%test-datomic-dev=):
+   - Tests the standalone dev transactor
+   - Verifies service startup and process management
+   - Checks log file creation
+   - Validates data directory setup with correct ownership
+   - Confirms the transactor is listening on the expected port
+
+2. *PostgreSQL Transactor Test* (=%test-datomic-postgres=):
+   - Tests the full PostgreSQL-backed setup
+   - Verifies PostgreSQL service dependency
+   - Checks database schema initialization
+   - Confirms table creation in PostgreSQL
+   - Validates transactor startup with SQL protocol
+   - Tests the complete service dependency chain
+
+Key features:
+- Uses the same testing patterns as the existing database tests
+- Proper service dependency management (PostgreSQL → Datomic init → Datomic transactor)
+- Memory allocation suitable for Java applications
+- Comprehensive logging and directory structure validation
+- Port forwarding for external connectivity testing
+
+You'll need to add this module to your test suite and ensure the necessary imports are available. The tests follow the same structure as the PostgreSQL and MySQL tests in the provided context.
+
+***
