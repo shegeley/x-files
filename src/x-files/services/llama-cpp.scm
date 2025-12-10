@@ -40,8 +40,8 @@
 (define* (llama-cpp-default-config
           #:key
           (model (str "/data/models"
-                      "/LFM2-8B-A1B-GGUF"
-                      "/LFM2-8B-A1B-Q8_0.gguf"))
+                      "/Mistral-7B-Instruct-v0.2-GGUF"
+                      "/mistral-7b-instruct-v0.2.Q4_K_M.gguf"))
           (port "9090"))
   (let* [(cmd #~(list
                  #$(file-append llama-cpp "/bin/llama-server")
