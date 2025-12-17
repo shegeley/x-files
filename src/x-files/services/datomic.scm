@@ -203,7 +203,8 @@ GRANT ALL ON TABLE datomic_kvs TO public;"))
 (define (datomic-postgres-shepherd-services config)
   (cons
    (datomic-transactor-shepherd-service config)
-   (datomic-postgres-init-services      config)))
+   ;; won't work for now, you have to create user by-hand
+   #;(datomic-postgres-init-services      config)))
 
 (define-public datomic-postgres-transactor-service-type
   (service-type
