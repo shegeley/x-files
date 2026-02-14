@@ -10,12 +10,12 @@
 (define-public clojure-tools
   (package
     (name "clojure-tools")
-    (version "1.12.1.1550") ;; 03.06.2025
+    (version "1.12.4.1602") ;; 27.01.2026
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://download.clojure.org/install/clojure-tools-" version ".tar.gz"))
-       (sha256 (base32 "0gqd9d137zd2c6jrkx8xxqb3vn51j9is922rhwsp0bn7g5b64v4h"))))
+       (sha256 (base32 "18wjdz6b2f80bm5wvg9mn4im420q8whgsnq2zl4clmc4h7p5vn87"))))
     (build-system copy-build-system)
     (arguments
      (list
