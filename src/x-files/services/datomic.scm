@@ -201,10 +201,11 @@ GRANT ALL ON TABLE datomic_kvs TO public;"))
                (list #$(datomic-postgres-init-script config)))))))
 
 (define (datomic-postgres-shepherd-services config)
-  (cons
-   (datomic-transactor-shepherd-service config)
-   ;; won't work for now, you have to create user by-hand
-   #;(datomic-postgres-init-services      config)))
+  (list (datomic-transactor-shepherd-service config))
+  #;(cons
+      (datomic-transactor-shepherd-service config)
+      ;; won't work for now, you have to create user by-hand
+      (datomic-postgres-init-services      config)))
 
 (define-public datomic-postgres-transactor-service-type
   (service-type
@@ -212,8 +213,8 @@ GRANT ALL ON TABLE datomic_kvs TO public;"))
     (description "Datomic Transactor Service")
     (extensions
      (list
-      (service-extension postgresql-role-service-type
-                         datomic-postgres-roles)
+      #;(service-extension postgresql-role-service-type
+                           datomic-postgres-roles)
       (service-extension profile-service-type
                          (const (list datomic datomic-cli-tools)))
       (service-extension account-service-type
@@ -223,3 +224,32 @@ GRANT ALL ON TABLE datomic_kvs TO public;"))
       (service-extension shepherd-root-service-type
                          datomic-postgres-shepherd-services)))
     (default-value datomic-default-value)))
+
+;; /var/log/guix/drvs/va/s321avi9zbnqwxvlf4xxy6c9r4n7ql-queries.drv.gz
+   #|
+   Backtrace:
+           3 (primitive-load "/gnu/store/zg8pm1g01ipic2lhm3pr4gw71f0…")
+In ice-9/ports.scm:
+   433:17  2 (call-with-output-file _ _ #:binary _ #:encoding _)
+In ice-9/eval.scm:
+    159:9  1 (_ #(#(#<directory (guile-user) 7ffff7741c80>) #<outp…>))
+In unknown file:
+           0 (string-append "SELECT NOT(EXISTS(SELECT 1 FROM pg_cat…" …)
+
+ERROR: In procedure string-append:
+   In procedure string-append: Wrong type (expecting string): #f
+   ;; /gnu/store/zg8pm1g01ipic2lhm3pr4gw71f0iydzd-queries-builder
+    (call-with-output-file ((@ (guile) getenv) "out")
+       (lambda (port)
+              (set-port-encoding! port "UTF-8")
+              (display
+               (string-append
+                "SELECT NOT(EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '"
+                #f "')) as not_exists;\n" "\\gset\n" "\\if :not_exists\n"
+                "CREATE ROLE \"" #f "\"" " WITH " "CREATEDB LOGIN" ""
+                ";\n" "CREATE DATABASE \"" #f "\"" " OWNER \"" #f "\"\n"
+                " ENCODING '" "UTF8" "'\n" " LC_COLLATE '" "en_US.utf8"
+                "'\n" " LC_CTYPE '" "en_US.utf8" "'\n" " TEMPLATE "
+                "template1" ";" "\\endif\n")
+               port)))
+   |#
