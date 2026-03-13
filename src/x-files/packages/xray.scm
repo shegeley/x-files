@@ -17,7 +17,7 @@
 
 (define targets (map car target->xray-core-target))
 
-(define target->xray-core-server-hash
+(define target->xray-core-hash
   ;; TODO: add other
   '(("x86_64-linux"  . "11g3z34sncmpid8fry7g0gh0nhfc5n2d9hm1zw3a81z2ardm7ki9")))
 
@@ -25,7 +25,7 @@
   (let* [(target (or (%current-target-system) (%current-system)))
          (xray-core-target (assoc-ref target->xray-core-target target))
          (zip-filename (string-append "Xray-" xray-core-target ".zip"))
-         (hash (assoc-ref target->xray-core-server-hash target))]
+         (hash (assoc-ref target->xray-core-hash target))]
     (package
       (name "xray-core")
       (version (string-append "v" xray-core-version))
@@ -35,7 +35,7 @@
                       "https://github.com/"
                       "XTLS/Xray-core/"
                       "releases/download/"
-                      "v26.2.6/Xray-linux-64.zip"))
+                      version "/" zip-filename))
                 (sha256 (base32 hash))))
       (build-system copy-build-system)
       (inputs (list unzip))
