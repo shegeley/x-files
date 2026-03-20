@@ -19,7 +19,7 @@
   ;; https://patchwise.org/77780
   (package
     (name "gpaste")
-    (version "45.2")
+    (version "45.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -28,7 +28,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1x8rqxqzggvzs0hr9hkwq9gmzn1m16jwllml4m4bxrdib4c9lh8q"))
+                "0fdki7k9ak9vsw77hfx7fwfmarnkg78f5p1mlx92n8zgrl6f5car"))
               (patches
                (parameterize
                    ((%patch-path
@@ -109,5 +109,3 @@ functions you might want to use, for example.  The clipboard manager will
 store an history of everything you do, so that you can get back to older
 copies you now want to paste.")
     (license license:bsd-2)))
-
-gpaste
