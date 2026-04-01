@@ -59,7 +59,7 @@
        (marionette-eval
         '(begin
           (use-modules (gnu services herd))
-          (match (start-service 'datomic-transactor)
+          (match (start-service 'datomic-dev-transactor)
            (#f #f)
            (('service response-parts ...)
             (match (assq-ref response-parts 'running)
@@ -180,7 +180,7 @@
        (marionette-eval
         '(begin
           (use-modules (gnu services herd))
-          (start-service 'datomic-transactor))
+          (start-service 'datomic-postgres-transactor))
         marionette))
 
       ;; Wait for transactor to start listening.

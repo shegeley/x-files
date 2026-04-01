@@ -79,7 +79,7 @@
          (props-file (serialize-transactor-config props)))
     (shepherd-service
      (documentation "Datomic Transactor")
-     (provision '(datomic-transactor))
+     (provision '(datomic-dev-transactor))
      (requirement '(file-systems networking))
      (start #~(make-forkexec-constructor
                (list (string-append #$datomic "/bin/transactor") #$props-file)
@@ -119,7 +119,7 @@
 
 (define-public datomic-dev-transactor-service-type
   (service-type
-   (name 'datomic-transactor)
+   (name 'datomic-dev-transactor)
    (description "Datomic Transactor Service")
    (extensions
     (list
@@ -210,7 +210,7 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
 (define (datomic-postgres-transactor-shepherd-service config)
   (shepherd-service
    (documentation "Datomic Transactor (PostgreSQL)")
-   (provision '(datomic-transactor))
+   (provision '(datomic-postgres-transactor))
    ;; postgres-roles uses make-forkexec-constructor so shepherd considers it
    ;; "running" as soon as the PID is returned — before role/database creation
    ;; finishes.  The wrapper script handles the timing with its own retry loop.
@@ -257,4 +257,3 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
       (service-extension shepherd-root-service-type
                          datomic-postgres-shepherd-services)))
     (default-value datomic-postgres-default-value)))
-
