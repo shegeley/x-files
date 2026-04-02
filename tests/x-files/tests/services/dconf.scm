@@ -89,8 +89,13 @@
              #~'(("org/gnome/GPaste" ("history-name" . "'history'")))
              #~'(("org/gnome/shell" ("disable-user-extensions" . "false")))))))
 
-    (test "gexp + empty list → gexp result"
-      (is (gexp?
-            (merge-dconf-entries
-             #~'(("org/gnome/GPaste" ("history-name" . "'history'")))
-             '()))))))
+    (test-suite "gexp + empty list — no-op, returns gexp unchanged"
+      ;; Regression test: merge-dconf-entries must NOT wrap a gexp in
+      ;; #~(append #$gexp '()) when the other argument is empty.
+      ;; That nested gexp cannot be serialized by serialize-ini-gexp,
+      ;; causing a build-time "unexpected syntax in form ()" error.
+      (let ((g #~'(("org/gnome/GPaste" ("history-name" . "'history'")))))
+        (test "gexp + '() → same gexp object (not wrapped)"
+          (is (eq? g (merge-dconf-entries g '()))))
+        (test "'() + gexp → same gexp object (not wrapped)"
+          (is (eq? g (merge-dconf-entries '() g))))))))
