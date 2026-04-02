@@ -1,12 +1,9 @@
 (define-module (x-files tests utils records)
   #:use-module (x-files utils records)
-  #:use-module (x-files utils tests)
+  #:use-module (ares suitbl))
 
-  #:use-module (srfi srfi-64)
-  #:use-module (srfi srfi-64-ext test))
-
-(define-test define-record-type-
-  (test-group "define-record-type!"
+(define-test-suite define-record-type!-tests
+  (test "constructor, predicate, and getters"
     (define-record-type! person
       (name)
       (age (default 27)))
@@ -16,8 +13,15 @@
        (name "Ivan")
        (age 30)))
 
-    (test-equal #t (person? i))
+    (is (person? i))
+    (is (equal? 30 (person:age i)))
+    (is (equal? "Ivan" (person:name i))))
 
-    (test-equal 30 (person:age i))
+  (test "default field value"
+    (define-record-type! point
+      (x (default 0))
+      (y (default 0)))
 
-    (test-equal "Ivan" (person:name i))))
+    (define p (point))
+    (is (equal? 0 (point:x p)))
+    (is (equal? 0 (point:y p)))))

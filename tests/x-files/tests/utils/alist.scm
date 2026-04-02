@@ -1,11 +1,7 @@
 (define-module (x-files tests utils alist)
   #:use-module (x-files utils alist)
-  #:use-module (x-files utils tests)
-
-  #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-17)
-  #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-64-ext test))
+  #:use-module (ares suitbl)
+  #:use-module (srfi srfi-1))
 
 (define alist*
   `((a . b)
@@ -15,29 +11,22 @@
                 (canine . ((wolfs . bad)
                            (dogs . good)))))))
 
-(define-test match-alist-
-  (test-group "match-alist"
-    (test-equal 'b
-      (match-alist alist* (('(a) a)) a))
-    (test-equal 'b
-      (match-alist alist* (a) a))
+(define-test-suite match-alist-tests
+  (test "simple key lookup"
+    (is (equal? 'b (match-alist alist* (('(a) a)) a)))
+    (is (equal? 'b (match-alist alist* (a) a))))
 
-    (test-equal #t
-      (match-alist alist*
-                   (('(hello world) hw))
-                   hw))
+  (test "nested path lookup"
+    (is (equal? #t (match-alist alist* (('(hello world) hw)) hw)))
+    (is (equal? #f (match-alist alist* (('(hello its-me) hw)) hw))))
 
-    (test-equal #f
-      (match-alist alist*
-                   (('(hello its-me) hw))
-                   hw))
+  (test "multiple bindings"
+    (is (equal? '(good bad good)
+          (match-alist alist*
+                       (('(animals canine dogs) dogs)
+                        ('(animals canine wolfs) wolfs)
+                        ('(animals feline cats) cats))
+                       (list dogs wolfs cats)))))
 
-    (test-equal `(good bad good)
-      (match-alist alist*
-                   (('(animals canine dogs) dogs)
-                    ('(animals canine wolfs) wolfs)
-                    ('(animals feline cats) cats))
-                   (list dogs wolfs cats)))
-
-    (test-equal #f
-      (match-alist alist* (lol) lol))))
+  (test "missing key returns #f"
+    (is (equal? #f (match-alist alist* (lol) lol)))))
