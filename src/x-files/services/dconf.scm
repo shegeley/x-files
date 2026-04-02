@@ -1,5 +1,6 @@
 (define-module (x-files services dconf)
   #:use-module (x-files utils records)
+  #:use-module (x-files utils dconf)
 
   #:use-module (gnu services)
   #:use-module (gnu home services)
@@ -10,7 +11,8 @@
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages gnome)
 
-  #:export (dconf-home-service-type
+  #:re-export (merge-dconf-entries)
+  #:export (home-dconf-service-type
             dconf-service-conf))
 
 (define guile-ini:extensions
@@ -73,6 +75,13 @@
     (list
      (service-extension home-xdg-configuration-files-service-type files)
      (service-extension home-activation-service-type activation)))
+   (compose concatenate)
+   (extend (lambda (config extra-entries)
+     (dconf-service-conf
+      (inherit config)
+      (entries (merge-dconf-entries
+                (dconf-service-conf:entries config)
+                extra-entries)))))
    (default-value (dconf-service-conf))
    (description
     "A simple service to set all the proper dconf keys to manage Gnome desktop (Custom keyboard shortcuts, applications colorschemes and etc).
