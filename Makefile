@@ -5,6 +5,7 @@ tmp := $(root)/tmp
 
 nrepl:
 	guix shell \
+	guix \
 	guile-next \
 	guile-ares-rs \
 	-- guile \
