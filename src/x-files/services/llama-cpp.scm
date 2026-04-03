@@ -9,29 +9,39 @@
                                                    shepherd-service))
   #:use-module (guix gexp)
   #:use-module ((guix records) #:select (define-record-type*))
+  #:use-module ((guix packages) #:select (package origin))
+  #:use-module ((guix git-download) #:select (git-reference git-fetch/lfs))
+  #:use-module ((guix build-system copy) #:select (copy-build-system))
 
   #:export (llama-cpp-model
             llama-cpp-configuration
             llama-cpp-service-type))
 
-;; models as packages is kinda pointless because default guix timeout on quite execution of git-fetch/lfs is 3600 seconds. the weight much more
-#;(define %gpt-oss-20b-gguf
-   (let [(commit "c3303d94926e0e2262aacdd0fac4b18e1a29468e")]
-     (package
-       (name "gpt-oss-20b-gguf")
-       (version "0.0")
-       (build-system copy-build-system)
-       (source (origin
-                 (method git-fetch/lfs)
-                 (uri (git-reference
-                        (url "https://huggingface.co/unsloth/gpt-oss-20b-GGUF")
-                        (commit commit)))
-                 (file-name (string-append "gtp-oss-20b-gguf"))
-                 (sha256 (base32 "0ankwgkc7avswq06lippqj5xbllk9g1x3qs0d5bbf2c1qh63wk7n"))))
-       (home-page "")
-       (synopsis "")
-       (description "")
-       (license #f))))
+;; Per-package timeout override: the daemon normally kills a build after 3600s
+;; of silence (max-silent-time) or 86400s total (timeout).  Large LFS fetches
+;; (multi-GB model weights) easily exceed the silence limit.  Setting these in
+;; package `properties` overrides the global daemon defaults for that specific
+;; derivation only — see gnu/packages/linux.scm:%linux-libre-timeout-properties
+;; for prior art and nix/libstore/globals.cc for the C-level defaults.
+(define %gpt-oss-20b-gguf
+  (let [(commit "c3303d94926e0e2262aacdd0fac4b18e1a29468e")]
+    (package
+      (name "gpt-oss-20b-gguf")
+      (version "0.0")
+      (build-system copy-build-system)
+      (source (origin
+                (method git-fetch/lfs)
+                (uri (git-reference
+                       (url "https://huggingface.co/unsloth/gpt-oss-20b-GGUF")
+                       (commit commit)))
+                (file-name (string-append "gpt-oss-20b-gguf"))
+                (sha256 (base32 "0ankwgkc7avswq06lippqj5xbllk9g1x3qs0d5bbf2c1qh63wk7n"))))
+      (properties `((timeout         . ,(* 24 3600))  ;; 24h — large LFS fetch
+                    (max-silent-time . ,(* 12 3600)))) ;; 12h — network stalls
+      (home-page "https://huggingface.co/unsloth/gpt-oss-20b-GGUF")
+      (synopsis "GPT OSS 20B model weights in GGUF format")
+      (description "Quantized GGUF weights for the GPT OSS 20B model.")
+      (license #f))))
 
 (define-record-type* <llama-cpp-model>
   llama-cpp-model make-llama-cpp-model
