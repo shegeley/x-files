@@ -46,14 +46,27 @@
 (define-record-type* <llama-cpp-model>
   llama-cpp-model make-llama-cpp-model
   llama-cpp-model?
-  (name         llama-cpp-model-name)           ;; string, used in shepherd provision and log file name
-  (model-path   llama-cpp-model-path)           ;; path to .gguf file
-  (port         llama-cpp-model-port            ;; port string
-                (default "9090"))
-  (context-size llama-cpp-model-context-size    ;; context window size string
-                (default "16384"))
-  (parallel     llama-cpp-model-parallel        ;; number of parallel slots string
-                (default "4")))
+  (name             llama-cpp-model-name)              ;; string — shepherd provision + log file suffix
+  (model-path       llama-cpp-model-path)              ;; path to .gguf file
+  (port             llama-cpp-model-port               ;; --port
+                    (default "9090"))
+  (context-size     llama-cpp-model-context-size       ;; -c   context window in tokens
+                    (default "16384"))
+  (parallel         llama-cpp-model-parallel           ;; -np  parallel request slots
+                    (default "4"))
+  ;; GPU / performance knobs
+  (gpu-layers       llama-cpp-model-gpu-layers         ;; -ngl layers to offload to GPU VRAM;
+                    (default "999"))                   ;;      999 = offload everything that fits,
+                                                       ;;      remainder runs on CPU using system RAM
+  (flash-attention? llama-cpp-model-flash-attention?   ;; -fa  fused attention kernel —
+                    (default #t))                      ;;      reduces VRAM pressure, faster on RDNA3
+  (threads          llama-cpp-model-threads            ;; -t   CPU threads for non-GPU work
+                    (default #f))                      ;;      #f = let llama-cpp auto-detect
+  ;; NOTE: for AMD GPUs (ROCm/HIP) you may need HSA_OVERRIDE_GFX_VERSION=11.0.0
+  ;; if your card (e.g. Navi 32 / RX 7700 XT / 7800 XT) is not yet in ROCm's
+  ;; supported list.  Set it system-wide in /etc/environment or per-session.
+  (extra-args       llama-cpp-model-extra-args         ;; list of extra CLI flags,
+                    (default '())))                    ;;   e.g. '("--numa" "distribute")
 
 (define-record-type* <llama-cpp-configuration>
   llama-cpp-configuration make-llama-cpp-configuration
@@ -74,22 +87,31 @@
      (system? #t))))
 
 (define (llama-cpp-model->shepherd-service model)
-  (let* [(name         (llama-cpp-model-name model))
-         (model-path   (llama-cpp-model-path model))
-         (port         (llama-cpp-model-port model))
-         (context-size (llama-cpp-model-context-size model))
-         (parallel     (llama-cpp-model-parallel model))
-         (log-file     (string-append "/var/log/llama-cpp-" name ".log"))
-         (provision    (list (string->symbol (string-append "llama-cpp-" name))))]
+  (let* [(name             (llama-cpp-model-name model))
+         (model-path       (llama-cpp-model-path model))
+         (port             (llama-cpp-model-port model))
+         (context-size     (llama-cpp-model-context-size model))
+         (parallel         (llama-cpp-model-parallel model))
+         (gpu-layers       (llama-cpp-model-gpu-layers model))
+         (flash-attention? (llama-cpp-model-flash-attention? model))
+         (threads          (llama-cpp-model-threads model))
+         (extra-args       (llama-cpp-model-extra-args model))
+         (log-file         (string-append "/var/log/llama-cpp-" name ".log"))
+         (provision        (list (string->symbol (string-append "llama-cpp-" name))))]
     (shepherd-service
       (provision     provision)
       (requirement   '(user-processes networking))
       (start         #~(make-forkexec-constructor
-                        (list #$(file-append llama-cpp "/bin/llama-server")
-                              "-m" #$model-path
-                              "-c" #$context-size
-                              "-np" #$parallel
-                              "--port" #$port)
+                        (append
+                         (list #$(file-append llama-cpp "/bin/llama-server")
+                               "-m"    #$model-path
+                               "-c"    #$context-size
+                               "-np"   #$parallel
+                               "--port" #$port
+                               "-ngl"  #$gpu-layers)
+                         (if #$flash-attention? '("-fa") '())
+                         (if #$threads (list "-t" #$threads) '())
+                         '#$extra-args)
                         #:log-file #$log-file
                         #:user "llama-cpp"
                         #:group "llama-cpp"))
