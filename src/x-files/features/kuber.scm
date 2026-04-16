@@ -42,7 +42,11 @@
                                   (extra-arguments '("--enable-worker"))))
           (k0s-worker-config (k0s-worker-configuration))
           (kubectl-alias? #t)
-          (helm helm))
+          (helm helm)
+          ;; Set to #f on client machines that only need kubectl/helm,
+          ;; not a local k0s controller/worker (e.g. laptops/desktops
+          ;; managing a remote cluster).
+          (server? #t))
 
   (define (get-home-services config)
     (append (emacs-kuber config)
@@ -54,11 +58,13 @@
                              home-profile-service-type (list helm)))))
 
   (define (get-system-services config)
-    (list
-     (simple-service 'packages-for-kuber
-                     profile-service-type (list kubectl))
-     (service k0s-controller-service-type k0s-controller-config)
-     (service k0s-worker-service-type k0s-worker-config)))
+    (append
+     (list (simple-service 'packages-for-kuber
+                           profile-service-type (list kubectl)))
+     (if server?
+         (list (service k0s-controller-service-type k0s-controller-config)
+               (service k0s-worker-service-type k0s-worker-config))
+         '())))
 
   (feature
    (name 'kuber)
