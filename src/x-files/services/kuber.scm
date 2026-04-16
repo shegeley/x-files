@@ -13,6 +13,7 @@
 
   #:export (k0s-controller-configuration
             k0s-controller-configuration?
+            k0s-controller-configuration-config-file
             k0s-controller-service-type
             k0s-worker-configuration
             k0s-worker-configuration?
@@ -28,8 +29,9 @@
 (define-record-type* <k0s-controller-configuration>
   k0s-controller-configuration make-k0s-controller-configuration
   k0s-controller-configuration?
-  (k0s k0s-controller-configuration-k0s (default k0s))
-  (log-file k0s-controller-log-file (default "/var/log/k0s-controller"))
+  (k0s            k0s-controller-configuration-k0s            (default k0s))
+  (log-file       k0s-controller-log-file                     (default "/var/log/k0s-controller"))
+  (config-file    k0s-controller-configuration-config-file    (default #f))
   (extra-arguments k0s-controller-configuration-extra-arguments (default '())))
 
 (define (k0s-controller-shepherd-service config)
@@ -46,6 +48,8 @@
           #$(file-append (k0s-controller-configuration-k0s config)
                          "/bin/k0s")
           "controller"
+          #$@(let ((cfg (k0s-controller-configuration-config-file config)))
+               (if cfg (list "--config" cfg) '()))
           #$@(k0s-controller-configuration-extra-arguments config))
          #:environment-variables '#$%default-system-environment
          #:log-file #$(k0s-controller-log-file config)))
