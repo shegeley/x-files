@@ -33,3 +33,7 @@ system-test-datomic-dev:
 system-test-datomic-postgres:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services datomic) %test-datomic-postgres)'
+
+system-test-remark42:
+	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
+	  -e '(@ (x-files tests services remark42) %test-remark42)'
