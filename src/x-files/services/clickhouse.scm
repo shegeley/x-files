@@ -135,6 +135,10 @@
              (gid (passwd:gid pw)))
         (for-each (lambda (dir) (chown dir uid gid))
                   (list #$(cfg config 'data-dir)
+                        (string-append #$(cfg config 'data-dir) "/tmp")
+                        (string-append #$(cfg config 'data-dir) "/user_files")
+                        (string-append #$(cfg config 'data-dir) "/access")
+                        (string-append #$(cfg config 'data-dir) "/format_schemas")
                         #$(cfg config 'log-dir)))
         (chown (string-append #$(cfg config 'data-dir) "/users.xml") uid gid))))
 
