@@ -1,6 +1,27 @@
 (channel-news
  (version 0)
  (entry
+  (commit "6fefafacb5825f4879a7d7ccedc17dc84be4f5a2")
+  (title (en "Phosh: phone shell and compositor"))
+  (body (en "Added @code{phosh} 0.55.0 and @code{phoc} 0.55.0 (Wayland compositor)
+for mobile devices.  Includes bumped dependencies: @code{polkit-next} 124,
+@code{gmobile-next} 0.7.1, @code{feedbackd-next} 0.8.9, @code{libmbim-next} 1.32,
+@code{libqmi-next} 1.36, and @code{modem-manager-next} 1.24.2.
+Based on the old Guix issue #44400, updated from 0.14 to current.")))
+ (entry
+  (commit "3b358d3a4cd87970f074bc4a2b35d2cc93ef2cdc")
+  (title (en "Valentina: pattern-making software"))
+  (body (en "Added @code{valentina} package for open-source pattern-making
+for sewing.")))
+ (entry
+  (commit "40f882e1006b90949cd78a95558e2df3cec9bc54")
+  (title (en "Qbs: Qt Build Suite"))
+  (body (en "Added @code{qbs} package.")))
+ (entry
+  (commit "e2f7c7648bd054dc9553bd64cecf117d53a9d1c0")
+  (title (en "ClickHouse: fix data directory permissions"))
+  (body (en "The ClickHouse service now chowns all data-dir subdirectories.")))
+ (entry
   (commit "52cecdfec45bece4528ff61b61d28cacb3e87afe")
   (title (en "ClickHouse: package, service, system test"))
   (body (en "Added @code{clickhouse-bin} package (version 25.8.22.28 LTS, x86_64 and aarch64)
