@@ -8,6 +8,30 @@
                                                    emacs-org-ql))
   #:use-module (gnu packages))
 
+(define-public emacs-prisma-ts-mode
+  (let [(url "https://github.com/nverno/prisma-ts-mode")
+        (commit "c63117764dc9e177aea7ddbef23c47feba1523d8")
+        (version "1.0.0")
+        (hash "19mhcr7v11shhzf1p5b6wbb9b8hx1q0wpzwrxhgypmzvx9837mgz")]
+    (package
+      (name "emacs-prisma-ts-mode")
+      (version (git-version version "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url url)
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256 (base32 hash))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f))
+      (home-page url)
+      (synopsis "Major mode for Prisma using tree-sitter")
+      (description "Tree-sitter based major mode for Prisma schema files.
+Provides support for indentation, font-locking, imenu, and structural navigation.")
+      (license license:gpl3+))))
+
 (define-public emacs-gptel-got
   (let [(url "https://codeberg.org/bajsicki/gptel-got")
         (commit "f25c56c4b3fae3bf435e3a82723438b49ac6878b")
