@@ -137,6 +137,7 @@ HostBinaries=~a/bin
                                    (number->string (parallel-job-count))
                                    "1")
                       "config:release" "project.enableConan:false"
+                      "qbs.installPrefix:/"
                       (string-append
                        "moduleProviders.qbspkgconfig.extraPaths:"
                        (string-join
@@ -144,9 +145,46 @@ HostBinaries=~a/bin
                         ",")))))
           (replace 'install
             (lambda* (#:key outputs #:allow-other-keys)
-              (invoke "qbs" "install" "--no-build" "-d" "../build"
-                      "--install-root" (assoc-ref outputs "out")
-                      "config:release"))))))
+              (let ((out (assoc-ref outputs "out")))
+                (invoke "qbs" "install" "--no-build" "-d" "../build"
+                        "--install-root" out
+                        "config:release"
+                        "qbs.installPrefix:/")
+                ;; Install desktop files.
+                (for-each
+                 (lambda (f)
+                   (install-file f (string-append out "/share/applications")))
+                 (find-files "dist" "\\.desktop$"))
+                ;; Install icons into the hicolor theme.
+                (for-each
+                 (lambda (f)
+                   (let* ((rel (string-drop f (string-length "share/icons/")))
+                          (dest (string-append out "/share/icons/hicolor/" rel)))
+                     (mkdir-p (dirname dest))
+                     (copy-file f dest)))
+                 (find-files "share/icons" "\\.png$"))
+                ;; Symlink shared libraries into per-app lib dirs
+                ;; so the RUNPATH (../lib/<app>) can find them.
+                (let ((valentina-libs
+                       (find-files (string-append out "/lib/valentina")
+                                   "\\.so")))
+                  (for-each
+                   (lambda (app)
+                     (let ((app-lib (string-append out "/lib/" app)))
+                       (mkdir-p app-lib)
+                       (for-each
+                        (lambda (lib)
+                          (let ((dest (string-append app-lib "/"
+                                                     (basename lib))))
+                            (unless (file-exists? dest)
+                              (symlink lib dest))))
+                        valentina-libs)))
+                   '("puzzle" "tape"))
+                ;; Remove .debug test binaries that have corrupt ELF
+                ;; headers and cause RUNPATH validation to fail.
+                (for-each delete-file
+                          (find-files (string-append out "/bin")
+                                      "\\.debug$")))))))))
     (native-inputs (list qbs qttools pkg-config))
     (inputs (list qtbase qtsvg qtwayland xerces-c))
     (home-page "https://smart-pattern.com.ua/valentina/")
