@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "032554a")
+  (title (en "Emacs: prisma-ts-mode"))
+  (body (en "Added @code{emacs-prisma-ts-mode} for tree-sitter based Prisma schema editing.")))
+ (entry
+  (commit "a9168e5")
+  (title (en "Valentina: desktop integration"))
+  (body (en "Fixed @code{valentina} install prefix, added desktop files and icons,
+fixed RUNPATH for puzzle and tape binaries.")))
+ (entry
   (commit "6fefafacb5825f4879a7d7ccedc17dc84be4f5a2")
   (title (en "Phosh: phone shell and compositor"))
   (body (en "Added @code{phosh} 0.55.0 and @code{phoc} 0.55.0 (Wayland compositor)
