@@ -6,6 +6,7 @@
   #:use-module ((guix build-system emacs) #:select (emacs-build-system))
   #:use-module ((gnu packages emacs-xyz) #:select (emacs-gptel
                                                    emacs-org-ql))
+  #:use-module ((gnu packages tree-sitter) #:select (tree-sitter-prisma))
   #:use-module (gnu packages))
 
 (define-public emacs-prisma-ts-mode
@@ -26,6 +27,7 @@
          (sha256 (base32 hash))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f))
+      (propagated-inputs (list tree-sitter-prisma))
       (home-page url)
       (synopsis "Major mode for Prisma using tree-sitter")
       (description "Tree-sitter based major mode for Prisma schema files.
