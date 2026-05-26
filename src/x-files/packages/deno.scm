@@ -11,7 +11,7 @@
 
 (define target->bin-name
   '(("x86_64-linux"  . "deno-x86_64-unknown-linux-gnu.zip")
-    ("aarch64-linux" . "deno-aarch64-unkown-linux-gnu.zip")))
+    ("aarch64-linux" . "deno-aarch64-unknown-linux-gnu.zip")))
 
 (define targets (map car target->bin-name))
 
