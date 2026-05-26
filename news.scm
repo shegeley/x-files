@@ -1,9 +1,13 @@
 (channel-news
  (version 0)
  (entry
-  (commit "032554a")
-  (title (en "Emacs: prisma-ts-mode"))
-  (body (en "Added @code{emacs-prisma-ts-mode} for tree-sitter based Prisma schema editing.")))
+  (commit "aaf3072")
+  (title (en "Deno 2.8.0"))
+  (body (en "Updated @code{deno} from 2.7.11 to 2.8.0.  Also fixed aarch64 binary URL typo.")))
+ (entry
+  (commit "dadd21d")
+  (title (en "Emacs: prisma-ts-mode + tree-sitter-prisma"))
+  (body (en "Added @code{tree-sitter-prisma} as a propagated input to @code{emacs-prisma-ts-mode}.")))
  (entry
   (commit "a9168e5")
   (title (en "Valentina: desktop integration"))
