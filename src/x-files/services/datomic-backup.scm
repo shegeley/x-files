@@ -127,14 +127,38 @@ Examples:
       #~(begin
           (use-modules (ice-9 format)
                        (ice-9 ftw)
+                       (ice-9 popen)
+                       (ice-9 rdelim)
+                       (srfi srfi-1)
                        (srfi srfi-19))
+
+          (define psql-bin (string-append #$postgresql "/bin/psql"))
+
+          (define (discover-databases)
+            "Query postgres for all datomic database names."
+            (let* ((port (open-pipe* OPEN_READ
+                                     psql-bin
+                                     "-U" "datomic" "-h" "localhost"
+                                     "-d" "datomic" "-tA" "-c"
+                                     "SELECT DISTINCT map FROM datomic_kvs WHERE map NOT LIKE '%$%';"))
+                   (output (let loop ((lines '()))
+                             (let ((line (read-line port)))
+                               (if (eof-object? line)
+                                   (reverse lines)
+                                   (loop (cons (string-trim-both line)
+                                               lines)))))))
+              (close-pipe port)
+              (filter (lambda (s) (not (string-null? s))) output)))
 
           (let* ((date-str (date->string (current-date) "~Y-~m-~d_~H~M~S"))
                  (datomic-bin (string-append #$datomic "/bin/datomic"))
                  (pg-dump-bin (string-append #$postgresql "/bin/pg_dump"))
                  (gzip-bin    (string-append #$gzip "/bin/gzip"))
                  (backup-base #$backup-dir)
-                 (pg-backup-dir (string-append backup-base "/pg")))
+                 (pg-backup-dir (string-append backup-base "/pg"))
+                 (db-names (if (null? '#$db-names)
+                               (discover-databases)
+                               '#$db-names)))
 
             ;; 1. PostgreSQL-level backup
             (let ((pg-file (string-append pg-backup-dir "/datomic-" date-str ".sql")))
@@ -154,6 +178,7 @@ Examples:
                             (list-tail (sort files string>?) 7)))))
 
             ;; 2. Datomic-level backups (per database)
+            (format #t "~a databases to backup: ~a~%" date-str db-names)
             (for-each
              (lambda (db-name)
                (let* ((db-backup-dir (string-append backup-base "/" db-name))
@@ -164,7 +189,7 @@ Examples:
                          date-str db-name db-backup-dir)
                  (system* datomic-bin "backup-db" uri
                           (string-append "file:" db-backup-dir))))
-             '#$db-names)
+             db-names)
 
             (format #t "~a backup complete~%" date-str)))))
 
