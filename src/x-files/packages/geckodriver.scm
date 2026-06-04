@@ -11,21 +11,19 @@
 
 (define target->gecko-target
   '(("x86_64-linux"  . "linux64")
-    ("i686-linux"    . "linux32")
     ("aarch64-linux" . "linux-aarch64")))
 
 (define targets (map car target->gecko-target))
 
 (define target->hash
-  '(("x86_64-linux"  . "011yh9jqznz0x4zbh3n6fd7hvmn7vi50zmbb1ji8d9mhgrq3iphb")
-    ("i686-linux"    . "10yn8fw2q6pwgnqr8kn6639lanzcv7j72hp0m8qrfn1dha2lbp95")
-    ("aarch64-linux" . "0ha2vh3kg2n8pzvpgp2z3fh4frwqz91nv2804wlrkjh5izy17zdm")))
+  '(("x86_64-linux"  . "0j75c8851n32b8fm20siysij7v7zm84i638n1i088rl1v4xy7m4h")
+    ("aarch64-linux" . "0n21ml264dnpp74ab0jxbw9bwsl7mak7ip25ifknsxz1k2aw4sx1")))
 
 (define-public geckodriver
   (let* [(target       (or (%current-target-system) (%current-system)))
          (gecko-target (assoc-ref target->gecko-target target))
          (hash         (assoc-ref target->hash target))
-         (version      "0.36.0")
+         (version      "0.37.0")
          (uri          (string-append
                         "https://github.com/mozilla"
                         "/geckodriver/releases/download/v" version
