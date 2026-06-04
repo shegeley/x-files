@@ -7,15 +7,15 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (nonguix licenses))
 
-(define vault-version "1.21.4")
+(define vault-version "2.0.1")
 
 (define target->vault-target
   '(("x86_64-linux"  . "amd64")
     ("aarch64-linux" . "arm64")))
 
 (define target->vault-hash
-  '(("x86_64-linux"  . "1bixkwybcyi8mbqm959lp48rivnhknfglckr9f41n8pyj0cni6w8")
-    ("aarch64-linux" . "0pg8885s0qxcjwq3yd2rflir7jbf5ahd5d77w82f25md39qfy10i")))
+  '(("x86_64-linux"  . "0d4y7gvcyphhnfhck61g205946976a06cw8nd687a23mdbikpvf6")
+    ("aarch64-linux" . "08g8gjxhzrqkb8bzwry4fba3xfpfwagi3aa0857jh7ppmw7l1iq2")))
 
 (define-public vault
   (let* [(target      (or (%current-target-system) (%current-system)))
