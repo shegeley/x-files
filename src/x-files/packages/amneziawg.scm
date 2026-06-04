@@ -31,7 +31,7 @@
 (define-public go-github-com-amnezia-vpn-amneziawg-go
   (package
     (name "go-github-com-amnezia-vpn-amneziawg-go")
-    (version "0.2.16")
+    (version "0.2.18")
     (source
      (origin
        (method git-fetch)
@@ -40,7 +40,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16l6qwq5rzqpqkvziiaz8g0q59b6pdq50iv7cs9bfyk0ylq9cs94"))))
+        (base32 "0dasy6548vnkw65ncwryqrbvf2acls1ccj8rlidw9hx1fa7zrqyf"))))
     (native-inputs
      (list go-golang-org-x-net
            go-golang-org-x-sys
@@ -116,7 +116,7 @@ architecture and high performance of the original.")
 (define-public wireproxy-awg
   (package
     (name "wireproxy-awg")
-    (version "1.0.13")
+    (version "1.0.15")
     (source
      (origin
        (method git-fetch)
@@ -125,7 +125,7 @@ architecture and high performance of the original.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p4spqgl1yg0zqi2lmn2gi6z2szlvm955h37dmfwf9ajd82jwcm3"))))
+        (base32 "153ib35jy8syx28qajvcd50dhg0dh302gz1v36xi0c5p6h77kni1"))))
     (build-system go-build-system)
     (arguments
      (list
