@@ -9,17 +9,17 @@
 
   #:use-module ((guix licenses) #:prefix license:))
 
-(define xray-core-version "26.2.6")
+(define xray-core-version "26.3.27")
 
 (define target->xray-core-target
-  ;; TODO: add others
-  '(("x86_64-linux"  . "linux-64")))
+  '(("x86_64-linux"  . "linux-64")
+    ("aarch64-linux" . "linux-arm64-v8a")))
 
 (define targets (map car target->xray-core-target))
 
 (define target->xray-core-hash
-  ;; TODO: add other
-  '(("x86_64-linux"  . "11g3z34sncmpid8fry7g0gh0nhfc5n2d9hm1zw3a81z2ardm7ki9")))
+  '(("x86_64-linux"  . "1bn8yw47ciihk6zfc3qykl8b5x1cjzaclpp3drvrfkbl6zwrmk93")
+    ("aarch64-linux" . "0g21h3g8rr39rf19sqzqj7gnzgj2i84csrqgfdzhbqqlwqx2hc2d")))
 
 (define-public xray-core
   (let* [(target (or (%current-target-system) (%current-system)))
