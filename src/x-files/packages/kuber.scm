@@ -15,14 +15,14 @@
   (let ((version-suffix "+k0s.0"))
     (package
       (name "k0s")
-      (version "1.31.3")
+      (version "1.35.4")
       (source (origin
                 (method url-fetch)
                 (uri (string-append
                       "https://github.com/k0sproject/k0s/releases/download/v"
                       version version-suffix
                       "/k0s-v" version version-suffix "-amd64"))
-                (sha256 (base32 "0nbks656j1m42dws18mm7qw2np2fqrziqq16av54mh3s4dxs2m7d"))))
+                (sha256 (base32 "06spyy4n65nwc64xsli9mvrjpc408dk2ihxjka5q6cvnrg476n8x"))))
       (native-inputs (list binutils coreutils))
       (build-system trivial-build-system)
       (arguments
@@ -49,14 +49,14 @@
 (define-public kubectl
   (package
     (name "kubectl")
-    (version "1.30.3")
+    (version "1.35.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dl.k8s.io/release/v"
                                   version "/bin/linux/amd64/kubectl"))
               (sha256
                (base32
-                "1rf79s2m1d953aprcchg4vz6iw26ni9cirj36rn2csr3plb3in5b"))))
+                "1z8fa79wf956vdwlfamyb35p3zdmxncj5bb43gb8ys4syq6l6adm"))))
     (build-system trivial-build-system)
     (native-inputs `(("source" ,source)))
     (arguments
@@ -78,14 +78,14 @@
 (define-public helm
   (package
     (name "helm")
-    (version "3.16.3")
+    (version "4.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://get.helm.sh/helm-v"
                                   version "-linux-amd64.tar.gz"))
               (sha256
                (base32
-                "1sllnavlrpg0gl3mxxv41b0g8wg042ws6cjl7k9fwl8935wmqdgm"))))
+                "15j0mwvd54p2s6fsh79vdxfb63scavcpd6c3wcklpb743fbypnwp"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
