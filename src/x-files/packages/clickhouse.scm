@@ -13,8 +13,8 @@
 
   #:use-module ((nonguix build-system binary) #:select (binary-build-system)))
 
-(define %clickhouse-version "25.8.22.28")
-(define %clickhouse-release-tag "v25.8.22.28-lts")
+(define %clickhouse-version "26.3.12.3")
+(define %clickhouse-release-tag "v26.3.12.3-lts")
 
 (define (clickhouse-url file)
   (string-append
@@ -29,13 +29,13 @@
          (hash (match (list component
                             (or (%current-target-system) (%current-system)))
                  (('server "aarch64-linux")
-                  "18pwk4h5mgzfsgvi3hxqvccq6f2r17h3sdcp4d0bh12nq9pw3dwl")
+                  "1x7n4gw9ihipgx18j34aqh2qr4h2knlqhw8gx6xxpih6f93sxv8z")
                  (('server _)
-                  "0dd66ld1w2bsna7w8f7z6lnn7l7z6v4hsibm9zybzabzv9iy1yi0")
+                  "0ddq7a2dxzkrl5kz9an514ymgv1d9pnsxswdzinzk6aly52dzmcp")
                  (('client "aarch64-linux")
-                  "0j11nl1i3s494kl44gk0n3k8ibgqr0rkx4wx5ss5pq9ra49bs85x")
+                  "00mwr2dsqw8y9j2vhjlnfqr3vd0n3m7m671bdrqijzaqlr2gv5l9")
                  (('client _)
-                  "08a47sc1kg9n1xl8whi1q8iw4lrlpfwqlb7viwbxrf604d2k8l4g"))))
+                  "05wngzkz5dgv7kll0wp4l1c6ar72xicbf40slyxz99y0a1mz7dy3"))))
     (origin
       (method url-fetch)
       (uri (clickhouse-url
@@ -53,9 +53,9 @@
                     (_ "amd64")))
             (hash (match (or (%current-target-system) (%current-system))
                     ("aarch64-linux"
-                     "0j9r2qjwsrg373ikxmf9qkivymq51w3zcfkmfw57mcgdx39l1ya1")
+                     "1a9v57c0x9ndfw641j9q3m7pb951ipsam57mx1fpqjnlsjaw46p2")
                     (_
-                     "1xgivnhdvir7wgwhgc27wbwjpvni4sgx01f9ra7xgw8anafi714h"))))
+                     "1mpa8ns2msx7yf9r7685zlwzassh9pmymcv4jh7niygn8vbyxfkx"))))
        (origin
          (method url-fetch)
          (uri (clickhouse-url
