@@ -18,7 +18,7 @@
 (define-public zapret2
   (package
    (name "zapret2")
-   (version "0.9.5")
+   (version "0.9.5.2")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -27,7 +27,7 @@
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "1awl8ngh6x6sdn04az1rrsw1v7ignaz8bp4d3067li8gc9bp6cnd"))))
+              "1ppdq7wzj3l9i04f84w703cym7vx8vvc2yxy3pdnhccrph4wbq7c"))))
    (build-system gnu-build-system)
    (native-inputs (list
                    pkg-config
