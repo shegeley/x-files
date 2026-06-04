@@ -19,7 +19,7 @@
   ;; https://patchwise.org/77780
   (package
     (name "gpaste")
-    (version "45.3")
+    (version "45.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -28,7 +28,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fdki7k9ak9vsw77hfx7fwfmarnkg78f5p1mlx92n8zgrl6f5car"))
+                "12dkzlv5mcyanxl23lxljzdzjzf52wlii9yx54jmiinnpnh1yj2i"))
               (patches
                (parameterize
                    ((%patch-path
@@ -103,7 +103,7 @@ export default (await import('./.@originalName@-wrapped.js')).default;"))
     (home-page "https://github.com/Keruspe/GPaste")
     (synopsis "Clipboard management system for GNOME Shell")
     (description "GPaste is a clipboard manager, a tool which allows you to
-keep a trace of what you’re copying and pasting.  Is is really useful when
+keep a trace of what you're copying and pasting.  Is is really useful when
 you go through tons of documentation and you want to keep around a bunch of
 functions you might want to use, for example.  The clipboard manager will
 store an history of everything you do, so that you can get back to older
