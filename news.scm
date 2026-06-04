@@ -1,6 +1,25 @@
 (channel-news
  (version 0)
  (entry
+  (commit "1093a2b")
+  (title (en "GPaste 45.6 + simplified typelib wrapping"))
+  (body (en "Updated @code{gpaste} from 45.3 to 45.6.  Dropped @file{fix-paths.patch}
+and replaced the NixOS-style JS wrapper with direct preamble injection.")))
+ (entry
+  (commit "0c1022f")
+  (title (en "ClickHouse 26.3.12.3-lts"))
+  (body (en "Updated @code{clickhouse-bin} from 25.8.22.28-lts to 26.3.12.3-lts.")))
+ (entry
+  (commit "e61c6b0")
+  (title (en "Package version bumps"))
+  (body (en "Updated @code{deno} 2.8.2, @code{geckodriver} 0.37.0 (dropped i686),
+@code{task} 3.51.1, @code{xray-core} 26.3.27 (+aarch64),
+@code{coder} 2.33.6, @code{clojure-tools} 1.12.5.1654, @code{etcd} 3.6.12,
+@code{zellij} 0.44.3, @code{remark42} 1.16.1 (+aarch64), @code{amneziawg-go} 0.2.18,
+@code{wireproxy-awg} 1.0.15, @code{k0s} 1.35.4, @code{kubectl} 1.35.4,
+@code{helm} 4.2.0, @code{vault} 2.0.1, @code{zapret2} 0.9.5.2,
+@code{grafana} 13.0.2.")))
+ (entry
   (commit "aaf3072")
   (title (en "Deno 2.8.0"))
   (body (en "Updated @code{deno} from 2.7.11 to 2.8.0.  Also fixed aarch64 binary URL typo.")))
