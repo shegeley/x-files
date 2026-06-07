@@ -8,6 +8,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
+  #:use-module ((gnu packages) #:hide (search-auxiliary-file))
   #:use-module (guix build-system meson)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -27,7 +28,14 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "12dkzlv5mcyanxl23lxljzdzjzf52wlii9yx54jmiinnpnh1yj2i"))))
+                "12dkzlv5mcyanxl23lxljzdzjzf52wlii9yx54jmiinnpnh1yj2i"))
+              (patches
+               (parameterize
+                   ((%patch-path
+                     (map (lambda (directory)
+                            (string-append directory "/x-files/packages/patches/gpaste"))
+                          %load-path)))
+                 (search-patches "fix-paths.patch")))))
     (build-system meson-build-system)
     (native-inputs
      (list gcr
@@ -55,28 +63,43 @@
                              #$output "/etc/systemd/user"))
            #:phases
            #~(modify-phases %standard-phases
-               (add-after 'install 'fix-typelib-path
+               (add-after 'unpack 'fix-introspection-install-dir
                  (lambda _
-                   (use-modules (ice-9 textual-ports))
-                   (let* [(ext-dir
+                   (substitute* "src/libgpaste/gpaste/gpaste-settings.c"
+                     (("@gschemasCompiled@")
+                      (string-append #$output "/share/glib-2.0/schemas/")))))
+               (add-after 'install 'wrap-typelib
+                 ;; absolute copy from nixpkgs
+                 ;; https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/gp/gpaste/package.nix#L67
+                 (lambda _
+                   (let* [(extension-dir
                            (string-append
-                            #$output "/share/gnome-shell/extensions/"
-                            "GPaste@gnome-shell-extensions.gnome.org"))
-                          (typelib-dir
-                           (string-append #$output "/lib/girepository-1.0"))
-                          (preamble
-                           (string-append
-                            "import GIRepository from 'gi://GIRepository';\n"
-                            "GIRepository.Repository.prepend_search_path('"
-                            typelib-dir "');\n"))]
-                     (for-each
-                      (lambda (f)
-                        (let* [(path (string-append ext-dir "/" f))
-                               (content (call-with-input-file path get-string-all))]
-                          (call-with-output-file path
-                            (lambda (port) (display preamble port)
-                                           (display content port)))))
-                      '("extension.js" "prefs.js"))))))))
+                            #$output
+                            "/share"
+                            "/gnome-shell"
+                            "/extensions"
+                            "/GPaste@gnome-shell-extensions.gnome.org"))
+                          (extension.js (string-append extension-dir "/extension.js"))
+                          (extension-wrapped.js (string-append extension-dir "/.extension-wrapped.js"))
+                          (prefs.js (string-append extension-dir "/prefs.js"))
+                          (prefs-wrapped.js (string-append extension-dir "/.prefs-wrapped.js"))
+                          (wrapper.js
+                           #$(plain-file
+                              "wrapper.js"
+                              "import GIRepository from 'gi://GIRepository';
+GIRepository.Repository.prepend_search_path('@typelibDir@');
+export default (await import('./.@originalName@-wrapped.js')).default;"))
+                          (typelibdir (string-append #$output "/lib/girepository-1.0"))]
+                     (rename-file extension.js extension-wrapped.js)
+                     (rename-file prefs.js prefs-wrapped.js)
+                     (copy-file wrapper.js extension.js)
+                     (copy-file wrapper.js prefs.js)
+                     (substitute* extension.js
+                       (("@originalName@") "extension")
+                       (("@typelibDir@") typelibdir))
+                     (substitute* prefs.js
+                       (("@originalName@") "prefs")
+                       (("@typelibDir@") typelibdir))))))))
     (home-page "https://github.com/Keruspe/GPaste")
     (synopsis "Clipboard management system for GNOME Shell")
     (description "GPaste is a clipboard manager, a tool which allows you to
