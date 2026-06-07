@@ -141,9 +141,9 @@
     ("port"                   . ,(assoc-ref config 'port))
     ("data-dir"               . ,(data-dir config))
     ("log-dir"                . ,(assoc-ref config 'log-dir))
-    ("memory-index-threshold" . "32m")
-    ("memory-index-max"       . "256m")
-    ("object-cache-max"       . "128m")))
+    ("memory-index-threshold" . ,(or (assoc-ref config 'memory-index-threshold) "32m"))
+    ("memory-index-max"       . ,(or (assoc-ref config 'memory-index-max) "256m"))
+    ("object-cache-max"       . ,(or (assoc-ref config 'object-cache-max) "128m"))))
 
 (define (datomic-postgres-roles config)
  (let* [(username      (assoc-ref config 'sql-user))
@@ -190,6 +190,10 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
   ;; any other PostgreSQL role.
   (let* ((props      (transactor/postgres-config config))
          (props-file (serialize-transactor-config props))
+         ;; Extra args passed to bin/transactor BEFORE the props file. The
+         ;; transactor script parses -Xmx*/-Xms* and forwards the rest as
+         ;; JAVA_OPTS, so e.g. '("-Xmx4g" "-Xms1g") bumps the transactor heap.
+         (java-opts  (or (assoc-ref config 'java-opts) '()))
          (bin        (file-append datomic "/bin/transactor")))
     (program-file "datomic-transactor-wrapper"
       #~(begin
@@ -205,7 +209,7 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
               #t)
              ((< tries 60) (sleep 1) (loop (+ tries 1)))
              (else         (exit 1))))
-          (execl #$bin #$bin #$props-file)))))
+          (execl #$bin #$bin #$@java-opts #$props-file)))))
 
 (define (datomic-postgres-transactor-shepherd-service config)
   (shepherd-service
@@ -238,7 +242,11 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
     (log-dir          . "/var/log/datomic")
     (sql-url          . "jdbc:postgresql://localhost:5432/datomic")
     (sql-user         . "datomic")
-    (sql-password-file . "")))
+    (sql-password-file . "")
+    ;; Tunables (all optional). java-opts is a list of args passed to
+    ;; bin/transactor before the props file (e.g. ("-Xmx4g" "-Xms1g")); the
+    ;; memory-* / object-cache-max strings are Datomic transactor properties.
+    (java-opts        . ())))
 
 (define-public datomic-postgres-transactor-service-type
   (service-type
