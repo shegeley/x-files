@@ -48,6 +48,8 @@
   llama-cpp-model?
   (name             llama-cpp-model-name)              ;; string — shepherd provision + log file suffix
   (model-path       llama-cpp-model-path)              ;; path to .gguf file
+  (host             llama-cpp-model-host               ;; --host  bind address;
+                    (default "127.0.0.1"))             ;;   "0.0.0.0" exposes on all interfaces
   (port             llama-cpp-model-port               ;; --port
                     (default "9090"))
   (context-size     llama-cpp-model-context-size       ;; -c   context window in tokens
@@ -89,6 +91,7 @@
 (define (llama-cpp-model->shepherd-service model)
   (let* [(name             (llama-cpp-model-name model))
          (model-path       (llama-cpp-model-path model))
+         (host             (llama-cpp-model-host model))
          (port             (llama-cpp-model-port model))
          (context-size     (llama-cpp-model-context-size model))
          (parallel         (llama-cpp-model-parallel model))
@@ -107,6 +110,7 @@
                                "-m"    #$model-path
                                "-c"    #$context-size
                                "-np"   #$parallel
+                               "--host" #$host
                                "--port" #$port
                                "-ngl"  #$gpu-layers)
                          (if #$flash-attention? '("-fa") '())
