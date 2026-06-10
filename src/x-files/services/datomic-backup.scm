@@ -130,14 +130,34 @@ Examples:
                        (ice-9 popen)
                        (ice-9 rdelim)
                        (srfi srfi-1)
+                       (srfi srfi-13)
                        (srfi srfi-19))
 
-          ;; Databases to back up come from #:db-names ONLY. SQL auto-discovery
-          ;; was removed: it queried datomic_kvs.map, which holds ~50k internal
-          ;; storage blobs (not db names), so the per-db loop spawned a JVM per
-          ;; blob and pinned the host for hours. The pg_dump below already
-          ;; captures the whole storage; per-db datomic backups run only for the
-          ;; databases explicitly listed in #:db-names.
+          ;; Auto-discover Datomic databases via the PEER API
+          ;; (datomic.api/get-database-names). Datomic Pro has NO CLI to list
+          ;; databases, and the old SQL scan of datomic_kvs.map returned ~50k
+          ;; internal storage blobs (not db names) → a `backup-db` JVM per blob →
+          ;; the host pinned for hours. `bin/run -e` evals a form with the peer
+          ;; classpath; lines are tagged "DBNAME:" so any startup noise is ignored.
+          (define (discover-databases)
+            (let* ((run-bin     (string-append #$datomic "/bin/run"))
+                   (storage-uri (string-append "datomic:sql://*?" #$sql-url))
+                   (form (string-append
+                          "(do (require '[datomic.api :as d])"
+                          " (doseq [n (datomic.api/get-database-names \""
+                          storage-uri "\")] (println (str \"DBNAME:\" n))))"))
+                   (port  (open-pipe* OPEN_READ run-bin "-e" form))
+                   (lines (let loop ((acc '()))
+                            (let ((line (read-line port)))
+                              (if (eof-object? line)
+                                  (reverse acc)
+                                  (loop (cons (string-trim-both line) acc)))))))
+              (close-pipe port)
+              (filter-map
+               (lambda (l)
+                 (and (string-prefix? "DBNAME:" l)
+                      (substring l (string-length "DBNAME:"))))
+               lines)))
 
           (let* ((date-str (date->string (current-date) "~Y-~m-~d_~H~M~S"))
                  (datomic-bin (string-append #$datomic "/bin/datomic"))
@@ -145,7 +165,10 @@ Examples:
                  (gzip-bin    (string-append #$gzip "/bin/gzip"))
                  (backup-base #$backup-dir)
                  (pg-backup-dir (string-append backup-base "/pg"))
-                 (db-names '#$db-names))
+                 ;; empty #:db-names → back up EVERY database in storage
+                 (db-names (if (null? '#$db-names)
+                               (discover-databases)
+                               '#$db-names)))
 
             ;; 1. PostgreSQL-level backup
             (let ((pg-file (string-append pg-backup-dir "/datomic-" date-str ".sql")))
@@ -166,7 +189,7 @@ Examples:
 
             ;; 2. Datomic-level backups (only for explicitly-listed databases)
             (if (null? db-names)
-                (format #t "~a no #:db-names configured — datomic-level backup skipped (pg_dump above is a full backup)~%"
+                (format #t "~a no datomic databases found — datomic-level backup skipped (pg_dump above is a full backup)~%"
                         date-str)
                 (begin
                   (format #t "~a databases to backup: ~a~%" date-str db-names)

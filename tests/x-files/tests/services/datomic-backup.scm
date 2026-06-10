@@ -15,6 +15,7 @@
   #:use-module ((gnu packages admin)      #:select (shepherd))
   #:use-module ((gnu system)              #:select (operating-system
                                                     operating-system-user-services))
+  #:use-module ((x-files packages datomic) #:select (datomic))
   #:use-module ((x-files services datomic) #:select (datomic-postgres-transactor-service-type))
   #:use-module ((x-files services datomic-backup) #:select (datomic-restore-script
                                                             datomic-backup-services))
@@ -166,13 +167,14 @@ host all all ::1/128 trust
    (value (run-datomic-backup-test))))
 
 
-;;; --- db-names selection (regression for the 50k-blob runaway) -----------------
+;;; --- db-names selection + peer auto-discovery --------------------------------
 ;;;
-;;; The backup must use #:db-names verbatim and NEVER auto-discover databases by
-;;; querying datomic_kvs.map (which holds ~50k internal storage blobs, not db
-;;; names — that bug spawned a `datomic backup-db` JVM per blob and pinned the
-;;; host). With explicit names it backs up exactly those; with empty names it
-;;; does pg_dump only and skips the per-db loop entirely.
+;;; - explicit #:db-names → backs up exactly those (verbatim, no discovery).
+;;; - empty   #:db-names → auto-discovers EVERY database via the peer API
+;;;   (datomic.api/get-database-names) and backs each up. This is the correct
+;;;   replacement for the old datomic_kvs.map SQL scan, which returned ~50k
+;;;   internal storage blobs (not db names) and spawned a backup-db JVM per blob.
+;;; The test creates a real database and asserts auto-discovery finds + backs it up.
 
 (define %backup-base-os
   (simple-operating-system
@@ -229,7 +231,26 @@ host all all ::1/128 trust
                        (gnu build marionette))
 
           (define marionette (make-marionette (list #$vm)))
-          (define herd #$(file-append shepherd "/bin/herd"))
+          (define herd    #$(file-append shepherd "/bin/herd"))
+          (define run-bin #$(file-append datomic "/bin/run"))
+          (define sql-url "jdbc:postgresql://localhost:5432/datomic")
+
+          ;; Create a Datomic database via the peer (bin/run -e). Retries while
+          ;; the transactor finishes coming up. Returns #t on success.
+          (define (create-db! name)
+            (let loop ((n 12))
+              (cond
+               ((zero? n) #f)
+               ((zero? (status:exit-val
+                        (marionette-eval
+                         `(system* ,run-bin "-e"
+                            (string-append
+                             "(do (require '[datomic.api :as d]) "
+                             "(d/create-database \"datomic:sql://" ,name "?"
+                             ,sql-url "?user=datomic\") (println :ok))"))
+                         marionette)))
+                #t)
+               (else (sleep 3) (loop (- n 1))))))
 
           (define (log-has? path needle)
             (marionette-eval
@@ -263,6 +284,10 @@ host all all ::1/128 trust
           (test-assert "transactor listening"
             (wait-for-tcp-port 4334 marionette #:timeout 300))
 
+          ;; create a real database so auto-discovery has something to find
+          (test-assert "create datomic database 'autodb'"
+            (begin (sleep 5) (create-db! "autodb")))
+
           ;; --- explicit #:db-names '("testdb") ---
           (test-assert "with-names: backup triggered"
             (trigger! "with-names"))
@@ -280,15 +305,23 @@ host all all ::1/128 trust
           (test-assert "with-names: ran `datomic backup-db testdb`"
             (log-has? "/var/log/datomic/with-names.log" "datomic backup-db testdb"))
 
-          ;; --- empty #:db-names '() => pg_dump only, NO per-db loop ---
-          (test-assert "no-names: backup triggered"
+          ;; --- empty #:db-names '() => peer auto-discovery of every database ---
+          (test-assert "auto: backup triggered"
             (trigger! "no-names"))
-          (test-assert "no-names: backup completes"
+          (test-assert "auto: backup completes"
             (wait-complete "/var/log/datomic/no-names.log"))
-          (test-assert "no-names: datomic-level backup skipped (the fix)"
-            (log-has? "/var/log/datomic/no-names.log" "datomic-level backup skipped"))
-          (test-assert "no-names: NO `datomic backup-db` (no 50k-blob runaway)"
-            (not (log-has? "/var/log/datomic/no-names.log" "datomic backup-db")))
+          (test-assert "auto: discovered + backed up 'autodb'"
+            (log-has? "/var/log/datomic/no-names.log" "datomic backup-db autodb"))
+          (test-assert "auto: datomic backup dir for 'autodb' exists"
+            (marionette-eval '(file-exists? "/var/backup/datomic/autodb") marionette))
+          (test-assert "auto: no 50k-blob explosion (few per-db dirs, not thousands)"
+            (marionette-eval
+             '(begin (use-modules (ice-9 ftw))
+                     (< (length (or (scandir "/var/backup/datomic"
+                                             (lambda (f) (not (member f '("." ".." "pg")))))
+                                    '()))
+                        10))
+             marionette))
 
           (test-end))))
 
@@ -298,6 +331,7 @@ host all all ::1/128 trust
   (system-test
    (name "datomic-backup-names")
    (description
-    "datomic-backup uses #:db-names verbatim (no datomic_kvs auto-discovery); \
-empty db-names does pg_dump only and skips the per-db backup loop.")
+    "datomic-backup: explicit #:db-names used verbatim; empty db-names \
+auto-discovers every database via the peer API (get-database-names) and backs \
+each up — proven by creating a real database in the VM.")
    (value (run-datomic-backup-names-test))))
