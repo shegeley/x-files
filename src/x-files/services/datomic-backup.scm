@@ -132,23 +132,12 @@ Examples:
                        (srfi srfi-1)
                        (srfi srfi-19))
 
-          (define psql-bin (string-append #$postgresql "/bin/psql"))
-
-          (define (discover-databases)
-            "Query postgres for all datomic database names."
-            (let* ((port (open-pipe* OPEN_READ
-                                     psql-bin
-                                     "-U" "datomic" "-h" "localhost"
-                                     "-d" "datomic" "-tA" "-c"
-                                     "SELECT DISTINCT map FROM datomic_kvs WHERE map NOT LIKE '%$%';"))
-                   (output (let loop ((lines '()))
-                             (let ((line (read-line port)))
-                               (if (eof-object? line)
-                                   (reverse lines)
-                                   (loop (cons (string-trim-both line)
-                                               lines)))))))
-              (close-pipe port)
-              (filter (lambda (s) (not (string-null? s))) output)))
+          ;; Databases to back up come from #:db-names ONLY. SQL auto-discovery
+          ;; was removed: it queried datomic_kvs.map, which holds ~50k internal
+          ;; storage blobs (not db names), so the per-db loop spawned a JVM per
+          ;; blob and pinned the host for hours. The pg_dump below already
+          ;; captures the whole storage; per-db datomic backups run only for the
+          ;; databases explicitly listed in #:db-names.
 
           (let* ((date-str (date->string (current-date) "~Y-~m-~d_~H~M~S"))
                  (datomic-bin (string-append #$datomic "/bin/datomic"))
@@ -156,9 +145,7 @@ Examples:
                  (gzip-bin    (string-append #$gzip "/bin/gzip"))
                  (backup-base #$backup-dir)
                  (pg-backup-dir (string-append backup-base "/pg"))
-                 (db-names (if (null? '#$db-names)
-                               (discover-databases)
-                               '#$db-names)))
+                 (db-names '#$db-names))
 
             ;; 1. PostgreSQL-level backup
             (let ((pg-file (string-append pg-backup-dir "/datomic-" date-str ".sql")))
@@ -177,19 +164,23 @@ Examples:
                               (delete-file (string-append pg-backup-dir "/" f)))
                             (list-tail (sort files string>?) 7)))))
 
-            ;; 2. Datomic-level backups (per database)
-            (format #t "~a databases to backup: ~a~%" date-str db-names)
-            (for-each
-             (lambda (db-name)
-               (let* ((db-backup-dir (string-append backup-base "/" db-name))
-                      (uri (string-append
-                            "datomic:sql://" db-name
-                            "?" #$sql-url)))
-                 (format #t "~a datomic backup-db ~a → ~a~%"
-                         date-str db-name db-backup-dir)
-                 (system* datomic-bin "backup-db" uri
-                          (string-append "file:" db-backup-dir))))
-             db-names)
+            ;; 2. Datomic-level backups (only for explicitly-listed databases)
+            (if (null? db-names)
+                (format #t "~a no #:db-names configured — datomic-level backup skipped (pg_dump above is a full backup)~%"
+                        date-str)
+                (begin
+                  (format #t "~a databases to backup: ~a~%" date-str db-names)
+                  (for-each
+                   (lambda (db-name)
+                     (let* ((db-backup-dir (string-append backup-base "/" db-name))
+                            (uri (string-append
+                                  "datomic:sql://" db-name
+                                  "?" #$sql-url)))
+                       (format #t "~a datomic backup-db ~a → ~a~%"
+                               date-str db-name db-backup-dir)
+                       (system* datomic-bin "backup-db" uri
+                                (string-append "file:" db-backup-dir))))
+                   db-names)))
 
             (format #t "~a backup complete~%" date-str)))))
 
