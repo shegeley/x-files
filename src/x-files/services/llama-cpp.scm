@@ -64,11 +64,21 @@
                     (default #t))                      ;;      reduces VRAM pressure, faster on RDNA3
   (threads          llama-cpp-model-threads            ;; -t   CPU threads for non-GPU work
                     (default #f))                      ;;      #f = let llama-cpp auto-detect
-  ;; NOTE: for AMD GPUs (ROCm/HIP) you may need HSA_OVERRIDE_GFX_VERSION=11.0.0
-  ;; if your card (e.g. Navi 32 / RX 7700 XT / 7800 XT) is not yet in ROCm's
-  ;; supported list.  Set it system-wide in /etc/environment or per-session.
   (extra-args       llama-cpp-model-extra-args         ;; list of extra CLI flags,
-                    (default '())))                    ;;   e.g. '("--numa" "distribute")
+                    (default '()))                     ;;   e.g. '("--numa" "distribute")
+  ;; Extra "VAR=value" strings added to the server process environment (merged
+  ;; on top of the inherited shepherd env, not replacing it).  The shepherd env
+  ;; is minimal, so GPU backends that resolve their driver via a loader need
+  ;; their search path set here.  For AMD/Vulkan (the ggml `libggml-vulkan.so'
+  ;; backend on RDNA3, e.g. RX 7700/7800 XT) the Vulkan loader otherwise finds
+  ;; no ICD and falls back to CPU — point it at mesa's radv ICD:
+  ;;   (environment (list (string-append
+  ;;     "VK_ICD_FILENAMES=/run/current-system/profile"
+  ;;     "/share/vulkan/icd.d/radeon_icd.x86_64.json")))
+  ;; (ROCm/HIP is an alternative but needs a HIP-built ggml + much larger
+  ;; closure; Vulkan needs nothing beyond this var since ggml already ships it.)
+  (environment      llama-cpp-model-environment        ;; list of "VAR=value"
+                    (default '())))
 
 (define-record-type* <llama-cpp-configuration>
   llama-cpp-configuration make-llama-cpp-configuration
@@ -99,6 +109,7 @@
          (flash-attention? (llama-cpp-model-flash-attention? model))
          (threads          (llama-cpp-model-threads model))
          (extra-args       (llama-cpp-model-extra-args model))
+         (environment      (llama-cpp-model-environment model))
          (log-file         (string-append "/var/log/llama-cpp-" name ".log"))
          (provision        (list (string->symbol (string-append "llama-cpp-" name))))]
     (shepherd-service
@@ -118,7 +129,10 @@
                          '#$extra-args)
                         #:log-file #$log-file
                         #:user "llama-cpp"
-                        #:group "llama-cpp"))
+                        #:group "llama-cpp"
+                        ;; Merge extra vars on top of the inherited env (empty
+                        ;; list => unchanged behavior).  See `environment' field.
+                        #:environment-variables (append '#$environment (environ))))
       (auto-start?   #t)
       (stop          #~(make-kill-destructor))
       (documentation (string-append "Run llama-cpp server for model: " name)))))
