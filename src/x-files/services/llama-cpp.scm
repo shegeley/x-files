@@ -75,10 +75,17 @@
   ;;   (environment (list (string-append
   ;;     "VK_ICD_FILENAMES=/run/current-system/profile"
   ;;     "/share/vulkan/icd.d/radeon_icd.x86_64.json")))
-  ;; (ROCm/HIP is an alternative but needs a HIP-built ggml + much larger
-  ;; closure; Vulkan needs nothing beyond this var since ggml already ships it.)
+  ;; ROCm/HIP is faster than Vulkan on RDNA3 (measured ~31 vs ~12 tok/s on a
+  ;; 7700 XT) but needs a HIP-built ggml/llama-cpp (see (g-files packages
+  ;; llama-hip)) — pass it via the `package' field below; it needs no ICD var,
+  ;; just HOME for ROCm's kernel cache.
   (environment      llama-cpp-model-environment        ;; list of "VAR=value"
-                    (default '())))
+                    (default '()))
+  ;; The llama.cpp package providing bin/llama-server.  Override per model to
+  ;; use a GPU-specific build, e.g. a HIP/ROCm variant for one model and the
+  ;; default (Vulkan/CPU) for another.
+  (package          llama-cpp-model-package
+                    (default llama-cpp)))
 
 (define-record-type* <llama-cpp-configuration>
   llama-cpp-configuration make-llama-cpp-configuration
@@ -110,6 +117,7 @@
          (threads          (llama-cpp-model-threads model))
          (extra-args       (llama-cpp-model-extra-args model))
          (environment      (llama-cpp-model-environment model))
+         (pkg              (llama-cpp-model-package model))
          (log-file         (string-append "/var/log/llama-cpp-" name ".log"))
          (provision        (list (string->symbol (string-append "llama-cpp-" name))))]
     (shepherd-service
@@ -117,7 +125,7 @@
       (requirement   '(user-processes networking))
       (start         #~(make-forkexec-constructor
                         (append
-                         (list #$(file-append llama-cpp "/bin/llama-server")
+                         (list #$(file-append pkg "/bin/llama-server")
                                "-m"    #$model-path
                                "-c"    #$context-size
                                "-np"   #$parallel
