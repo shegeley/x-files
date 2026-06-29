@@ -49,3 +49,7 @@ system-test-clickhouse:
 system-test-remark42:
 	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
 	  -e '(@ (x-files tests services remark42) %test-remark42)'
+
+system-test-stalwart:
+	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
+	  -e '(@ (x-files tests services stalwart) %test-stalwart)'
