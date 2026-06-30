@@ -23,18 +23,28 @@
 
   (define (emacs-config config)
     (rde-elisp-configuration-service
-     'emacs-1s
+     ;; NB: a digit-led token anywhere in the configuration name (e.g. `emacs-1s')
+     ;; makes guix's emacs-build-system truncate the elpa name at that token
+     ;; (`rde-emacs-1s' -> installs `rde-emacs.el'), so the file no longer matches
+     ;; the `(provide 'rde-emacs-1s)' the feature-loader requires -> "Cannot open
+     ;; load file: rde-emacs-1s".  Use a digit-free name (`emacs-bsl', after the
+     ;; bsl-language-server this wraps); the feature itself stays `feature-emacs-1s'.
+     'emacs-bsl
      config
-     `((require '1s-mode)
+     ;; The symbol `1s-mode' starts with a digit, so Guile's writer escapes
+     ;; it as `#{1s-mode}#' (R6RS symbol syntax) when serializing the elisp,
+     ;; which Emacs cannot read.  Build those symbols at runtime with `intern'
+     ;; to keep the generated elisp valid.
+     `((require (intern "1s-mode"))
        (require 'bsl-ls)
 
        (setq bsl-ls-java      ,java-exe
              bsl-ls-server-jar ,server-jar)
 
        (with-eval-after-load 'eglot
-         (add-hook '1s-mode-hook 'eglot-ensure)
+         (add-hook (intern "1s-mode-hook") 'eglot-ensure)
          (add-to-list 'eglot-server-programs
-                      '(1s-mode . bsl-ls-contact))))
+                      (cons (intern "1s-mode") 'bsl-ls-contact))))
      #:elisp-packages (list emacs-1s)))
 
   (define (get-home-services config)
