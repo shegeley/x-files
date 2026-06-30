@@ -1,6 +1,16 @@
 (channel-news
  (version 0)
  (entry
+  (commit "c4c1cdccf82a3870c52bcebca836e7f002132816")
+  (title (en "Emacs 1s: feature-emacs-1s loads again"))
+  (body (en "Fixed @code{feature-emacs-1s}.  A digit-leading token in the rde
+elisp-config name made guix's @code{emacs-build-system} truncate the elpa name
+(@code{rde-emacs-1s} was installed as @file{rde-emacs.el}), so the feature-loader's
+@code{(require 'rde-emacs-1s)} failed with \"Cannot open load file: rde-emacs-1s\".
+The config is now named @code{emacs-bsl} (after the @code{bsl-language-server} it
+wraps); @code{feature-emacs-1s} is unchanged.  Also keeps the earlier fix for
+@code{1s-mode} symbols being written as @code{#{1s-mode}#}.")))
+ (entry
   (commit "1093a2b")
   (title (en "GPaste 45.6 + simplified typelib wrapping"))
   (body (en "Updated @code{gpaste} from 45.3 to 45.6.  Dropped @file{fix-paths.patch}
