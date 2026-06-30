@@ -1,6 +1,4 @@
 (define-module (x-files packages clickhouse)
-  #:use-module (ice-9 match)
-
   #:use-module (guix gexp)
 
   #:use-module ((guix licenses)               #:prefix license:)
@@ -21,46 +19,51 @@
    "https://github.com/ClickHouse/ClickHouse/releases/download/"
    %clickhouse-release-tag "/" file))
 
+;; Per-system download arch (default amd64) and per-(component,system) sha256.
+;; component is one of 'common (the main binary), 'server, 'client.  The "_"
+;; key is the fallback used for any non-aarch64 system (i.e. x86_64).
+(define %arch
+  '(("aarch64-linux" . "arm64")
+    ("_"             . "amd64")))
+
+(define %hashes
+  '((common ("aarch64-linux" . "1a9v57c0x9ndfw641j9q3m7pb951ipsam57mx1fpqjnlsjaw46p2")
+            ("_"             . "1mpa8ns2msx7yf9r7685zlwzassh9pmymcv4jh7niygn8vbyxfkx"))
+    (server ("aarch64-linux" . "1x7n4gw9ihipgx18j34aqh2qr4h2knlqhw8gx6xxpih6f93sxv8z")
+            ("_"             . "0ddq7a2dxzkrl5kz9an514ymgv1d9pnsxswdzinzk6aly52dzmcp"))
+    (client ("aarch64-linux" . "00mwr2dsqw8y9j2vhjlnfqr3vd0n3m7m671bdrqijzaqlr2gv5l9")
+            ("_"             . "05wngzkz5dgv7kll0wp4l1c6ar72xicbf40slyxz99y0a1mz7dy3"))))
+
+(define (current-system*) (or (%current-target-system) (%current-system)))
+
+(define (lookup alist key)
+  "assoc-ref ALIST by KEY, falling back to the \"_\" default entry."
+  (or (assoc-ref alist key) (assoc-ref alist "_")))
+
+(define (system-arch)        (lookup %arch (current-system*)))
+(define (component-hash component)
+  (lookup (assoc-ref %hashes component) (current-system*)))
+
+(define (clickhouse-origin component file-prefix)
+  "Origin for the COMPONENT ('common/'server/'client) tarball named
+FILE-PREFIX-<version>-<arch>.tgz."
+  (origin
+    (method url-fetch)
+    (uri (clickhouse-url
+          (string-append file-prefix "-" %clickhouse-version
+                         "-" (system-arch) ".tgz")))
+    (sha256 (base32 (component-hash component)))))
+
 (define (clickhouse-extra-source component)
   "Return an origin for the COMPONENT ('server or 'client) extras tarball."
-  (let* ((arch (match (or (%current-target-system) (%current-system))
-                 ("aarch64-linux" "arm64")
-                 (_ "amd64")))
-         (hash (match (list component
-                            (or (%current-target-system) (%current-system)))
-                 (('server "aarch64-linux")
-                  "1x7n4gw9ihipgx18j34aqh2qr4h2knlqhw8gx6xxpih6f93sxv8z")
-                 (('server _)
-                  "0ddq7a2dxzkrl5kz9an514ymgv1d9pnsxswdzinzk6aly52dzmcp")
-                 (('client "aarch64-linux")
-                  "00mwr2dsqw8y9j2vhjlnfqr3vd0n3m7m671bdrqijzaqlr2gv5l9")
-                 (('client _)
-                  "05wngzkz5dgv7kll0wp4l1c6ar72xicbf40slyxz99y0a1mz7dy3"))))
-    (origin
-      (method url-fetch)
-      (uri (clickhouse-url
-            (string-append "clickhouse-" (symbol->string component)
-                           "-" %clickhouse-version "-" arch ".tgz")))
-      (sha256 (base32 hash)))))
+  (clickhouse-origin component
+                     (string-append "clickhouse-" (symbol->string component))))
 
 (define-public clickhouse-bin
   (package
     (name "clickhouse-bin")
     (version %clickhouse-version)
-    (source
-     (let* ((arch (match (or (%current-target-system) (%current-system))
-                    ("aarch64-linux" "arm64")
-                    (_ "amd64")))
-            (hash (match (or (%current-target-system) (%current-system))
-                    ("aarch64-linux"
-                     "1a9v57c0x9ndfw641j9q3m7pb951ipsam57mx1fpqjnlsjaw46p2")
-                    (_
-                     "1mpa8ns2msx7yf9r7685zlwzassh9pmymcv4jh7niygn8vbyxfkx"))))
-       (origin
-         (method url-fetch)
-         (uri (clickhouse-url
-               (string-append "clickhouse-common-static-" version "-" arch ".tgz")))
-         (sha256 (base32 hash)))))
+    (source (clickhouse-origin 'common "clickhouse-common-static"))
     (build-system binary-build-system)
     (arguments
      (let ((server-src (clickhouse-extra-source 'server))
