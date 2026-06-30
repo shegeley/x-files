@@ -11,7 +11,7 @@
   ;; stolen from https://codeberg.org/simendsjo/dotfiles.git
   (package
     (name "datomic")
-    (version "1.0.7180")
+    (version "1.0.7622")
     (source
      (origin
        (method url-fetch)
@@ -19,7 +19,7 @@
              "https://datomic-pro-downloads.s3.amazonaws.com/"
              version "/datomic-pro-" version ".zip"))
        (sha256
-        (base32 "09rc1hsdia59p48vjbwsis7ggny2mvzr97k0pmsnlwvi84xaaq2d"))))
+        (base32 "1g8s24pnfjpbfhaqz1jdpdm6jssfjgr98773cwqvnzkinpjjxai9"))))
     (build-system copy-build-system)
     (inputs (list unzip openjdk))
     (arguments
