@@ -11,10 +11,9 @@ The config is now named @code{emacs-bsl} (after the @code{bsl-language-server} i
 wraps); @code{feature-emacs-1s} is unchanged.  Also keeps the earlier fix for
 @code{1s-mode} symbols being written as @code{#{1s-mode}#}.")))
  (entry
-  (commit "1093a2b")
-  (title (en "GPaste 45.6 + simplified typelib wrapping"))
-  (body (en "Updated @code{gpaste} from 45.3 to 45.6.  Dropped @file{fix-paths.patch}
-and replaced the NixOS-style JS wrapper with direct preamble injection.")))
+  (commit "23a9d3e")
+  (title (en "GPaste 45.6"))
+  (body (en "Updated @code{gpaste} from 45.3 to 45.6.")))
  (entry
   (commit "0c1022f")
   (title (en "ClickHouse 26.3.12.3-lts"))
