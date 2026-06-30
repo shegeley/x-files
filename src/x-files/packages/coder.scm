@@ -25,15 +25,15 @@
 (define targets (map car target->arch-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "16z1fmnnzh8qakvq01da700rypgkm9nrwkffqya86j2i50m0ai8y")
-    ("aarch64-linux" . "04dsmdivk71514zysbk0rzyxp1vqfknq90mcrm927cnawihqkqxf")
-    ("armv7-linux"   . "03nrv0sknzishqx8lc4gv23yncr69n879458ggq61d3vm3y20a51")))
+  '(("x86_64-linux"  . "0jfz4ha7gvbx9ijz17x2n43vppzax3rf3szrb1qbsgisnz4733rm")
+    ("aarch64-linux" . "01jhbc9328907ysyc1i9hrxkyny5avd8gpyqgpswcaa9if363ksr")
+    ("armv7-linux"   . "1gpsgmd0qddfslk7zbcc2nsf263a2mr40a4lhm42gw54gvml41xk")))
 
 (define-public coder
   (let* [(target  (or (%current-target-system) (%current-system)))
          (arch    (assoc-ref target->arch-name target))
          (hash    (assoc-ref target->hash target))
-         (version "2.33.6")
+         (version "2.33.11")
          (uri     (string-append
                    "https://github.com/coder/"
                    "coder/releases/download/"
