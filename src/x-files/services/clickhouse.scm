@@ -26,17 +26,22 @@
 ;;   log-level  — log verbosity: trace|debug|information|warning|error (default "information")
 ;;   log-size   — max log file size before rotation (default "500M")
 ;;   log-count  — number of rotated log files to keep (default "3")
+;;   max-server-memory — total server memory cap in bytes, "0" = auto (default "0").
+;;                       Set low for a restricted dev instance.
+;;   mark-cache-size   — mark cache size in bytes (default "5368709120" = 5 GiB).
 
 (define clickhouse-default-config
-  `((package    . ,clickhouse-bin)
-    (http-port  . "8123")
-    (tcp-port   . "9000")
-    (listen     . "::")
-    (data-dir   . "/var/lib/clickhouse")
-    (log-dir    . "/var/log/clickhouse-server")
-    (log-level  . "information")
-    (log-size   . "500M")
-    (log-count  . "3")))
+  `((package          . ,clickhouse-bin)
+    (http-port        . "8123")
+    (tcp-port         . "9000")
+    (listen           . "::")
+    (data-dir         . "/var/lib/clickhouse")
+    (log-dir          . "/var/log/clickhouse-server")
+    (log-level        . "information")
+    (log-size         . "500M")
+    (log-count        . "3")
+    (max-server-memory . "0")
+    (mark-cache-size   . "5368709120")))
 
 (define (cfg config key)
   (assoc-ref config key))
@@ -75,6 +80,8 @@
        (count ,(cfg config 'log-count)))
       (http_port ,(cfg config 'http-port))
       (tcp_port  ,(cfg config 'tcp-port))
+      (max_server_memory_usage ,(cfg config 'max-server-memory))
+      (mark_cache_size         ,(cfg config 'mark-cache-size))
       (path      ,(string-append (cfg config 'data-dir) "/"))
       (tmp_path  ,(string-append (cfg config 'data-dir) "/tmp/"))
       (user_files_path
