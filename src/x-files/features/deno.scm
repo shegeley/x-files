@@ -44,7 +44,8 @@
           #:key
           (deno deno)
           (emacs-deno-mode emacs-deno-mode)
-          (node-vscode-js-debug node-vscode-js-debug-latest))
+          (node-vscode-js-debug node-vscode-js-debug-latest)
+          (idle-time 0.3))
 
   "Stolen from RDE and refactored to use with deno and deno-ts-mode. A lot removed.
    Only dape + eglot left. Add deno settings"
@@ -115,6 +116,33 @@
           (add-hook 'deno-tsx-mode-hook 'eglot-ensure)
           (add-hook 'deno-js-mode-hook  'eglot-ensure)
           (add-hook 'deno-jsx-mode-hook 'eglot-ensure)))
+
+      ;; Snappy, inline as-you-type lint/type diagnostics.  Only when the
+      ;; 'emacs-lsp feature value is present; otherwise omitted.
+      ,@(if (get-value 'emacs-lsp config #f)
+          `((with-eval-after-load 'eglot
+              ;; re-send buffer changes to `deno lsp' shortly after typing stops,
+              ;; so diagnostics refresh while editing (not just on save)
+              (setq eglot-send-changes-idle-time ,idle-time)
+
+              (defun deno/live-diagnostics ()
+                "Make deno lint/type diagnostics snappy and visible in this buffer."
+                ;; show the message right at the end of the offending line (Emacs 30+)
+                (when (boundp 'flymake-show-diagnostics-at-end-of-line)
+                  (setq-local flymake-show-diagnostics-at-end-of-line 'short))
+                ;; safeguard: keep deno lint on even if deno-mode ever drops the
+                ;; server initializationOptions
+                (setq-local eglot-workspace-configuration
+                            '(:deno (:enable t
+                                     :lint t
+                                     :unstable t))))
+
+              (dolist (hook '(deno-ts-mode-hook
+                              deno-tsx-mode-hook
+                              deno-js-mode-hook
+                              deno-jsx-mode-hook))
+                (add-hook hook (function deno/live-diagnostics)))))
+          '())
 
       ,@(if (get-value 'emacs-dape config #f) dape-config '()))
     #:authors
