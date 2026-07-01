@@ -404,3 +404,109 @@ It provides a touch-friendly interface with support for phone calls,
 notifications, and adaptive applications.")
     (home-page "https://gitlab.gnome.org/World/Phosh/phosh")
     (license license:gpl3+)))
+
+
+;;;
+;;; Phosh/phoc 0.48 (GNOME 48 cycle).
+;;;
+;;; phosh 0.55 above targets GNOME 49 and reads schema keys (e.g.
+;;; org.gnome.shell.keybindings 'screen-brightness-up') that only exist in
+;;; gnome-shell 49; Guix currently ships gnome-shell 48.7, so 0.55 aborts at
+;;; runtime.  These 0.48 variants match the GNOME 48 stack Guix has and are used
+;;; by the OnePlus 6T VM until gnome-shell 49 lands.  They reuse the same build
+;;; recipe as the 0.55 packages, only pinning the version-specific sources:
+;;; phoc 0.48 embeds wlroots 0.19 (not 0.20) and phosh 0.48 uses libcall-ui
+;;; 0.1.4 and an older gvc.
+;;;
+
+(define wlroots-for-phoc-0.19-source
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://gitlab.freedesktop.org/wlroots/wlroots.git")
+          (commit "0.19.0")))
+    (file-name "wlroots-0.19-for-phoc-checkout")
+    (sha256
+     (base32 "1fa4gi2c6iil4k0xmqf2jx1apqg3pk0r4lrf23blpfiz439zkk13"))))
+
+(define-public phoc-48
+  (package
+    (inherit phoc)
+    (version "0.48.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.gnome.org/World/Phosh/phoc")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name "phoc" version))
+              (sha256
+               (base32
+                "1209ba9nyb2y77hldf1sy58rn8zw56fh3fsc6c6hnrx2mqsvvvmx"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments phoc)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'copy-subprojects
+              (lambda _
+                (copy-recursively #+gvdb-source "subprojects/gvdb")
+                (copy-recursively #+wlroots-for-phoc-0.19-source
+                                  "subprojects/wlroots-0.19.x")))
+            (replace 'apply-wlroots-patches
+              (lambda _
+                (with-directory-excursion "subprojects/wlroots-0.19.x"
+                  (invoke "patch" "-p1" "-i"
+                          "../../subprojects/packagefiles/wlroots/0001-Revert-layer-shell-error-on-0-dimension-without-anch.patch"))))))))))
+
+(define gvc-0.48-source
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://gitlab.gnome.org/GNOME/libgnome-volume-control.git")
+          (commit "5f9768a2eac29c1ed56f1fbb449a77a3523683b6")))
+    (file-name "gvc-0.48-checkout")
+    (sha256
+     (base32 "1lyq6lcz5m0p9j5lsjn85qg31zxbk3pvybqb82c1gw673jgi7n41"))))
+
+(define libcall-ui-0.1.4-source
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://gitlab.gnome.org/World/Phosh/libcall-ui")
+          (commit "v0.1.4")))
+    (file-name "libcall-ui-0.1.4-checkout")
+    (sha256
+     (base32 "0prhjaxxqx7m5w4hiarcnwwp184574nw8m4zd7pwjw50yrvamy79"))))
+
+(define-public phosh-48
+  (package
+    (inherit phosh)
+    (version "0.48.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.gnome.org/World/Phosh/phosh")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name "phosh" version))
+              (sha256
+               (base32
+                "1apayvyspkhgiz16x2ymbjcy98i8wwjwnapivq9fvay85a2qrka8"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments phosh)
+       ;; phosh 0.48 has no -Dstatus-icon-plugins option (added later).
+       ((#:configure-flags _)
+        #~(list "-Dtests=false"
+                "-Dman=false"
+                "-Dlockscreen-plugins=false"
+                "-Dquick-setting-plugins=false"
+                (string-append "-Dcompositor="
+                               (search-input-file %build-inputs "/bin/phoc"))))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'copy-subprojects
+              (lambda _
+                (copy-recursively #+gvc-0.48-source "subprojects/gvc")
+                (copy-recursively #+libcall-ui-0.1.4-source
+                                  "subprojects/libcall-ui")))))))
+    (inputs
+     (modify-inputs (package-inputs phosh)
+       (replace "phoc" phoc-48)))))
