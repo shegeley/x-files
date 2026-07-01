@@ -79,7 +79,7 @@ run-oneplus-6t:
 	  -drive if=pflash,format=raw,unit=0,file=$$code,readonly=on \
 	  -drive if=pflash,format=raw,unit=1,file=$$vars \
 	  -drive file=$$disk,format=qcow2,if=virtio \
-	  -device virtio-gpu-pci,xres=720,yres=1440 \
+	  -vga none -device virtio-gpu-pci,xres=720,yres=1440 \
 	  -device virtio-keyboard-pci -device virtio-tablet-pci \
 	  -device virtio-net-pci,netdev=n0 -netdev user,id=n0,hostfwd=tcp::5555-:22 \
 	  -display gtk

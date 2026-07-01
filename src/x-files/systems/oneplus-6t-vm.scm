@@ -1,6 +1,7 @@
 (define-module (x-files systems oneplus-6t-vm)
   #:use-module ((gnu system)            #:select (operating-system
-                                                  %base-packages))
+                                                  %base-packages
+                                                  %default-kernel-arguments))
   #:use-module ((gnu system file-systems) #:select (file-system
                                                     file-system-label
                                                     %base-file-systems))
@@ -16,6 +17,9 @@
   #:use-module ((gnu packages gl)       #:select (mesa))
   #:use-module ((gnu packages terminals) #:select (foot))
   #:use-module ((x-files services phosh) #:select (phosh-desktop-services))
+  ;; Use the GNOME-48 phosh/phoc; the default 0.55 packages target GNOME 49
+  ;; schema keys that Guix's gnome-shell 48.7 does not provide.
+  #:use-module ((x-files packages phosh) #:select (phosh-48 phoc-48))
   #:export (make-phone-os
             oneplus-6t-vm-os))
 
@@ -53,6 +57,12 @@
     (locale "en_US.utf8")
     ;; Keyboard layout is left at the default (US QWERTY), which suits the VM.
 
+    ;; Log to the serial port as well as the framebuffer, so a headless
+    ;; (-display none) QEMU run still shows the full boot on -serial.  tty0
+    ;; stays the primary console for the graphical (Phosh) session.
+    (kernel-arguments
+     (cons* "console=ttyS0,115200" "console=tty0" %default-kernel-arguments))
+
     ;; grub-efi: the efi-raw image installs GRUB onto the ESP for us; this also
     ;; provides the running system's grub.cfg.  Works for aarch64 and x86_64.
     (bootloader
@@ -89,7 +99,9 @@
 
     (services
      (append
-      (phosh-desktop-services #:autologin-user user)
+      (phosh-desktop-services #:autologin-user user
+                              #:phosh phosh-48
+                              #:phoc phoc-48)
       (list
        ;; SSH in for debugging (port-forwarded by the QEMU run target).
        (service openssh-service-type
