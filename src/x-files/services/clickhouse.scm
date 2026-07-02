@@ -17,6 +17,8 @@
             clickhouse-default-config))
 
 ;; Config is a plain alist.  Keys:
+;;   service-name — shepherd service (provision) name, a symbol (default 'clickhouse).
+;;                  Set e.g. 'clickhouse-dev to distinguish a throwaway instance.
 ;;   package    — clickhouse-bin package
 ;;   http-port  — HTTP listen port (string, default "8123")
 ;;   tcp-port   — native TCP port (string, default "9000")
@@ -31,7 +33,8 @@
 ;;   mark-cache-size   — mark cache size in bytes (default "5368709120" = 5 GiB).
 
 (define clickhouse-default-config
-  `((package          . ,clickhouse-bin)
+  `((service-name     . clickhouse)
+    (package          . ,clickhouse-bin)
     (http-port        . "8123")
     (tcp-port         . "9000")
     (listen           . "::")
@@ -152,7 +155,7 @@
 (define (clickhouse-shepherd-service config)
   (list
    (shepherd-service
-    (provision '(clickhouse))
+    (provision (list (cfg config 'service-name)))
     (requirement '(file-systems networking))
     (documentation "Run the ClickHouse column-oriented database server.")
     (start
