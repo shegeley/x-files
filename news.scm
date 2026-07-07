@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "bec1d12")
+  (title (en "OfficeCLI: AI-agent Office suite"))
+  (body (en "Added @code{officecli} (iOfficeAI/OfficeCLI 1.0.129), a
+self-contained CLI for reading, editing, and automating Word, Excel, and
+PowerPoint files.  It is a prebuilt .NET single-file binary: only its
+interpreter is patched (rpath/strip would corrupt the appended bundle) and it
+runs through a wrapper providing @code{glibc}, @code{gcc:lib}, and
+@code{icu4c}.")))
+ (entry
   (commit "103fa18")
   (title (en "ntfy clients: Ntfyr desktop app and emacs-ntfy"))
   (body (en "Added two clients for @url{https://ntfy.sh,ntfy} push
