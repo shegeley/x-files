@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "103fa18")
+  (title (en "ntfy clients: Ntfyr desktop app and emacs-ntfy"))
+  (body (en "Added two clients for @url{https://ntfy.sh,ntfy} push
+notifications.  @code{ntfyr} is a native GTK4/libadwaita desktop application
+(tobagin/Ntfyr 0.7.1), built from its meson+cargo sources with the crate
+dependencies vendored in a fixed-output derivation.  @code{emacs-ntfy}
+(shombando/ntfy) sends notifications from Emacs, with @command{curl} pinned to
+the store.")))
+ (entry
   (commit "c4c1cdccf82a3870c52bcebca836e7f002132816")
   (title (en "Emacs 1s: feature-emacs-1s loads again"))
   (body (en "Fixed @code{feature-emacs-1s}.  A digit-leading token in the rde
