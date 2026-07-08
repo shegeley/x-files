@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "ca3081f")
+  (title (en "xray-checker: Xray/VLESS proxy quality monitor"))
+  (body (en "Added @code{xray-checker} (kutovoys/xray-checker 1.3.1), a Prometheus
+exporter that dials through each node in an Xray/VLESS/V2Ray/Sing-box/Clash
+subscription and measures latency + connectivity, exposing @code{/metrics} and a
+web status page.  Statically-linked linux amd64 Go binary packaged via
+@code{nonguix} @code{binary-build-system}.  Intended for benchmarking VPN
+providers (feed it multiple @option{--subscription-url}s).")))
+ (entry
   (commit "b7d0b5b")
   (title (en "GitLab CLI (glab)"))
   (body (en "Added @code{glab}, the official GitLab command-line client
