@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "b7d0b5b")
+  (title (en "GitLab CLI (glab)"))
+  (body (en "Added @code{glab}, the official GitLab command-line client
+(gitlab-org/cli 1.107.0), a statically-linked linux amd64 binary packaged via
+@code{nonguix} @code{binary-build-system}.  It works with merge requests,
+issues, pipelines, releases, and the raw GitLab API against gitlab.com or a
+self-hosted instance (selected via @env{GITLAB_HOST}).  Relocated from
+@code{(g-files packages glab)} so it lives with the other shared packages.")))
+ (entry
   (commit "bec1d12")
   (title (en "OfficeCLI: AI-agent Office suite"))
   (body (en "Added @code{officecli} (iOfficeAI/OfficeCLI 1.0.129), a
