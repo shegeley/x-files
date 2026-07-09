@@ -16,14 +16,14 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "0qjkagb9ypldrc3jgf2zk3kdh1b8rv1kn6w212y4kdks4sjsfk8q")
-    ("aarch64-linux" . "1z3sjf7bqrfi05cn4k60cnab74kzlw0afbw5p7clwig6ms4p2r28")))
+  '(("x86_64-linux"  . "0jksqrjm4wrxv4cz7sfd1xf3qjnh121caksa5rzyvsh9rgainkck")
+    ("aarch64-linux" . "1lhnzdd7schqr3wbz7jxrjqyi47vci7ycd8di4cgyr4rwm48y2ri")))
 
 (define-public deno
   (let* [(target    (or (%current-target-system) (%current-system)))
          (deno.bin  (assoc-ref target->bin-name target))
          (hash      (assoc-ref target->hash target))
-         (version   "2.8.2")
+         (version   "2.9.2")
          (uri       (string-append
                      "https://github.com/denoland/"
                      "deno/releases/download/"
