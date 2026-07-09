@@ -103,7 +103,20 @@ directory = \"~a\"
 [net]
 offline = true
 "
-                          #$ntfyr-cargo-vendor))))))))
+                          #$ntfyr-cargo-vendor)))))
+          (add-after 'install 'delete-icon-cache
+            (lambda* (#:key outputs #:allow-other-keys)
+              ;; meson's post_install runs gtk4-update-icon-cache, baking a
+              ;; per-package hicolor/icon-theme.cache.  Store mtimes are reset
+              ;; to 1970, so `cache mtime >= dir mtime' holds and GTK treats
+              ;; the cache as authoritative — it stops scanning the directory,
+              ;; and the profile's gtk-icon-themes hook won't rebuild a merged
+              ;; cache over it.  Result: GNOME can't resolve the app icon.
+              ;; Drop the cache so the profile hook regenerates a correct one.
+              (let ((cache (string-append (assoc-ref outputs "out")
+                                          "/share/icons/hicolor/icon-theme.cache")))
+                (when (file-exists? cache)
+                  (delete-file cache))))))))
     (native-inputs
      (list appstream
            blueprint-compiler
