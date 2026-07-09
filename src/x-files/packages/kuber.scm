@@ -15,14 +15,14 @@
   (let ((version-suffix "+k0s.0"))
     (package
       (name "k0s")
-      (version "1.35.4")
+      (version "1.36.2")
       (source (origin
                 (method url-fetch)
                 (uri (string-append
                       "https://github.com/k0sproject/k0s/releases/download/v"
                       version version-suffix
                       "/k0s-v" version version-suffix "-amd64"))
-                (sha256 (base32 "06spyy4n65nwc64xsli9mvrjpc408dk2ihxjka5q6cvnrg476n8x"))))
+                (sha256 (base32 "164jis43p19ablrs71rgpl0fcj2v99bv407r8k5pmwixh1grhpcb"))))
       (native-inputs (list binutils coreutils))
       (build-system trivial-build-system)
       (arguments
