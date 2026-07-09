@@ -1,6 +1,61 @@
 (channel-news
  (version 0)
  (entry
+  (commit "bcd7d1c")
+  (title (en "Ntfyr: app icon shows up in GNOME"))
+  (body (en "Fixed the missing @code{ntfyr} icon on the GNOME desktop.  The
+@file{.desktop} file and @code{hicolor} icons installed fine, but meson's
+@code{post_install} baked a per-package
+@file{share/icons/hicolor/icon-theme.cache}.  With store mtimes reset to 1970,
+GTK treated that cache as authoritative and stopped scanning the directory, so
+the profile's @code{gtk-icon-themes} hook could not rebuild a merged cache over
+it and GNOME never resolved the icon.  The cache is now deleted in a
+post-install phase so the profile hook regenerates a correct one.")))
+ (entry
+  (commit "4e9885a")
+  (title (en "kubectl 1.36.2"))
+  (body (en "Bumped @code{kubectl} 1.35.4@tie{}->@tie{}1.36.2 (dl.k8s.io release
+binary), sha256 recomputed with @command{guix download}.")))
+ (entry
+  (commit "728a926")
+  (title (en "k0s 1.36.2"))
+  (body (en "Bumped @code{k0s} 1.35.4@tie{}->@tie{}1.36.2 (@code{+k0s.0}
+upstream binary), sha256 recomputed with @command{guix download}.")))
+ (entry
+  (commit "b2f8cc2")
+  (title (en "vault 2.0.3"))
+  (body (en "Bumped @code{vault} 2.0.1@tie{}->@tie{}2.0.3 (HashiCorp release
+zip, x86_64 and aarch64), sha256 recomputed with @command{guix download}.")))
+ (entry
+  (commit "5f22d64")
+  (title (en "stalwart 0.16.12"))
+  (body (en "Bumped @code{stalwart} 0.16.11@tie{}->@tie{}0.16.12 (upstream
+release binary, x86_64 and aarch64), sha256 recomputed with
+@command{guix download}.")))
+ (entry
+  (commit "cf5f7a3")
+  (title (en "grafana 13.1.0"))
+  (body (en "Bumped @code{grafana-bin} 13.0.3@tie{}->@tie{}13.1.0 (dl.grafana.com
+release tarball, x86_64 and aarch64), sha256 recomputed with
+@command{guix download}.")))
+ (entry
+  (commit "1fbc40e")
+  (title (en "etcd 3.7.0"))
+  (body (en "Bumped @code{etcd} 3.6.12@tie{}->@tie{}3.7.0; the public symbol is
+now @code{etcd-3.7.0} (with @code{etcd} aliased to it).  sha256 for x86_64 and
+aarch64 recomputed with @command{guix download}.")))
+ (entry
+  (commit "e4f7125")
+  (title (en "coder 2.34.5"))
+  (body (en "Bumped @code{coder} 2.33.11@tie{}->@tie{}2.34.5 (upstream release
+tarball, x86_64/aarch64/armv7), sha256 recomputed with
+@command{guix download}.")))
+ (entry
+  (commit "71ad417")
+  (title (en "deno 2.9.2"))
+  (body (en "Bumped @code{deno} 2.8.2@tie{}->@tie{}2.9.2 (upstream release zip,
+x86_64 and aarch64), sha256 recomputed with @command{guix download}.")))
+ (entry
   (commit "ca3081f")
   (title (en "xray-checker: Xray/VLESS proxy quality monitor"))
   (body (en "Added @code{xray-checker} (kutovoys/xray-checker 1.3.1), a Prometheus
