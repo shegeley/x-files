@@ -12,21 +12,30 @@
   #:use-module ((guix download)               #:select (url-fetch))
   #:use-module ((nonguix build-system binary)  #:select (binary-build-system))
   #:use-module ((nonguix licenses)             #:select (nonfree))
-  #:use-module ((gnu packages compression)     #:select (squashfs-tools)))
+  #:use-module ((gnu packages compression)     #:select (squashfs-tools))
+  #:use-module ((gnu packages guile-xyz)       #:select (guile-ini
+                                                        guile-smc
+                                                        guile-lib)))
 
+;; guile-ini's (ini) module pulls in (ini fsm), which needs guile-smc and
+;; guile-lib; all three must be on the builder's load path.  Same set as
+;; (x-files services dconf).
+(define %guile-ini-extensions (list guile-ini guile-smc guile-lib))
+
+;; Desktop entry as guile-ini data: (("Section" ("Key" . "Value") ...)).
+;; scm->ini serialises it to the freedesktop "[Section]\nKey=Value" form.
 (define %spotify-desktop-entry
-  "[Desktop Entry]
-Type=Application
-Name=Spotify
-GenericName=Music Player
-Icon=spotify
-TryExec=spotify
-Exec=spotify %U
-Terminal=false
-MimeType=x-scheme-handler/spotify;
-Categories=Audio;Music;Player;AudioVideo;
-StartupWMClass=spotify
-")
+  '(("Desktop Entry"
+     ("Type"           . "Application")
+     ("Name"           . "Spotify")
+     ("GenericName"    . "Music Player")
+     ("Icon"           . "spotify")
+     ("TryExec"        . "spotify")
+     ("Exec"           . "spotify %U")
+     ("Terminal"       . "false")
+     ("MimeType"       . "x-scheme-handler/spotify;")
+     ("Categories"     . "Audio;Music;Player;AudioVideo;")
+     ("StartupWMClass" . "spotify"))))
 
 ;; Shell wrapper template for the bin/spotify launcher.
 ;; Format args: app-dir, ":", lib-paths-joined, fontconfig-conf, binary-path.
@@ -83,8 +92,11 @@ exec env \\
       ;; Patch system library rpaths into the main binary.
       #:patchelf-plan `'(("squashfs-root/usr/share/spotify/spotify"
                           ,%spotify-libs))
+      ;; with-extensions puts guile-ini's (ini) module (and guile-smc/guile-lib
+      ;; it depends on) on the builder's load path for the desktop entry.
       #:phases
-      #~(modify-phases %standard-phases
+      (with-extensions %guile-ini-extensions
+       #~(modify-phases %standard-phases
           (replace 'unpack
             (lambda* (#:key source #:allow-other-keys)
               (invoke "unsquashfs" source)))
@@ -95,6 +107,7 @@ exec env \\
 
           (replace 'install
             (lambda _
+              (use-modules (ini))
               (let* ((app   (string-append #$output "/share/spotify"))
                      (bin   (string-append #$output "/bin"))
                      (icons (string-append #$output "/share/icons/hicolor"))
@@ -137,11 +150,11 @@ exec env \\
                        (copy-file src (string-append dir "/spotify.png")))))
                  '("16" "22" "24" "32" "48" "64" "128" "256" "512"))
 
-                ;; Desktop entry
+                ;; Desktop entry, serialised from guile-ini data.
                 (mkdir-p apps)
                 (call-with-output-file (string-append apps "/spotify.desktop")
                   (lambda (port)
-                    (display #$%spotify-desktop-entry port)))))))))
+                    (scm->ini '#$%spotify-desktop-entry #:port port))))))))))
     (native-inputs (list squashfs-tools))
     (inputs
      (append
