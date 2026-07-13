@@ -6,6 +6,9 @@
                                                         base32
                                                         this-package-input))
   #:use-module ((gnu packages)                #:select (specification->package))
+  #:use-module ((x-files packages ayatana)    #:select (ayatana-ido
+                                                        libayatana-indicator
+                                                        libayatana-appindicator))
   #:use-module ((guix download)               #:select (url-fetch))
   #:use-module ((nonguix build-system binary)  #:select (binary-build-system))
   #:use-module ((nonguix licenses)             #:select (nonfree))
@@ -53,7 +56,12 @@ exec env \\
     "libxext" "libxfixes" "libxi" "libxkbcommon" "libxrandr" "libxrender"
     "libxscrnsaver" "libxshmfence" "libxtst" "mesa" "nspr" "pango"
     "gcc-toolchain" "eudev" "zlib"
-    "libappindicator" "libdbusmenu" "fontconfig"))
+    "libdbusmenu" "fontconfig"))
+
+;; The Spotify binary hard-links three Ayatana tray libraries; none exist in
+;; Guix proper, so pull them from our channel (see (x-files packages ayatana)).
+(define %spotify-ayatana-libs
+  (list ayatana-ido libayatana-indicator libayatana-appindicator))
 
 (define-public spotify
   (package
@@ -96,13 +104,6 @@ exec env \\
                 (copy-recursively "squashfs-root/usr/share/spotify" app)
                 (chmod (string-append app "/spotify") #o755)
 
-                ;; libayatana-appindicator3 is not in Guix; provide a compat
-                ;; symlink so Spotify's system-tray code can dlopen it via
-                ;; the ABI-compatible libappindicator3.
-                (symlink (string-append #$(this-package-input "libappindicator")
-                                        "/lib/libappindicator3.so.1")
-                         (string-append app "/libayatana-appindicator3.so.1"))
-
                 ;; bin/ wrapper: prepend app dir to LD_LIBRARY_PATH so the
                 ;; bundled libcef.so and friends are found, then exec the binary.
                 (mkdir-p bin)
@@ -115,7 +116,10 @@ exec env \\
                               (string-append #$(this-package-input "nss") "/lib/nss")
                               #$@(map (lambda (pkg)
                                         (file-append (this-package-input pkg) "/lib"))
-                                      %spotify-libs))
+                                      %spotify-libs)
+                              #$@(map (lambda (pkg)
+                                        (file-append pkg "/lib"))
+                                      %spotify-ayatana-libs))
                              ":")
                             (string-append #$(this-package-input "fontconfig")
                                            "/etc/fonts/fonts.conf")
@@ -140,8 +144,10 @@ exec env \\
                     (display #$%spotify-desktop-entry port)))))))))
     (native-inputs (list squashfs-tools))
     (inputs
-     (map specification->package
-          (append %spotify-libs (list "nss"))))
+     (append
+      (map specification->package
+           (append %spotify-libs (list "nss")))
+      %spotify-ayatana-libs))
     (supported-systems '("x86_64-linux"))
     (home-page "https://www.spotify.com/")
     (synopsis "Music streaming service client")
@@ -150,3 +156,5 @@ exec env \\
 This package provides the official Spotify desktop client, sourced from the
 Snapcraft store.")
     (license (nonfree "https://www.spotify.com/legal/end-user-agreement/"))))
+
+spotify
