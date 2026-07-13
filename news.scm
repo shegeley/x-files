@@ -1,6 +1,19 @@
 (channel-news
  (version 0)
  (entry
+  (commit "3fc3452")
+  (title (en "Spotify: fixed missing libayatana tray libraries"))
+  (body (en "@code{spotify} would not start with @code{libayatana-indicator3.so.7:
+cannot open shared object file}.  The binary hard-links three Ayatana tray
+libraries (@code{libayatana-ido3-0.4.so.0}, @code{libayatana-indicator3.so.7},
+@code{libayatana-appindicator3.so.1}); Guix proper ships none of them and the
+old package only faked the appindicator one with a symlink to classic
+@code{libappindicator3}, leaving the other two unresolved.  Added the Ayatana
+Indicators stack to the channel (@code{ayatana-ido} 0.9.3,
+@code{libayatana-indicator} 0.9.5, @code{libayatana-appindicator} 0.6.0) and
+wired the real libraries into Spotify's launcher, restoring startup and the
+system-tray icon.")))
+ (entry
   (commit "bcd7d1c")
   (title (en "Ntfyr: app icon shows up in GNOME"))
   (body (en "Fixed the missing @code{ntfyr} icon on the GNOME desktop.  The
