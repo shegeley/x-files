@@ -1,6 +1,26 @@
 (channel-news
  (version 0)
  (entry
+  (commit "0bed1c2")
+  (title (en "slojka 0.2.1"))
+  (body (en "Packaged @code{slojka} (Слойка), an Electron-based AI-first raster
+graphics editor.  Upstream ships only a prebuilt AppImage, so — like
+@code{spotify} — the package unpacks the appended squashfs image (offset
+computed from the AppImage's ELF section-header table), patchelfs the Electron
+binary and @code{chrome_crashpad_handler}, and wraps @command{slojka} with the
+required @code{LD_LIBRARY_PATH} and @code{FONTCONFIG_FILE}.  The single 512x512
+icon is rendered down to the full @code{hicolor} ladder with ImageMagick and the
+@file{.desktop} entry is generated from guile-ini data.  Only the editor core is
+packaged; the optional SAM@tie{}2.1 / polza.ai AI features self-provision into
+@file{~/.local/share/slojka/venv} at runtime.")))
+ (entry
+  (commit "4aba6a4")
+  (title (en "Spotify: desktop entry generated with guile-ini"))
+  (body (en "The @code{spotify} @file{.desktop} entry is now serialised from
+guile-ini data with @code{scm->ini} instead of a hand-written string, matching
+the new @code{slojka} package and @code{(x-files services dconf)}.  No
+user-visible change.")))
+ (entry
   (commit "3fc3452")
   (title (en "Spotify: fixed missing libayatana tray libraries"))
   (body (en "@code{spotify} would not start with @code{libayatana-indicator3.so.7:
