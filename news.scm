@@ -1,6 +1,14 @@
 (channel-news
  (version 0)
  (entry
+  (commit "6b1e6dd")
+  (title (en "emacs-ansible-vault"))
+  (body (en "Packaged @code{emacs-ansible-vault} (ansible-vault-mode 0.6.1), an
+Emacs minor mode that transparently decrypts Ansible Vault files on open and
+re-encrypts them on save.  Its @code{ansible-vault-command} @code{defcustom} is
+patched to the absolute @command{ansible-vault} path from @code{ansible-core}
+(also a propagated input), so it works without any extra @env{PATH} setup.")))
+ (entry
   (commit "0bed1c2")
   (title (en "slojka 0.2.1"))
   (body (en "Packaged @code{slojka} (Слойка), an Electron-based AI-first raster
