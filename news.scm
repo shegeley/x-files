@@ -1,6 +1,21 @@
 (channel-news
  (version 0)
  (entry
+  (commit "08924a2")
+  (title (en "yandex-tracker-mcp 0.7.2"))
+  (body (en "Packaged @code{yandex-tracker-mcp}, a Model Context Protocol
+server exposing Yandex Tracker issues, queues, comments, worklogs and search to
+AI assistants over stdio, streamable-http or SSE.  Full functionality — down to
+the service-account (IAM-key) auth path — needs a current gRPC: the generated
+Yandex stubs use the registered-method API and guard for @code{grpcio>=1.78},
+but Guix ships 1.52.  So the change also carries @code{python-grpcio-next}
+(1.78, built from the sdist with the vendored C-core at @code{-O1}),
+@code{python-yandexcloud} on protobuf@tie{}6, a protobuf-6 rebuild of
+@code{googleapis-common-protos} (1.70, with the legacy @file{google/}
+@code{pkg_resources} namespace stub restored so @code{google.api} coexists with
+@code{google.protobuf}), @code{python-aiocache}, and a completed
+@code{python-mcp} dependency closure.")))
+ (entry
   (commit "6b1e6dd")
   (title (en "emacs-ansible-vault"))
   (body (en "Packaged @code{emacs-ansible-vault} (ansible-vault-mode 0.6.1), an
