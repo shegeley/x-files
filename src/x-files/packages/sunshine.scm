@@ -1,5 +1,9 @@
 (define-module (x-files packages sunshine)
-  ;; stolen https://github.com/forgoty/dotfiles/blob/master/guix/forgoty/packages/streaming.scm
+  ;; Originally appropriated from forgoty's channel:
+  ;;   https://github.com/forgoty/dotfiles/blob/master/guix/forgoty/packages/streaming.scm
+  ;; Since diverged: forgoty builds the Vite/Vue web UI from a third-party
+  ;; npm-offline-cache release.  We dropped npm entirely and instead install
+  ;; the web UI assets from LizardByte's own official release package.
   #:use-module (guix gexp)
   #:use-module ((guix packages)            #:select (package origin base32))
   #:use-module ((guix git-download)        #:select (git-fetch git-reference))
@@ -8,6 +12,7 @@
   #:use-module ((guix licenses)            #:prefix license:)
   #:use-module ((gnu packages avahi)       #:select (avahi))
   #:use-module ((gnu packages base)        #:select (tar))
+  #:use-module ((gnu packages compression) #:select (zstd))
   #:use-module ((gnu packages boost)       #:select (boost))
   #:use-module ((gnu packages cpp)         #:select (nlohmann-json))
   #:use-module ((gnu packages curl)        #:select (curl))
@@ -15,7 +20,6 @@
   #:use-module ((gnu packages gl)          #:select (mesa))
   #:use-module ((gnu packages gnome)       #:select (libnotify))
   #:use-module ((gnu packages linux)       #:select (eudev libcap numactl))
-  #:use-module ((gnu packages node)        #:select (node))
   #:use-module ((gnu packages pkg-config)  #:select (pkg-config))
   #:use-module ((gnu packages pulseaudio)  #:select (pulseaudio))
   #:use-module ((gnu packages tls)         #:select (openssl))
@@ -64,7 +68,6 @@
 	       "-DSUNSHINE_ENABLE_CUDA=OFF"
 	       "-DBUILD_DOCS=false"
 	       "-DBUILD_TESTS=OFF"
-         "-DNPM_OFFLINE=ON"
          (string-append "-DOPENSSL_ROOT_DIR=" (assoc-ref %build-inputs "openssl")))
       #:phases
       #~(modify-phases %standard-phases
@@ -87,20 +90,39 @@
                 (string-append #$libx11 "/lib/" all))
                 (("libxcb(-shm|)\\.so" all)
                  (string-append #$libxcb "/lib/" all)))))
+          ;; The web UI is a Vite/Vue build that would require a whole npm
+          ;; dependency tree.  We install LizardByte's own prebuilt assets
+          ;; instead (see 'install-prebuilt-web-ui), so excise the npm-driven
+          ;; `web-ui' target from the build entirely: no npm is probed or run.
+          (add-after 'unpack 'remove-web-ui-npm-build
+            (lambda _
+              (let* ((file  "cmake/targets/common.cmake")
+                     (text  (call-with-input-file file
+                              (@ (ice-9 textual-ports) get-string-all)))
+                     (start (string-contains text "find_program(NPM npm"))
+                     (mark  (string-contains text "VERBATIM)" start))
+                     (end   (+ mark (string-length "VERBATIM)"))))
+                (call-with-output-file file
+                  (lambda (port)
+                    ((@ (ice-9 textual-ports) put-string) port
+                     (string-append
+                      (substring text 0 start)
+                      "# npm web-ui build removed; prebuilt assets installed instead."
+                      (substring text end))))))))
           (add-before 'configure 'set-version
             (lambda _
               (setenv "BRANCH" (string-append "v" #$version))
               (setenv "BUILD_VERSION" #$version)))
-          (add-before 'build 'unpack-npm-cache
+          ;; Place LizardByte's officially-built Vite web UI where CMake's
+          ;; `install(DIRECTORY ${CMAKE_BINARY_DIR}/assets/web ...)` expects it.
+          (add-before 'install 'install-prebuilt-web-ui
             (lambda* (#:key inputs #:allow-other-keys)
-              (invoke "tar" "xzf" (assoc-ref inputs "npm-offline-cache"))
-              (copy-file "package-lock.json" "../source/package-lock.json")
-              (setenv "NPM_CONFIG_CACHE" (string-append (getcwd) "/offline-cache"))
-              (with-directory-excursion "../source"
-                (invoke "npm" "ci" "--offline")
-                (for-each (lambda (bin)
-                            (patch-shebang (string-append "node_modules/.bin/" (readlink bin))))
-                            (find-files "node_modules/.bin" ".*"))))))))
+              (mkdir-p "assets")
+              (invoke "tar" "--zstd" "-xf"
+                      (assoc-ref inputs "sunshine-web-ui")
+                      "usr/share/sunshine/web")
+              (copy-recursively "usr/share/sunshine/web" "assets/web")
+              (delete-file-recursively "usr"))))))
     (inputs
      (list
       eudev
@@ -124,18 +146,23 @@
       libxrandr
       libxfixes
       libxcb
-      node
       nlohmann-json
       mesa
       avahi))
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("tar" ,tar)
-       ("npm-offline-cache" ,(origin
-                              (method url-fetch)
-                              (uri (string-append "https://github.com/forgoty/sunshine-web-ui-builder/releases/download/v" version "/npm-offline-cache.tar.gz"))
-                              (file-name "npm-offline-cache.tar.gz")
-                              (sha256 (base32 "18d6166vkp1xxq1r3mbvr5sjlqvsj5gsi8h8za6rw5c208j0p1pc"))))))
+       ("zstd" ,zstd)
+       ;; LizardByte's official Arch package, used only for its prebuilt
+       ;; Vite web UI (usr/share/sunshine/web); replaces forgoty's
+       ;; third-party npm-offline-cache.
+       ("sunshine-web-ui"
+        ,(origin
+           (method url-fetch)
+           (uri (string-append "https://github.com/LizardByte/Sunshine/releases/download/v"
+                               version "/sunshine.pkg.tar.zst"))
+           (file-name (string-append "sunshine-web-ui-" version ".pkg.tar.zst"))
+           (sha256 (base32 "0g4wzpdcm0p7slf4ih4ly6skslcb2nsys0pihrn39yz6zlgy0yrd"))))))
     (home-page "https://app.lizardbyte.dev/Sunshine/")
     (synopsis "Self-hosted game stream host for Moonlight")
     (description "Sunshine is a self-hosted game stream host for Moonlight. Offering low latency, cloud gaming server capabilities with support for AMD, Intel, and Nvidia GPUs for hardware encoding. Software encoding is also available.")
