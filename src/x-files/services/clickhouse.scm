@@ -31,6 +31,9 @@
 ;;   max-server-memory — total server memory cap in bytes, "0" = auto (default "0").
 ;;                       Set low for a restricted dev instance.
 ;;   mark-cache-size   — mark cache size in bytes (default "5368709120" = 5 GiB).
+;;   prometheus-port — native Prometheus /metrics endpoint port (string).  #f
+;;                     (default) leaves it off; set e.g. "9363" to expose
+;;                     ClickHouseMetrics_*/ClickHouseProfileEvents_* for scraping.
 
 (define clickhouse-default-config
   `((service-name     . clickhouse)
@@ -44,7 +47,8 @@
     (log-size         . "500M")
     (log-count        . "3")
     (max-server-memory . "0")
-    (mark-cache-size   . "5368709120")))
+    (mark-cache-size   . "5368709120")
+    (prometheus-port   . #f)))
 
 (define (cfg config key)
   (assoc-ref config key))
@@ -95,7 +99,17 @@
        ,(string-append (cfg config 'data-dir) "/format_schemas/"))
       (users_config
        ,(string-append (cfg config 'data-dir) "/users.xml"))
-      (listen_host ,(cfg config 'listen))))))
+      (listen_host ,(cfg config 'listen))
+      ;; Native Prometheus endpoint (no external exporter): binds on listen_host.
+      ,@(if (cfg config 'prometheus-port)
+            `((prometheus
+               (endpoint "/metrics")
+               (port ,(cfg config 'prometheus-port))
+               (metrics "true")
+               (events "true")
+               (asynchronous_metrics "true")
+               (status_info "true")))
+            '())))))
 
 (define %clickhouse-users-xml
   (plain-file
