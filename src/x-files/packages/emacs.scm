@@ -5,8 +5,10 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module ((guix build-system emacs) #:select (emacs-build-system))
+  #:use-module ((gnu packages emacs) #:select (emacs))
   #:use-module ((gnu packages emacs-xyz) #:select (emacs-gptel
-                                                   emacs-org-ql))
+                                                   emacs-org-ql
+                                                   emacs-tramp))
   #:use-module ((gnu packages admin) #:select (ansible-core))
   #:use-module ((gnu packages tree-sitter) #:select (tree-sitter-prisma))
   #:use-module (gnu packages))
@@ -103,3 +105,41 @@ opening an encrypted file it decrypts the buffer with the
 @command{ansible-vault} command and re-encrypts it on save, so the plaintext of
 a secret never touches disk.")
       (license license:gpl3+))))
+
+(define-public emacs-tramp-rpc
+  (package
+    (name "emacs-tramp-rpc")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ArthurHeymans/emacs-tramp-rpc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yiwa7hsc8anj1l6902ycwmcxjwkl4crrn7h84797m2dbrh524gm"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-tramp))
+    (arguments
+     (list
+      #:emacs emacs
+      #:lisp-directory "lisp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'make-autoloads 'defer-autoloads
+            ;; The generated autoloads eagerly register the handler and push the
+            ;; method onto `tramp-methods'; defer both until tramp-rpc is loaded.
+            (lambda _
+              (define (defer form)
+                (string-append "(eval-after-load 'tramp-rpc '" form ")"))
+              (substitute* "tramp-rpc-autoloads.el"
+                (("^\\(add-to-list 'tramp-methods.*\\)$" all) (defer all))
+                (("^\\(tramp-register-foreign-file-name-handler.*\\)$" all)
+                 (defer all))))))))
+    (home-page "https://github.com/ArthurHeymans/emacs-tramp-rpc")
+    (synopsis "High-performance TRAMP frontend using JSON-RPC")
+    (description
+     "A high-performance TRAMP backend for Emacs that uses a binary RPC server
+instead of parsing shell command output.")
+    (license license:gpl3+)))
