@@ -128,15 +128,28 @@ a secret never touches disk.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'make-autoloads 'defer-autoloads
-            ;; The generated autoloads eagerly register the handler and push the
-            ;; method onto `tramp-methods'; defer both until tramp-rpc is loaded.
+            ;; The ;;;###autoload'd `add-to-list' / `tramp-register-foreign-
+            ;; file-name-handler' forms call into tramp; the emacs-build-system
+            ;; now loads the compiled autoloads in isolation to validate them,
+            ;; which fails with a void function.  Wrap each in `eval-after-load'
+            ;; so they defer until tramp-rpc is loaded.  Done via emacs `read'
+            ;; so it is robust to the forms being pretty-printed across lines.
             (lambda _
-              (define (defer form)
-                (string-append "(eval-after-load 'tramp-rpc '" form ")"))
-              (substitute* "tramp-rpc-autoloads.el"
-                (("^\\(add-to-list 'tramp-methods.*\\)$" all) (defer all))
-                (("^\\(tramp-register-foreign-file-name-handler.*\\)$" all)
-                 (defer all))))))))
+              (invoke
+               "emacs" "-Q" "--batch" "--eval"
+               "(let ((f \"tramp-rpc-autoloads.el\"))
+                  (with-temp-buffer
+                    (insert-file-contents f)
+                    (goto-char (point-min))
+                    (while (re-search-forward
+                            \"^(\\\\(tramp-register-foreign-file-name-handler\\\\|add-to-list \\\\)\"
+                            nil t)
+                      (goto-char (match-beginning 0))
+                      (let ((beg (point)) (form (read (current-buffer))))
+                        (delete-region beg (point))
+                        (goto-char beg)
+                        (insert (format \"(eval-after-load 'tramp-rpc '%S)\" form))))
+                    (write-region (point-min) (point-max) f nil 'silent)))"))))))
     (home-page "https://github.com/ArthurHeymans/emacs-tramp-rpc")
     (synopsis "High-performance TRAMP frontend using JSON-RPC")
     (description
