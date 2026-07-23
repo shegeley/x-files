@@ -1,0 +1,43 @@
+#+title: jsonl-mode
+#+options: toc:nil
+
+A GNU Emacs major mode for [[https://jsonlines.org/][JSON Lines]] files (a.k.a. *JSONL* or *NDJSON*): a text format where every line is an independent, complete JSON value.
+
+~jsonl-mode~ is derived from the built-in ~js-json-mode~, so it inherits JSON font-lock, syntax table and indentation. On top of that it adds semantics specific to the one-record-per-line format.
+
+* Features
+- Record navigation :: ~jsonl-forward-record~ (~C-c C-f~) and ~jsonl-backward-record~ (~C-c C-b~) move between non-blank records.
+- Record count :: ~jsonl-count-records~ (~C-c C-l~).
+- Pretty-print a record :: ~jsonl-pretty-print-record~ (~C-c C-p~) renders the record on the current line, expanded, in a read-only ~*JSONL Record*~ buffer (records must stay on one line in the source, so they cannot be reflowed in place).
+- Validation :: a Flymake backend (~jsonl-flymake~) validates each non-blank line as an independent JSON value, and ~jsonl-validate-buffer~ (~C-c C-v~) runs a one-shot check reporting invalid line numbers.
+- jq filtering :: ~jsonl-jq~ (~C-c C-j~) streams the buffer (or region) through [[https://jqlang.github.io/jq/][jq]] into a ~*JSONL jq*~ buffer, and ~jsonl-jq-interactively~ (~C-c C-i~) gives a live preview via [[https://github.com/ljos/jq-mode][jq-mode]]. Both pass ~-c~ by default, so the JSON Lines shape is preserved.
+- Files ending in =.jsonl= or =.ndjson= are handled automatically.
+
+* Requirements
+- Emacs 29.1 or newer (for the built-in ~js-json-mode~).
+- The ~jq-mode~ Emacs package and the ~jq~ binary (both pulled in by the Guix package).
+
+* Installation
+** Guix
+Packaged in the [[https://github.com/shegeley/x-files][x-files]] channel as ~emacs-jsonl-mode~. The channel package bundles this source, bakes in the absolute ~jq~ store path, and propagates ~emacs-jq-mode~.
+
+** Manual
+Put ~jsonl-mode.el~ on your ~load-path~ and:
+
+#+begin_src emacs-lisp
+(require 'jsonl-mode)
+#+end_src
+
+* Configuration
+- ~jsonl-mode-enable-flymake~ (default ~t~) :: enable Flymake automatically in ~jsonl-mode~ buffers.
+- ~jsonl-jq-command~ (default ~"jq"~) :: the jq executable used by ~jsonl-jq~. The x-files Guix package bakes in the absolute store path.
+- ~jsonl-jq-default-flags~ (default ~'("-c")~) :: flags always passed to jq; keep ~-c~ to preserve the JSON Lines shape.
+
+* Development
+#+begin_src sh
+make compile   # byte-compile
+make test      # run ERT tests
+#+end_src
+
+* License
+GPL-3.0-or-later.
