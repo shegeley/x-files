@@ -5,7 +5,6 @@
                                                   shepherd-action
                                                   shepherd-trigger-action))
   #:use-module ((gnu home services shepherd) #:select (home-shepherd-service-type))
-  #:use-module ((shepherd support) #:select (%user-log-dir))
   #:use-module ((x-files storage-files) #:select (browser-history-manager-scrub))
   #:use-module (guix gexp)
   #:use-module ((gnu packages base) #:select (grep))
@@ -33,6 +32,14 @@
 ;;;
 ;;; Config (plain alist, no records)
 ;;;
+
+(define %user-log-dir
+  ;; Replicated from (shepherd support): importing that module at the channel
+  ;; top level breaks `guix pull' — shepherd is not on the channel build load
+  ;; path.  Value matches (shepherd support) %user-log-dir exactly.
+  (string-append (or (getenv "XDG_STATE_HOME")
+                     (string-append (or (getenv "HOME") "/") "/.local/state"))
+                 "/shepherd"))
 
 (define* (browser-history-manager-config
           #:key
