@@ -1,6 +1,20 @@
 (channel-news
  (version 0)
  (entry
+  (commit "a1b1140")
+  (title (en "Browser history manager + guile-fsnotify"))
+  (body (en "Added @code{(x-files features browser-history-manager)}: a Guix
+Home feature that periodically (shepherd timer) and in near-real-time (a native
+@code{guile-fsnotify} inotify watcher on Fibers) deletes browser history and
+other per-domain traces (history, autocomplete, cookies, downloads, plus a
+best-effort cache scan) matching declarative patterns, across Firefox- and
+Chromium-family profiles.  Deletion uses guile-sqlite3 with @code{PRAGMA
+foreign_keys=ON} (so a real Firefox @code{places.sqlite} is left with no
+dangling references), keeps bookmarks by default, and skips locked/running DBs;
+a marionette system test seeds and asserts against both schemas.  Also added
+@code{(x-files packages guile-fsnotify)} (pinned Linux inotify/fanotify FFI
+bindings).")))
+ (entry
   (commit "08924a2")
   (title (en "yandex-tracker-mcp 0.7.2"))
   (body (en "Packaged @code{yandex-tracker-mcp}, a Model Context Protocol
