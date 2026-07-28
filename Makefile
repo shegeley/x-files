@@ -54,6 +54,10 @@ system-test-stalwart:
 	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
 	  -e '(@ (x-files tests services stalwart) %test-stalwart)'
 
+system-test-jackett:
+	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
+	  -e '(@ (x-files tests services jackett) %test-jackett)'
+
 # --- OnePlus 6T (fajita) Phosh VM ----------------------------------------
 # The VM cannot emulate the Snapdragon 845; it exercises the transferable
 # software stack (greetd autologin -> Phosh/phoc, logind, mobile services).
