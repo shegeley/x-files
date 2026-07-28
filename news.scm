@@ -1,6 +1,20 @@
 (channel-news
  (version 0)
  (entry
+  (commit "1a725a1")
+  (title (en "Jackett service"))
+  (body (en "Added @code{(x-files services jackett)}: a system
+@code{jackett-service-type} that runs the Jackett tracker-proxy daemon as a
+dedicated system user.  Its configuration is a plain alist (no record types) —
+a @code{jackett-configuration} helper fills defaults (data folder, port,
+@code{--ListenPrivate}/@code{--ListenPublic}, @code{--NoUpdates}, extra CLI
+options) and the shepherd/activation/account builders read it back with
+@code{assoc-ref}.  The store is read-only, so the bundled self-updater is
+disabled by default and .NET is given a writable @env{HOME}.  A marionette
+system test boots a VM and asserts the daemon starts, listens, writes its
+@file{ServerConfig.json} into a data folder owned by the @code{jackett} user,
+and logs.")))
+ (entry
   (commit "d227373")
   (title (en "Jackett"))
   (body (en "Packaged @code{jackett}, a proxy server that translates queries
