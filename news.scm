@@ -1,6 +1,18 @@
 (channel-news
  (version 0)
  (entry
+  (commit "d227373")
+  (title (en "Jackett"))
+  (body (en "Packaged @code{jackett}, a proxy server that translates queries
+from @acronym{PVR, Personal Video Recorder} apps (Sonarr, Radarr, Lidarr, ...)
+into tracker-site-specific HTTP requests and returns Torznab/TorrentPotato
+results.  The package installs upstream's self-contained .NET folder
+deployment (the whole runtime is bundled): it patches the ELF interpreter of
+the native launchers and wraps the entry point with an @env{LD_LIBRARY_PATH}
+that hands the bundled @code{libSystem.*.Native.so} their glibc/gcc-lib
+dependencies plus the OpenSSL and ICU they @code{dlopen} at runtime.  Provides
+@code{x86_64-linux} and @code{aarch64-linux}.")))
+ (entry
   (commit "a1b1140")
   (title (en "Browser history manager + guile-fsnotify"))
   (body (en "Added @code{(x-files features browser-history-manager)}: a Guix
