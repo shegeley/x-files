@@ -1,6 +1,21 @@
 (channel-news
  (version 0)
  (entry
+  (commit "cca156d")
+  (title (en "Mission Center"))
+  (body (en "Packaged @code{mission-center}, a GTK4/libadwaita system monitor
+showing CPU, memory, disk, network and GPU usage plus running apps and
+processes.  It is a Rust app whose meson build (and its @code{magpie} gatherer
+subproject, pulled in as a git submodule) shell out to @code{cargo}, so all
+crates from both @file{Cargo.lock} files are vendored into one fixed-output
+derivation and consumed offline; the gatherer's @code{build.rs} would fetch
+nvtop's GPU-info C sources over the network, so those are supplied from a
+pinned tarball via @env{MC_NVTOP_TARBALL}.  The installed @code{missioncenter}
+is wrapped to put its own @file{bin} on @env{PATH} (so it finds the
+@code{missioncenter-magpie} gatherer) and to point @env{MC_MAGPIE_HW_DB} at the
+bundled hardware-name database.  This is 1.1.0 (GNOME 48 stack); 1.2.0 targets
+glib >= 2.88 / GNOME 50, newer than Guix currently ships.")))
+ (entry
   (commit "1a725a1")
   (title (en "Jackett service"))
   (body (en "Added @code{(x-files services jackett)}: a system
