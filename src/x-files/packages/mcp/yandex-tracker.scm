@@ -39,6 +39,7 @@
                                                           python-wheel
                                                           python-typing-extensions))
   #:use-module ((gnu packages time)            #:select (python-dateutil))
+  #:use-module ((x-files packages mcp python-mcp) #:select (python-mcp-full))
 
   #:export (python-aiocache
             python-grpcio-next
@@ -195,25 +196,9 @@ Yandex Cloud API plus helpers to obtain IAM tokens from OAuth tokens or service
 account keys.")
     (license license:expat)))
 
-;; Guix's python-mcp only propagates httpx and pydantic, but FastMCP (which the
-;; tracker runs) needs the full server-side stack.  Add mcp's remaining runtime
-;; dependencies so the closure is complete.
-(define python-mcp-full
-  (package
-    (inherit python-mcp)
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-mcp)
-       (append python-anyio
-               python-httpx-sse
-               python-jsonschema
-               python-pydantic-settings
-               python-pyjwt
-               python-multipart
-               python-sse-starlette
-               python-starlette
-               python-typing-extensions
-               python-typing-inspection
-               python-uvicorn)))))
+;; python-mcp-full (the FastMCP-complete python-mcp variant, named distinctly to
+;; avoid a profile clash with guix's plain `python-mcp') now lives in
+;; (x-files packages mcp python-mcp) and is imported above.
 
 (define-public yandex-tracker-mcp
   (package
