@@ -5,6 +5,7 @@
   #:use-module (gnu services desktop)
   #:use-module (gnu packages)
   #:use-module ((gnu packages networking) #:select (blueman))
+  #:use-module ((guix gexp) #:select (plain-file))
   #:use-module (gnu home services xdg)
 
   #:use-module (x-files packages gpaste)
@@ -66,6 +67,20 @@
    (application/djvu . evince.desktop)
    (application/pdf . evince.desktop)))
 
+;; On GNOME, ScreenCast/RemoteDesktop must be handled by the gnome portal backend
+;; (it drives Mutter's screencast).  The sway feature also installs
+;; xdg-desktop-portal-wlr; without pinning the interface, browsers can end up
+;; with no working screen source ("share screen" offers nothing).  Named
+;; `gnome-portals.conf' so xdg-desktop-portal only applies it under GNOME — sway
+;; keeps routing to wlr.
+(define %gnome-portals.conf
+  (plain-file "gnome-portals.conf"
+    (string-append
+     "[preferred]\n"
+     "default=gnome;gtk\n"
+     "org.freedesktop.impl.portal.ScreenCast=gnome\n"
+     "org.freedesktop.impl.portal.RemoteDesktop=gnome\n")))
+
 (define* (feature-gnome-desktop
           #:key
           (libnotify (specification->package "libnotify"))
@@ -81,7 +96,11 @@
      (simple-service
        'gnome-apps-mime-entries
        home-xdg-mime-applications-service-type
-       (home-xdg-mime-applications-configuration (default mimes)))))
+       (home-xdg-mime-applications-configuration (default mimes)))
+     (simple-service
+       'gnome-screencast-portal
+       home-xdg-configuration-files-service-type
+       (list (list "xdg-desktop-portal/gnome-portals.conf" %gnome-portals.conf)))))
 
   (define (get-system-services config)
     (list
