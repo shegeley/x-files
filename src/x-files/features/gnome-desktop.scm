@@ -6,6 +6,7 @@
   #:use-module (gnu packages)
   #:use-module ((gnu packages networking) #:select (blueman))
   #:use-module ((guix gexp) #:select (plain-file))
+  #:use-module ((gnu home services) #:select (home-xdg-configuration-files-service-type))
   #:use-module (gnu home services xdg)
 
   #:use-module (x-files packages gpaste)
