@@ -127,29 +127,28 @@ a secret never touches disk.")
       #:lisp-directory "lisp"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'make-autoloads 'defer-autoloads
-            ;; The ;;;###autoload'd `add-to-list' / `tramp-register-foreign-
-            ;; file-name-handler' forms call into tramp; the emacs-build-system
-            ;; now loads the compiled autoloads in isolation to validate them,
-            ;; which fails with a void function.  Wrap each in `eval-after-load'
-            ;; so they defer until tramp-rpc is loaded.  Done via emacs `read'
-            ;; so it is robust to the forms being pretty-printed across lines.
+          (add-after 'unpack 'strip-load-time-autoload-cookies
+            ;; tramp-rpc.el marks two forms `;;;###autoload' that call into
+            ;; tramp at load time: `tramp-register-foreign-file-name-handler'
+            ;; and `add-to-list' on `tramp-methods' (referencing the not-yet-
+            ;; defined `tramp-rpc-method').  Copied verbatim into the generated
+            ;; autoloads, they void-function/void-variable when the emacs-build-
+            ;; system loads the compiled autoloads in isolation to validate
+            ;; them.  They are pointless as autoloads anyway: both forms also run
+            ;; when tramp-rpc.el itself is loaded, where `tramp' is required and
+            ;; `tramp-rpc-method' is defined.  Drop the cookies so the forms live
+            ;; only in the library body (as the Commentary's `(require
+            ;; 'tramp-rpc)' intends).  Both cookies in this file are these
+            ;; load-time tramp calls.
+            ;;
+            ;; NB: `#:lisp-directory "lisp"' makes the emacs-build-system `unpack'
+            ;; phase chdir INTO "lisp" (guix commit acf3d19+), so at this point
+            ;; the cwd IS the lisp dir — a literal "lisp/tramp-rpc.el" resolves to
+            ;; lisp/lisp/tramp-rpc.el and mkstemp fails ENOENT.  Locate the file
+            ;; with `find-files' so the phase works from either cwd.
             (lambda _
-              (invoke
-               "emacs" "-Q" "--batch" "--eval"
-               "(let ((f \"tramp-rpc-autoloads.el\"))
-                  (with-temp-buffer
-                    (insert-file-contents f)
-                    (goto-char (point-min))
-                    (while (re-search-forward
-                            \"^(\\\\(tramp-register-foreign-file-name-handler\\\\|add-to-list \\\\)\"
-                            nil t)
-                      (goto-char (match-beginning 0))
-                      (let ((beg (point)) (form (read (current-buffer))))
-                        (delete-region beg (point))
-                        (goto-char beg)
-                        (insert (format \"(eval-after-load 'tramp-rpc '%S)\" form))))
-                    (write-region (point-min) (point-max) f nil 'silent)))"))))))
+              (for-each (lambda (f) (substitute* f ((";;;###autoload") "")))
+                        (find-files "." "(^|/)tramp-rpc\\.el$")))))))
     (home-page "https://github.com/ArthurHeymans/emacs-tramp-rpc")
     (synopsis "High-performance TRAMP frontend using JSON-RPC")
     (description
