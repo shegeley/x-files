@@ -85,14 +85,14 @@ exec env \\
 (define-public slojka
   (package
     (name "slojka")
-    (version "0.2.1")
+    (version "0.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/HelpFreedom/slojka/releases/download/v"
                            version "/Slojka-" version ".AppImage"))
        (sha256
-        (base32 "0vg5j3b8n12784ifcv07z027slzzbrm08y9vfjybpmjskb37cfbb"))))
+        (base32 "1qqws7r2jazkl9vp1khj3mxjg1dwagqdkikhyf8v311nmwzxs5xk"))))
     (build-system binary-build-system)
     (arguments
      (list
