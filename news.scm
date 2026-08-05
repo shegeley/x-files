@@ -1,6 +1,57 @@
 (channel-news
  (version 0)
  (entry
+  (commit "3747e8e")
+  (title (en "OfficeCLI: openssl for .NET libssl dlopen"))
+  (body (en "@code{officecli open <file>} (and any other command touching a
+document) would fail outright with @samp{No usable version of libssl was
+found}.  OfficeCLI's .NET crypto stack @code{dlopen}s @code{libssl} at
+runtime instead of linking it, so it never showed up as a missing
+dependency to @command{patchelf}/RUNPATH -- Guix's sandboxing simply hid it.
+Added @code{openssl} to the package's inputs and its
+@env{LD_LIBRARY_PATH} wrapper, alongside a routine
+@tie{}1.0.129@tie{}->@tie{}1.0.143 version bump.  Verified end to end: the
+rebuilt binary now starts and reaches real application logic instead of
+aborting at startup.")))
+ (entry
+  (commit "80609b7")
+  (title (en "rust-crates: bumped, but nix/serde/wasi/tokio-macros held back"))
+  (body (en "Bumped most of the vendored crates in
+@code{(x-files packages rust-crates)} (consumed by @code{tramp-rpc-server})
+to their latest minor/patch release.  Four were deliberately left at their
+prior version after real build failures, not just skipped: @code{nix}
+(tramp-rpc-server's own @file{Cargo.toml} pins @samp{version = \"0.29\"} --
+0.31.3 falls outside that range), @code{serde}/@code{serde_core}/
+@code{serde_derive} (the 1.0.229 patch release itself raised
+@code{serde_derive}'s @code{syn} requirement to @samp{^3}, which is a major
+bump out of scope here), @code{wasi} (@code{mio} pins @samp{wasi = \"^0.11.0\"}
+and 0.14.x is a different, incompatible WASI API generation), and
+@code{tokio}/@code{tokio-macros} (@code{tokio} 1.53 requires
+@code{tokio-macros ~2.7.0}, whose 2.7.2 also needs @code{syn ^3}).  Each was
+confirmed by a real @command{guix build} failure, not guessed from
+changelogs.")))
+ (entry
+  (commit "ddf8184")
+  (title (en "Package version bumps"))
+  (body (en "Updated @code{clickhouse-bin} 26.3.17.110, @code{clojureism}
+0.0.3, @code{coder} 2.35.3, @code{datomic} 1.0.7705, @code{deno} 2.9.4,
+@code{ayatana-ido} 0.10.4, @code{valentina} 1.1.0, @code{etcd} 3.7.1,
+@code{geckodriver} 0.37.1, @code{glab} 1.112.0, @code{grafana-bin} 13.1.2,
+@code{jackett} 0.24.2330, @code{k0s} 1.36.3+k0s.0, @code{kubectl} 1.36.3,
+@code{helm} 4.2.3, @code{rust-mcp-filesystem} 0.4.2,
+@code{python-yandexcloud} 0.402.0, @code{yandex-tracker-mcp} 0.7.3,
+@code{qbs} 3.3.1, @code{remark42} 1.16.4, @code{slojka} 0.2.2,
+@code{stalwart} 0.16.16, @code{task} 3.52.0, @code{vault} 2.0.4,
+@code{gmobile-next} 0.7.2, @code{libmbim-next} 1.34.0, @code{libqmi-next}
+1.38.0, @code{phoc} 0.56.0, and @code{phosh} 0.56.0 -- all pure
+version@tie{}+@tie{}sha256 bumps, sha256 recomputed with
+@command{guix build} against each package's real source, not guessed.
+@code{polkit-next} was checked too but stays at 124: upstream's git repo has
+no tag past @samp{124} at all, so there is no @samp{127} to bump to.
+@code{gpaste} was intentionally left untouched at 45.6 -- see the dedicated
+comment in @code{(x-files packages gpaste)} for why a naive bump breaks the
+GNOME Shell extension.")))
+ (entry
   (commit "cca156d")
   (title (en "Mission Center"))
   (body (en "Packaged @code{mission-center}, a GTK4/libadwaita system monitor
