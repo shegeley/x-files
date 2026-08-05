@@ -70,9 +70,9 @@
 (define rust-mio-1.2.2
   (crate-source "mio" "1.2.2"
                 "09y4b7gc42ymgssshh8sz6gs3y5r8bbigqaw2c4snh6fy5qmrmih"))
-(define rust-nix-0.31.3
-  (crate-source "nix" "0.31.3"
-                "0gbwnjfny9rq9hl5bz4ry520n9rnfknna4bg88n66f7zx3yx486g"
+(define rust-nix-0.29.0
+  (crate-source "nix" "0.29.0"
+                "0ikvn7s9r2lrfdm3mx1h7nbfjvcc6s9vxdzw7j5xfkd2qdnp9qki"
                 #:snippet '(delete-file-recursively "test")))
 (define rust-pin-project-lite-0.2.17
   (crate-source "pin-project-lite" "0.2.17"
@@ -86,15 +86,15 @@
 (define rust-quote-1.0.47
   (crate-source "quote" "1.0.47"
                 "00ch0yyzvv6s671ik0kcsbw8nigdaj2g3fr61kcahwx48aqlvgqz"))
-(define rust-serde-1.0.229
-  (crate-source "serde" "1.0.229"
-                "1fp04fq4a79bpm61xz1zy0pbz4kpc7d771zii1k3inmszq55jj21"))
-(define rust-serde-core-1.0.229
-  (crate-source "serde_core" "1.0.229"
-                "0j1ajiha76h3nmd976il9li6975k121xa7jb39ws8n0yqp4s5p37"))
-(define rust-serde-derive-1.0.229
-  (crate-source "serde_derive" "1.0.229"
-                "0j4k63i7h1bikxwz2c89ig0hrwbnl9mz1czn85xx99x5cc9dg9g7"))
+(define rust-serde-1.0.228
+  (crate-source "serde" "1.0.228"
+                "17mf4hhjxv5m90g42wmlbc61hdhlm6j9hwfkpcnd72rpgzm993ls"))
+(define rust-serde-core-1.0.228
+  (crate-source "serde_core" "1.0.228"
+                "1bb7id2xwx8izq50098s5j2sqrrvk31jbbrjqygyan6ask3qbls1"))
+(define rust-serde-derive-1.0.228
+  (crate-source "serde_derive" "1.0.228"
+                "0y8xm7fvmr2kjcd029g9fijpndh8csv5m20g4bd76w8qschg4h6m"))
 (define rust-serde-json-1.0.151
   (crate-source "serde_json" "1.0.151"
                 "051zww7lvpw147vvwss1ng6w587qyrkzg75fvj08q2dfrmgbahf8"))
@@ -116,19 +116,19 @@
 (define rust-thiserror-impl-1.0.69
   (crate-source "thiserror-impl" "1.0.69"
                 "1h84fmn2nai41cxbhk6pqf46bxqq1b344v8yz089w1chzi76rvjg"))
-(define rust-tokio-1.53.1
-  (crate-source "tokio" "1.53.1"
-                "1v8b3b45pkpbibls75yniqbvx5dlks2708141ljni5mnf6lawb10"))
-(define rust-tokio-macros-2.7.2
-  (crate-source "tokio-macros" "2.7.2"
-                "03kvy2r5gr4zccm4vdx8vvv3q69kbjc1b006rs11aibz74m3lxvq"))
+(define rust-tokio-1.49.0
+  (crate-source "tokio" "1.49.0"
+                "11ix3pl03s0bp71q3wddrbf8xr0cpn47d7fzr6m42r3kswy918kj"))
+(define rust-tokio-macros-2.6.0
+  (crate-source "tokio-macros" "2.6.0"
+                "19czvgliginbzyhhfbmj77wazqn2y8g27y2nirfajdlm41bphh5g"))
 (define rust-unicode-ident-1.0.24
   (crate-source "unicode-ident" "1.0.24"
                 "0xfs8y1g7syl2iykji8zk5hgfi5jw819f5zsrbaxmlzwsly33r76"
                 #:snippet '(delete-file-recursively "tests")))
-(define rust-wasi-0.14.7+wasi-0.2.4
-  (crate-source "wasi" "0.14.7+wasi-0.2.4"
-                "133fq3mq7h65mzrsphcm7bbbx1gsz7srrbwh01624zin43g7hd48"))
+(define rust-wasi-0.11.1+wasi-snapshot-preview1
+  (crate-source "wasi" "0.11.1+wasi-snapshot-preview1"
+                "0jx49r7nbkbhyfrfyhz0bm4817yrnxgd3jiwwwfv0zl439jyrwyc"))
 (define rust-windows-aarch64-gnullvm-0.53.1
   (crate-source "windows_aarch64_gnullvm" "0.53.1"
                 "0lqvdm510mka9w26vmga7hbkmrw9glzc90l4gya5qbxlm1pl3n59"
@@ -198,14 +198,14 @@
                                              rust-libc-0.2.189
                                              rust-memchr-2.8.3
                                              rust-mio-1.2.2
-                                             rust-nix-0.31.3
+                                             rust-nix-0.29.0
                                              rust-pin-project-lite-0.2.17
                                              rust-pin-utils-0.1.0
                                              rust-proc-macro2-1.0.107
                                              rust-quote-1.0.47
-                                             rust-serde-1.0.229
-                                             rust-serde-core-1.0.229
-                                             rust-serde-derive-1.0.229
+                                             rust-serde-1.0.228
+                                             rust-serde-core-1.0.228
+                                             rust-serde-derive-1.0.228
                                              rust-serde-json-1.0.151
                                              rust-signal-hook-registry-1.4.8
                                              rust-slab-0.4.12
@@ -213,10 +213,10 @@
                                              rust-syn-2.0.114
                                              rust-thiserror-1.0.69
                                              rust-thiserror-impl-1.0.69
-                                             rust-tokio-1.53.1
-                                             rust-tokio-macros-2.7.2
+                                             rust-tokio-1.49.0
+                                             rust-tokio-macros-2.6.0
                                              rust-unicode-ident-1.0.24
-                                             rust-wasi-0.14.7+wasi-0.2.4
+                                             rust-wasi-0.11.1+wasi-snapshot-preview1
                                              rust-windows-link-0.2.1
                                              rust-windows-sys-0.60.2
                                              rust-windows-sys-0.61.2
