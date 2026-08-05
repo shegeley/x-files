@@ -12,8 +12,8 @@
   #:use-module ((gnu packages guile-xyz) #:select (guile-srfi-125)))
 
 (define-public clojureism
- (let [(version "0.0.2")
-       (hash "0pjr0m937kz1skx1yivwnpjfqg3jppsv19pyzlfd6skcs0dq6790")]
+ (let [(version "0.0.3")
+       (hash "0w3l5bpjx3nchbqc71r01qpj7r6mpgcwrnn5mp9kggvxlszd53qa")]
   (package
    (name "clojureism")
    (version version)
