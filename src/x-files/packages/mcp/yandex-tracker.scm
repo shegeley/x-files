@@ -157,16 +157,16 @@ except ImportError:
 (define-public python-yandexcloud
   (package
     (name "python-yandexcloud")
-    (version "0.399.0")
+    (version "0.402.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://files.pythonhosted.org/packages/24/fc/"
-             "22c310c368ee39b43be14c85c166988a8e96cc44ff8ab1318c171550999f/"
+             "https://files.pythonhosted.org/packages/9c/c0/"
+             "b019909268ee17eb9a76b4d6647d986e2b324a6f1b8258fc935cfe2effeb/"
              "yandexcloud-" version ".tar.gz"))
        (sha256
-        (base32 "1sq9hq0qifzs3fpqi9lphr08qi21wa4lhnc5yi16v5c46kfpva8j"))))
+        (base32 "03mjvsnsx2izaph849k6kd2h6g5ki72r9bhwfb6zwcb5jzp3k5px"))))
     (build-system pyproject-build-system)
     ;; No tests shipped in the sdist; the generated gRPC stubs are import-only.
     (arguments
