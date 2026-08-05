@@ -19,17 +19,17 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "1da3na4z6zyz79kniacvn3bhhapxs7cbmv6gwymg47lnzzq94zns")
-    ("i686-linux"    . "05bk7iaayrmzc284hbsjpwjg7na442vq2l6msqp4vrjyj2mja12q")
-    ("armhf-linux"   . "0ckpn6wv7flzi394p0c0mzhxa7md8p5rj8g491xrkn6v4khyas4x")
-    ("riscv64-linux" . "074f6zl9sh4lral3dfplydbrds2kszshbkqcj2qi0p4wjq041p55")
-    ("aarch64-linux" . "1y0023pdl9hihgc6kinm0kff09649xlkwfrzanjlj97z1sq8pia9")))
+  '(("x86_64-linux"  . "1gcmksn8f74pghwlha999s4ia5kk665xfis8h28sgp2kmvzpkih2")
+    ("i686-linux"    . "16zccy5acgydlqw51683cv9f41g4by9l1xzbs9670h90wnxh71ag")
+    ("armhf-linux"   . "077fwr1hphk7yd5jy9zd81p1llnw9mnd6qi50rljliwwbfj5j0bs")
+    ("riscv64-linux" . "0ni78kcdc85h5ll49105dwdhslfh43c9fkclcmj1zldbay4xba6v")
+    ("aarch64-linux" . "1gjf9v867p0y39iynvr7vzk86z1v9rb8kckp8m9w1kihi084803y")))
 
 (define-public task
   (let* [(target    (or (%current-target-system) (%current-system)))
          (task.bin  (assoc-ref target->bin-name target))
          (hash      (assoc-ref target->hash target))
-         (version   "3.51.1")
+         (version   "3.52.0")
          (uri       (string-append
                      "https://github.com/go-task/"
                      "task/releases/download/"
