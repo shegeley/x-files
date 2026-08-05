@@ -146,7 +146,7 @@
   (package
     (inherit libmbim)
     (name "libmbim-next")
-    (version "1.32.0")
+    (version "1.34.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -155,7 +155,7 @@
               (file-name (git-file-name "libmbim" version))
               (sha256
                (base32
-                "1vgsx3smc0v8jbp15z07yv4z5vn9i6ry3b9fyjnb54gnw5g0v0pv"))))))
+                "1qbsly3cxxsfy9xsshf36k1276ipwf26mj5zxipp3qaaards651n"))))))
 
 (define-public libqmi-next
   (package
