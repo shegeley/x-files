@@ -13,7 +13,7 @@
 ;;
 ;; To bump: set %glab-version and recompute the hash with
 ;;   guix download https://gitlab.com/gitlab-org/cli/-/releases/vX.Y.Z/downloads/glab_X.Y.Z_linux_amd64.tar.gz
-(define %glab-version "1.107.0")
+(define %glab-version "1.112.0")
 
 (define-public glab
   (package
@@ -26,7 +26,7 @@
              "https://gitlab.com/gitlab-org/cli/-/releases/v" %glab-version
              "/downloads/glab_" %glab-version "_linux_amd64.tar.gz"))
        (sha256
-        (base32 "0b5fslq91xgr05sk558jzkkz237n1vzn0nda497wz2d7n5pgahpb"))))
+        (base32 "1gwfda7zr6s8z60ill0b4ia6xl1w6myph5dn68h5yrlbal3jkigi"))))
     (build-system binary-build-system)
     (arguments
      (list
