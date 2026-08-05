@@ -327,7 +327,7 @@ It is the default compositor used by Phosh, the GNOME-based phone shell.")
 (define-public phosh
   (package
     (name "phosh")
-    (version "0.55.0")
+    (version "0.56.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -336,7 +336,7 @@ It is the default compositor used by Phosh, the GNOME-based phone shell.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pmfsgw4rm6dznfqlyj5fqfwy91h9ynf6nyisyc6x9kk1by6sapy"))))
+                "1ziihsm2vdvyi63j4x278kkhg9q50zxpvspy0ilzym0sy0slxfh0"))))
     (build-system meson-build-system)
     (arguments
      (list
