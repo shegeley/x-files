@@ -203,16 +203,16 @@ account keys.")
 (define-public yandex-tracker-mcp
   (package
     (name "yandex-tracker-mcp")
-    (version "0.7.2")
+    (version "0.7.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://files.pythonhosted.org/packages/1c/3b/"
-             "aad4a345b50d778c7a20ec690bb05e55d6377636459824d08050661d95c7/"
+             "https://files.pythonhosted.org/packages/dd/c5/"
+             "c7ac8264ddb0f6f3057988ce31bbeef3d83fc99acd24e91d6ab16cd81287/"
              "yandex_tracker_mcp-" version ".tar.gz"))
        (sha256
-        (base32 "1k919qh0v77h4mcwqiv088ap9m89x85xclfmdxjqg9kp0m21wl9l"))))
+        (base32 "0c3742yj0kzs6qb819b4vz3wld20dl459i1bi49v76qbsidwbsp4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
