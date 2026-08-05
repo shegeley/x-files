@@ -21,7 +21,7 @@
 (define-public ayatana-ido
   (package
     (name "ayatana-ido")
-    (version "0.9.3")
+    (version "0.10.4")
     (source
      (origin
        (method git-fetch)
@@ -30,7 +30,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pi0qan239chglhi1vx8ndlx3ppr3xjrr7alan0vw6m06wx89kmd"))))
+        (base32 "1li6pzh9xvl66nlixzpwqsn8aaa0kj0azhzjan4cd65f7nnjpq99"))))
     (build-system cmake-build-system)
     (arguments
      (list
