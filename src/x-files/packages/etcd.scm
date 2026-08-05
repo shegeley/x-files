@@ -9,7 +9,7 @@
 
   #:use-module ((guix licenses) #:prefix license:))
 
-(define-public etcd-3.7.0
+(define-public etcd-3.7.1
   (let* [(target (or (%current-target-system) (%current-system)))
          (architecture
           (string-append "linux-"
@@ -19,11 +19,11 @@
                            ("aarch64-linux" "arm64"))))
          (hash
           (match target
-            ("x86_64-linux"  "1w7ravx22pijzxm1f9y6ynm29pgh8imri2dbrpwvinl6arzv0p5h")
-            ("aarch64-linux" "1s5grmq521jxlnwdx1d47qr5hp7128z7fppl43p06c3azra0j6p6")))]
+            ("x86_64-linux"  "1fcgvpzm4yhx0j0w90zv9vlaq5wljrpvfy5xbmy1762c0sl3zkg8")
+            ("aarch64-linux" "1nmnfpmv0iqmvfzz7qngvk9z7hz23y4plyzwj9vyvdllyq45xqnp")))]
     (package
       (name "etcd")
-      (version "3.7.0")
+      (version "3.7.1")
       (source
        (origin
          (method url-fetch)
@@ -51,4 +51,4 @@
 @code{etcd} is written in Go and uses the Raft consensus algorithm to manage a highly-available replicated log")
       (license license:asl2.0))))
 
-(define-public etcd etcd-3.7.0)
+(define-public etcd etcd-3.7.1)
