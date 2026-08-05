@@ -16,14 +16,14 @@
 (define targets (map car target->gecko-target))
 
 (define target->hash
-  '(("x86_64-linux"  . "0j75c8851n32b8fm20siysij7v7zm84i638n1i088rl1v4xy7m4h")
-    ("aarch64-linux" . "0n21ml264dnpp74ab0jxbw9bwsl7mak7ip25ifknsxz1k2aw4sx1")))
+  '(("x86_64-linux"  . "0zlzw0hxxbs7ls1wwpv36lbrkkm3sd43p14imrif30srm47165g8")
+    ("aarch64-linux" . "0331mlnzdwg9zpbdh5fnhvwv6vpnvx2b77skardsvyr22jahpncg")))
 
 (define-public geckodriver
   (let* [(target       (or (%current-target-system) (%current-system)))
          (gecko-target (assoc-ref target->gecko-target target))
          (hash         (assoc-ref target->hash target))
-         (version      "0.37.0")
+         (version      "0.37.1")
          (uri          (string-append
                         "https://github.com/mozilla"
                         "/geckodriver/releases/download/v" version
