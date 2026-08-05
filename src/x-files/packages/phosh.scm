@@ -161,7 +161,7 @@
   (package
     (inherit libqmi)
     (name "libqmi-next")
-    (version "1.36.0")
+    (version "1.38.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -170,7 +170,7 @@
               (file-name (git-file-name "libqmi" version))
               (sha256
                (base32
-                "1ifk6q3v9fq3ms09ig8k9640djjf9flpz27plgypmz6f9g1nfqvh"))))
+                "0k24slycvk1wg5hzxiyysk2azppfbgp842d1zxrfh9lmf9zcv5kc"))))
     (inputs
      (modify-inputs (package-inputs libqmi)
        (replace "libmbim" libmbim-next)))))
