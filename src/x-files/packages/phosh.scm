@@ -221,7 +221,7 @@
 (define-public phoc
   (package
     (name "phoc")
-    (version "0.55.0")
+    (version "0.56.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -230,7 +230,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0r5kafa17sgxr3dfmm40js2pi5b5rjqrrnvfzqsnlfv6hy824qp5"))))
+                "1g83lm6k4f4v37hqrj9rrf8hcrrh0hd9gn7kgjz38xjsqq5zndjz"))))
     (build-system meson-build-system)
     (arguments
      (list
