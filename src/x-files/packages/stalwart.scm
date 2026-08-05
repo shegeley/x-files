@@ -13,14 +13,14 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "0kp7izwiczbi1i5hg5gs6im6cjicsqjaiwg96jh8vq747gbyxv6h")
-    ("aarch64-linux" . "1qz00g07y65nni82cl5m69b2fpzz1da0vakjz5hyfhf5bd42l9pz")))
+  '(("x86_64-linux"  . "1ig2gs70nab68z74wnxf17wnnpqrkz2chp1sknyf0jy5zv99ar1z")
+    ("aarch64-linux" . "0lb0yay3kfz5a6bl8w32wg8f42gj98gcjnhl6r85y8kf82hdf66v")))
 
 (define-public stalwart
   (let* [(target  (or (%current-target-system) (%current-system)))
          (bin     (assoc-ref target->bin-name target))
          (hash    (assoc-ref target->hash target))
-         (version "0.16.12")
+         (version "0.16.16")
          (uri     (string-append
                    "https://github.com/stalwartlabs/stalwart/"
                    "releases/download/v" version "/"
