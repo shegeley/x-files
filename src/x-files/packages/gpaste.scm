@@ -17,6 +17,30 @@
 
 (define-public gpaste
   ;; https://patchwise.org/77780
+  ;; Version tracks the GNOME release cycle (45.x -> GNOME 45, etc), so
+  ;; upstream's newest (50.x) needs a matching GNOME 50 mutter/gnome-shell
+  ;; stack that isn't in Guix yet -- don't jump straight there.
+  ;;
+  ;; Guix's own gnome-xyz.scm carries gpaste at 45.10 with a cleaner fix for
+  ;; the same typelib-path problem our wrap-typelib phase solves via the
+  ;; nixpkgs wrapper.js trick: Guix patches `@typelibDir@' straight into
+  ;; extension.js/prefs.js (patches/gpaste-fix-paths.patch) and fills it in
+  ;; with one substitute*, no wrapper.js/ESM re-export, no `mutter' input.
+  ;; NOT identical to what we do here, and NOT flawless either -- checked
+  ;; ~/Projects/guix git history (2026-07-05, "Fix compatibility with GI
+  ;; 2.0", merges guix/guix#9741): it changed extension.js's
+  ;; `GIRepository.Repository.prepend_search_path(...)' call to
+  ;; `.dup_default().prepend_search_path(...)' because plain
+  ;; Repository.prepend_search_path stopped being a valid static call under
+  ;; GI2 (gobject-introspection >= ~1.80, we're on 1.86.0 here) -- but the
+  ;; identical call in prefs.js was never updated, so Guix's own current
+  ;; gpaste still breaks the extension's Preferences dialog specifically.
+  ;; Our wrapper.js template (below) uses the same un-fixed
+  ;; `Repository.prepend_search_path(...)' form for BOTH extension.js and
+  ;; prefs.js, so as shipped here it's likely broken the same way Guix's
+  ;; prefs.js is -- probably the "problem I've had already". Any bump/fix
+  ;; must add `.dup_default()' before `.prepend_search_path' in our own
+  ;; wrapper.js, not just copy Guix's patch verbatim.
   (package
     (name "gpaste")
     (version "45.6")
