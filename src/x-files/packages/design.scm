@@ -15,7 +15,7 @@
   ;; TODO: remove when deployed https://codeberg.org/guix/guix/pulls/8587
   (package
     (name "valentina")
-    (version "1.0.0")
+    (version "1.1.0")
     (source
      (origin
        (method url-fetch)
@@ -23,7 +23,7 @@
              "https://gitlab.com/smart-pattern/valentina/-/archive/v"
              version "/valentina-v" version ".tar.gz"))
        (sha256
-        (base32 "1jazq187ib5dn10jzcx2vl3f938833i2pdgrgkc1m1zgsa74jy9f"))))
+        (base32 "1w1b0mf0g7lzzwhnbny0vmpyd0bzxp50qlhjgpv8flfs0lw49rp3"))))
     (build-system gnu-build-system)
     (arguments
      (list
