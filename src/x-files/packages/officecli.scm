@@ -4,6 +4,7 @@
   #:use-module ((gnu packages elf) #:select (patchelf))
   #:use-module (gnu packages gcc)
   #:use-module ((gnu packages icu4c) #:select (icu4c))
+  #:use-module ((gnu packages tls) #:select (openssl))
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
@@ -72,7 +73,8 @@
                       (libs (string-append
                              (assoc-ref inputs "glibc") "/lib:"
                              (assoc-ref inputs "gcc") "/lib:"
-                             (assoc-ref inputs "icu4c") "/lib")))
+                             (assoc-ref inputs "icu4c") "/lib:"
+                             (assoc-ref inputs "openssl") "/lib")))
                   (mkdir-p bin)
                   (call-with-output-file (string-append bin "/officecli")
                     (lambda (port)
@@ -87,7 +89,8 @@ exec \"~a\" \"$@\"~%"
       (inputs (list bash-minimal
                     glibc
                     `(,gcc "lib")
-                    icu4c))
+                    icu4c
+                    openssl))
       (supported-systems targets)
       (home-page "https://officecli.ai/")
       (synopsis "AI-agent Office suite for Word, Excel, and PowerPoint files")
