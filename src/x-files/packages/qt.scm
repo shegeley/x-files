@@ -13,14 +13,14 @@
   ;; TODO: remove when merged https://codeberg.org/guix/guix/pulls/8586
   (package
     (name "qbs")
-    (version "3.2.0")
+    (version "3.3.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://qt/qbs/"
                                   version "/qbs-src-" version ".tar.gz"))
               (sha256
                (base32
-                "0700xffwjjnx9m8h11b9kvv37pfmha03aqvk7ydyf94y3cij8mr4"))))
+                "13wsmyjhgn7dahsqs1ym535x9r1n0pci1aii2cqkmj30zfjmi2sx"))))
     (build-system qt-build-system)
     (arguments
      (list
