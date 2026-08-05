@@ -10,16 +10,16 @@
 (define-public grafana-bin
   (package
     (name "grafana-bin")
-    (version "13.1.0")
+    (version "13.1.2")
     (source
      (let* ((arch (match (or (%current-target-system) (%current-system))
                     ("aarch64-linux" "arm64")
                     (_ "amd64")))
             (hash (match (or (%current-target-system) (%current-system))
                     ("aarch64-linux"
-                     "16iqdd1mcazjm3wyk6hpvzjmls4lngkgvm906cbpp49bg42q7yfm")
+                     "0bnskwpxgpb3zxja322fxsahs3na195i1iaah2iri78mplfw6336")
                     (_
-                     "0xg78pliiqgh5x7p33fshwbb8k18pfx834vq8y5pbfxq4jr2nmjg"))))
+                     "140jsy4dp3yj381874jbn34qlw5qdj1z61cf28ag2wxmb65a6592"))))
        (origin
          (method url-fetch)
          (uri (string-append
