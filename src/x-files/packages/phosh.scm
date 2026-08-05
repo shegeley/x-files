@@ -102,12 +102,12 @@
                     (("PACKAGE_PREFIX \"/lib/polkit-1/polkit-agent-helper-1\"")
                      "\"/run/setuid-programs/polkit-agent-helper-1\""))))))))
 
-;; gmobile 0.7.1 — needed by phoc (requires >= 0.6.0)
+;; gmobile 0.7.2 — needed by phoc (requires >= 0.6.0)
 (define-public gmobile-next
   (package
     (inherit gmobile)
     (name "gmobile-next")
-    (version "0.7.1")
+    (version "0.7.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -116,7 +116,7 @@
               (file-name (git-file-name "gmobile" version))
               (sha256
                (base32
-                "1p257f4r7vg53d1p4m6nx3z2bvj8jda3l4f26nh01k0nizxhfya5"))))
+                "0l828qbmi2aj2qvxvhgnrp7v1wrwk6zgq7h83igsvnh0ym2w4zr4"))))
     (native-inputs
      (list `(,glib "bin") gobject-introspection pkg-config vala))))
 
