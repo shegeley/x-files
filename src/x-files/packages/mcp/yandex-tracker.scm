@@ -114,9 +114,29 @@ from the vendored C-core so that recent generated stubs (which require the
 registered-method API) run correctly.")
     (license license:asl2.0)))
 
-;; yandexcloud's gRPC stubs are generated for protobuf 6.  Guix's
-;; googleapis-common-protos is 1.66, still capped at protobuf <6; bump to 1.70
-;; (protobuf <7) and rebuild it against protobuf 6.
+;; yandexcloud's gRPC stubs need protobuf 6; Guix's googleapis-common-protos
+;; is 1.66 (capped <6) so bump it to 1.70 and rebuild against protobuf 6.
+;;
+;; protobuf-6's sdist ships a regular google/__init__.py (pkg_resources
+;; namespace stub) that shadows PEP-420 namespace merging for every other
+;; google.* package (e.g. google.api_core) on sys.path. Strip it so
+;; everything merges via plain PEP 420 instead. Mirrors
+;; (ai-cloud packages mcp-google-sheets)'s definitions of the same name —
+;; identical recipe resolves to the identical store item, so the two
+;; channels' packages don't collide when installed together.
+(define python-protobuf-6-pep420
+  (package
+    (inherit python-protobuf-6)
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-protobuf-6)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-after 'install 'strip-google-namespace-stub
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (delete-file
+                 (string-append (site-packages inputs outputs)
+                                "/google/__init__.py"))))))))))
+
 (define python-googleapis-common-protos-6
   (package
     (inherit python-googleapis-common-protos)
@@ -133,26 +153,8 @@ registered-method API) run correctly.")
     (arguments
      (substitute-keyword-arguments (package-arguments python-googleapis-common-protos)
        ;; A namespace-package compat test is unrelated to our runtime use.
-       ((#:tests? _ #f) #f)
-       ((#:phases phases #~%standard-phases)
-        #~(modify-phases #$phases
-            ;; 1.70 dropped google/__init__.py in favour of PEP 420, but
-            ;; protobuf-6 still ships a pkg_resources declare_namespace stub;
-            ;; mixing the two hides google.api.  Restore the stub so both
-            ;; distributions share the legacy namespace.
-            (add-after 'install 'restore-google-namespace
-              (lambda* (#:key inputs outputs #:allow-other-keys)
-                (call-with-output-file
-                    (string-append (site-packages inputs outputs)
-                                   "/google/__init__.py")
-                  (lambda (port)
-                    (display "\
-try:
-  __import__('pkg_resources').declare_namespace(__name__)
-except ImportError:
-  __path__ = __import__('pkgutil').extend_path(__path__, __name__)
-" port)))))))))
-    (propagated-inputs (list python-protobuf-6))))
+       ((#:tests? _ #f) #f)))
+    (propagated-inputs (list python-protobuf-6-pep420))))
 
 (define-public python-yandexcloud
   (package
@@ -183,7 +185,7 @@ except ImportError:
     (propagated-inputs
      (list python-cryptography
            python-grpcio-next
-           python-protobuf-6
+           python-protobuf-6-pep420
            python-googleapis-common-protos-6
            python-pyjwt
            python-requests
