@@ -43,6 +43,8 @@
 
   #:export (python-aiocache
             python-grpcio-next
+            python-protobuf-6-pep420
+            python-googleapis-common-protos-6
             python-yandexcloud
             yandex-tracker-mcp))
 
@@ -123,8 +125,11 @@ registered-method API) run correctly.")
 ;; everything merges via plain PEP 420 instead. Mirrors
 ;; (ai-cloud packages mcp-google-sheets)'s definitions of the same name —
 ;; identical recipe resolves to the identical store item, so the two
-;; channels' packages don't collide when installed together.
-(define python-protobuf-6-pep420
+;; channels' packages don't collide when installed together.  Exported (along
+;; with python-googleapis-common-protos-6 below) so other protobuf-6-needing
+;; MCP packages -- e.g. (x-files packages mcp google-analytics) -- can reuse
+;; the same store items instead of rebuilding an equivalent recipe.
+(define-public python-protobuf-6-pep420
   (package
     (inherit python-protobuf-6)
     (arguments
@@ -137,7 +142,7 @@ registered-method API) run correctly.")
                  (string-append (site-packages inputs outputs)
                                 "/google/__init__.py"))))))))))
 
-(define python-googleapis-common-protos-6
+(define-public python-googleapis-common-protos-6
   (package
     (inherit python-googleapis-common-protos)
     (version "1.70.0")
