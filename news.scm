@@ -1,6 +1,49 @@
 (channel-news
  (version 0)
  (entry
+  (commit "892336b")
+  (title (en "glab: aarch64-linux"))
+  (body (en "Added @code{aarch64-linux} support to @code{glab} via a
+@code{target->arch}/@code{target->hash} alist keyed on
+@code{(or (%current-target-system) (%current-system))}, mirroring the
+per-target pattern already used by @code{officecli.scm}.  Selects
+@code{glab_<version>_linux_arm64.tar.gz} for that target; both tarball
+layouts (@file{bin/glab} + docs) are identical, so the install-plan needed no
+changes.  The @code{aarch64-linux} hash was independently recomputed with
+@command{guix hash} against the real downloaded tarball, not guessed; the
+@code{x86_64-linux} variant was rebuilt end to end and @code{glab --version}
+still runs.")))
+ (entry
+  (commit "2f5233d")
+  (title (en "xray-checker: aarch64-linux"))
+  (body (en "Added @code{aarch64-linux} support to @code{xray-checker} the
+same way as @code{glab}: a @code{target->arch}/@code{target->hash} alist
+selecting @code{xray-checker-v<version>-linux-arm64.tar.gz}.  Hash recomputed
+with @command{guix hash} against the real tarball; @code{x86_64-linux}
+rebuilt end to end and @code{xray-checker --version} still runs.")))
+ (entry
+  (commit "86edd70")
+  (title (en "go2rtc: aarch64-linux"))
+  (body (en "Added @code{aarch64-linux} support to @code{go2rtc} via the same
+@code{target->bin-name}/@code{target->hash} alist pattern, selecting the bare
+@code{go2rtc_linux_arm64} release asset for that target (go2rtc ships raw
+per-arch binaries, not tarballs).  Hash independently recomputed with
+@command{guix hash} against the real downloaded binary; the
+@code{aarch64-linux} derivation was confirmed to lower cleanly via
+@command{guix build -n --system=aarch64-linux} (no aarch64 emulation
+available to actually build it here).")))
+ (entry
+  (commit "85d6c6d")
+  (title (en "go2rtc: RTSP/WebRTC/HomeKit camera streaming server"))
+  (body (en "Added @code{go2rtc} (AlexxIT/go2rtc 1.9.14), a real-time media
+streaming server and camera gateway that converts between RTSP, RTMP,
+WebRTC, HomeKit, HLS/MSE, FFmpeg, and other sources/sinks -- the streaming
+backend behind Frigate NVR and Home Assistant's camera integration.
+Upstream ships a statically-linked linux amd64 Go binary as a bare release
+asset (no archive), packaged via @code{nonguix} @code{binary-build-system}
+the same way as @code{xray-checker}/@code{glab}: no patchelf or rpath
+surgery needed, just install the binary.")))
+ (entry
   (commit "3747e8e")
   (title (en "OfficeCLI: openssl for .NET libssl dlopen"))
   (body (en "@code{officecli open <file>} (and any other command touching a
