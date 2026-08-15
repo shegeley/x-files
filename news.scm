@@ -1,6 +1,23 @@
 (channel-news
  (version 0)
  (entry
+  (commit "75bd159")
+  (title (en "guile-ares-rs-hot-reload + guile-fsnotify pin fix"))
+  (body (en "Added @code{(x-files packages guile-ares-rs-hot-reload)}: a
+guile-ares-rs nREPL extension that watches a directory tree of Guile
+@code{.scm} files and @code{load}s changed ones, and watches a CSS file to
+invoke a callback on change, both via @code{inotify(7)} (no polling) ---
+exposing @code{nrepl.hot-reload/start}/@code{/stop}/@code{/status} ops
+parameterized entirely through the nREPL message, so it carries no
+project-specific assumptions (extracted from hatis, where it drives live
+@code{.scm}/CSS reload in its UI-only dev mode).  Newly pushed to
+@url{https://codeberg.org/shegeley/guile-ares-rs-hot-reload}.  Also fixed
+@code{(x-files packages guile-fsnotify)}, which was still pinned to the
+pre-restructure commit with @code{#:source-directory \"linux\"} --- upstream
+moved @file{linux/} under @file{guile/}, so the old pin's @code{tests.scm}
+would fail to find its own modules; repinned to the current commit with
+@code{#:source-directory \"guile\"}.")))
+ (entry
   (commit "892336b")
   (title (en "glab: aarch64-linux"))
   (body (en "Added @code{aarch64-linux} support to @code{glab} via a
