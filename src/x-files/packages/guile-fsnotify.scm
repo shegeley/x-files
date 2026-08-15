@@ -17,13 +17,15 @@
      (method git-fetch)
      (uri (git-reference
            (url "https://codeberg.org/shegeley/guile-fsnotify")
-           (commit "8ecd9c5dc465900068694f0e6124ca3149155804")))
+           (commit "f96dd6b27fd37cf252f8ae02ce05125cdd3f1d31")))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "0dysqjxd7639qf0cj4s8p0b8m0aash5sfdfn780aav0r53hcsf3p"))))
+      (base32 "0mjdscxwgm2azqqa3db89g8j8wh86rzk2hjh3wfg4gcbf7vrxnac"))))
    (build-system guile-build-system)
    (arguments
-    (list #:source-directory "linux"))
+    ;; Upstream moved linux/ under guile/ (f96dd6b) so guile/ is the module
+    ;; root and tests.scm/tests/ stay out of the build.
+    (list #:source-directory "guile"))
    (native-inputs (list guile-3.0-latest))
    (synopsis "Linux inotify and fanotify bindings for GNU Guile")
    (description
