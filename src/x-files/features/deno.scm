@@ -1,12 +1,9 @@
 (define-module (x-files features deno)
- #:use-module (guix gexp)
- #:use-module (guix packages)
- #:use-module (guix download)
+ #:use-module ((guix gexp) #:select (file-append))
 
  #:use-module (x-files packages deno)
  #:use-module (x-files packages emacs deno)
-
- #:use-module ((contrib packages node-xyz) #:select (node-vscode-js-debug-1.86.0))
+ #:use-module ((x-files packages emacs dape-deno) #:select (emacs-dape-deno))
 
  #:use-module (rde features)
  #:use-module (rde features emacs)
@@ -16,88 +13,35 @@
  #:use-module (gnu services)
  #:use-module (gnu home services)
 
- #:use-module ((gnu packages node) #:select (node-lts))
  #:use-module (gnu packages emacs-xyz)
  #:use-module (gnu packages tree-sitter)
 
- #:export (feature-deno
-           node-vscode-js-debug-latest))
+ #:export (feature-deno))
 
-(define node-vscode-js-debug-latest
-  (let* [(version "1.97.1")
-         (uri (string-append
-               "https://github.com/microsoft/vscode-js-debug/"
-               "releases/download/v" version
-               "/js-debug-dap-v" version ".tar.gz"))
-         (hash "135dj20maszb1xwsqq4mh3ah3rzbv2j3y066z56p4ilwbn4lgv9x")]
-    (package
-      (inherit node-vscode-js-debug-1.86.0)
-      (version version)
-      (source
-       (origin
-         (method url-fetch)
-         (uri uri)
-         (sha256 (base32 hash))))
-      (inputs (list node-lts)))))
+;; dape debug configs (the `deno'/`chrome-frontend'/`deno-attach' entries)
+;; live in their own package, (x-files packages emacs dape-deno) -- built
+;; from packages/aux/dape-deno/dape-deno.el, with the dapDebugServer/deno
+;; store paths baked in at build time via `emacs-substitute-variables'
+;; (patch-exe-paths phase) rather than spliced in as gexp'd string literals
+;; here.  This service just requires that file; kept as a top-level define,
+;; outside `feature-deno's body, since it has nothing else feature-local to
+;; close over.
+(define (dape-deno-service config)
+  (rde-elisp-configuration-service
+   'dape-deno config
+   '((require 'dape-deno))
+   #:elisp-packages (list emacs-dape-deno)))
 
 (define* (feature-deno
           #:key
           (deno deno)
           (emacs-deno-mode emacs-deno-mode)
-          (node-vscode-js-debug node-vscode-js-debug-latest)
           (idle-time 0.3))
 
   "Stolen from RDE and refactored to use with deno and deno-ts-mode. A lot removed.
    Only dape + eglot left. Add deno settings"
 
  (define deno-exe  (file-append deno "/bin/deno"))
- (define debug-exe (file-append node-vscode-js-debug
-                    "/bin/dapDebugServer"))
-
- (define dape-config
-   `((with-eval-after-load 'dape
-       (with-eval-after-load 'deno-mode
-         (let ((debug-exe ,debug-exe)
-               (deno-exe  ,deno-exe))
-           (setq dape-configs
-                 (append
-                  `((deno
-                     modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-                     command ,debug-exe
-                     port 8123
-                     ;; pwa-node
-                     ;; https://stackoverflow.com/questions/63442436/what-is-the-pwa-node-type-launch-configuration-on-vscode
-                     :type "pwa-node"
-                     :runtimeExecutable ,deno-exe
-                     :name "(Java/Type)script with Deno"
-                     :request "launch"
-                     :cwd dape-cwd
-                     ;; ["run" "--inspect-brk"] (vector) builds to ("run" "--inspect-brk") (list) on this guix+elisp setup
-                     ;; it took me ~ 3h to figure out + debug 💀
-                     :runtimeArgs (vector "run" "--inspect-brk" "--unstable" "--allow-all")
-                     :program dape-buffer-default
-                     :attachSimplePort 9229
-                     :port 9229))
-                  `((chrome-frontend
-                     modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-                     command ,debug-exe
-                     port 8123
-                     :type "chrome"
-                     :name "pwa-chrome"
-                     :sourceMaps t
-                     :trace t
-                     :outputCapture "internalConsole"
-                     :url ,(lambda () (read-string "Url: " "http://localhost:3000"))
-                     :webRoot ,(lambda () (read-string "Root: " (funcall dape-cwd-fn)))))
-                  `((deno-attach
-                     modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-                     command ,debug-exe
-                     port 8123
-                     type "pwa-node"
-                     :name "JS/TS Node Attach"
-                     :request "attach"
-                     :port 9229))
-                  dape-configs)))))))
 
  (define (emacs-config config)
    (rde-elisp-configuration-service
@@ -142,9 +86,7 @@
                               deno-js-mode-hook
                               deno-jsx-mode-hook))
                 (add-hook hook (function deno/live-diagnostics)))))
-          '())
-
-      ,@(if (get-value 'emacs-dape config #f) dape-config '()))
+          '()))
     #:authors
     '("Grigory Shepelev <shegeley@gmail.com>"
       "Demis Balbach <db@minikn.xyz>"
@@ -157,6 +99,7 @@
  (define (get-home-services config)
   (list
    (when (get-value 'emacs config) (emacs-config config))
+   (when (get-value 'emacs-dape config #f) (dape-deno-service config))
    (simple-service
     'type&java-script-add-packages
     home-profile-service-type
