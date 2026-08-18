@@ -23,44 +23,49 @@ Patched to the real Guix store path at build time."
 
 (with-eval-after-load 'dape
   (with-eval-after-load 'deno-mode
-    (setq dape-configs
-          (append
-           `((deno
-              modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-              command ,dape-deno-debug-exe
-              port 8123
-              ;; pwa-node
-              ;; https://stackoverflow.com/questions/63442436/what-is-the-pwa-node-type-launch-configuration-on-vscode
-              :type "pwa-node"
-              :runtimeExecutable ,dape-deno-deno-exe
-              :name "(Java/Type)script with Deno"
-              :request "launch"
-              :cwd dape-cwd
-              ;; ["run" "--inspect-brk"] (vector) builds to ("run" "--inspect-brk") (list) on this guix+elisp setup
-              :runtimeArgs (vector "run" "--inspect-brk" "--unstable" "--allow-all")
-              :program dape-buffer-default
-              :attachSimplePort 9229
-              :port 9229))
-           `((chrome-frontend
-              modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-              command ,dape-deno-debug-exe
-              port 8123
-              :type "chrome"
-              :name "pwa-chrome"
-              :sourceMaps t
-              :trace t
-              :outputCapture "internalConsole"
-              :url ,(lambda () (read-string "Url: " "http://localhost:3000"))
-              :webRoot ,(lambda () (read-string "Root: " (funcall dape-cwd-fn)))))
-           `((deno-attach
-              modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
-              command ,dape-deno-debug-exe
-              port 8123
-              type "pwa-node"
-              :name "JS/TS Node Attach"
-              :request "attach"
-              :port 9229))
-           dape-configs))))
+    (let ((deno-launch-config
+           `(deno
+             modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
+             command ,dape-deno-debug-exe
+             port 8123
+             ;; pwa-node
+             ;; https://stackoverflow.com/questions/63442436/what-is-the-pwa-node-type-launch-configuration-on-vscode
+             :type "pwa-node"
+             :runtimeExecutable ,dape-deno-deno-exe
+             :name "(Java/Type)script with Deno"
+             :request "launch"
+             :cwd dape-cwd
+             ;; ["run" "--inspect-brk"] (vector) builds to ("run" "--inspect-brk") (list) on this guix+elisp setup
+             :runtimeArgs (vector "run" "--inspect-brk" "--unstable" "--allow-all")
+             :program dape-buffer-default
+             :attachSimplePort 9229
+             :port 9229)))
+      (add-to-list 'dape-configs deno-launch-config))
+
+    (let ((chrome-frontend-config
+           `(chrome-frontend
+             modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
+             command ,dape-deno-debug-exe
+             port 8123
+             :type "chrome"
+             :name "pwa-chrome"
+             :sourceMaps t
+             :trace t
+             :outputCapture "internalConsole"
+             :url ,(lambda () (read-string "Url: " "http://localhost:3000"))
+             :webRoot ,(lambda () (read-string "Root: " (funcall dape-cwd-fn))))))
+      (add-to-list 'dape-configs chrome-frontend-config))
+
+    (let ((deno-attach-config
+           `(deno-attach
+             modes (deno-ts-mode deno-tsx-mode deno-js-mode deno-jsx-mode)
+             command ,dape-deno-debug-exe
+             port 8123
+             type "pwa-node"
+             :name "JS/TS Node Attach"
+             :request "attach"
+             :port 9229)))
+      (add-to-list 'dape-configs deno-attach-config))))
 
 (provide 'dape-deno)
 ;;; dape-deno.el ends here
