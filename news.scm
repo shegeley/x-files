@@ -1,6 +1,55 @@
 (channel-news
  (version 0)
  (entry
+  (commit "332b470")
+  (title (en "feature-nix-dev moved from g-files, + nixd LSP wiring"))
+  (body (en "@code{feature-nix-dev} (a throwaway/dev Nix daemon via
+@code{nix-service-type}, plus a udev rule granting sandboxed builds
+@file{/dev/kvm} access for @command{nixos-generators}/nixosTest VM builds)
+moved here from g-files, since it's a general-purpose dev-environment
+feature, not g-files-specific.  The move also folds in Emacs LSP
+integration: @code{(x-files packages emacs nix-lsp)} wires @code{nixd} (see
+below) into both @code{lsp-mode} (@code{lsp-nix-nixd-server-path}) and
+@code{eglot} (overriding its built-in @code{nix-mode} entry, which falls
+back to unpackaged @code{nil}/@code{rnix-lsp} off @env{PATH}). Built from
+@code{packages/aux/nix-lsp/nix-lsp.el} via @code{emacs-substitute-variables},
+same convention as the new @code{dape-deno}/@code{dape-typescript}
+packages.")))
+ (entry
+  (commit "4f57c6d")
+  (title (en "dape debug configs extracted into standalone emacs packages"))
+  (body (en "@code{feature-deno}'s inline, gexp-spliced @code{dape-configs}
+elisp (the @code{deno}/@code{chrome-frontend}/@code{deno-attach} debug
+configurations) is now a real, standalone
+@code{(x-files packages emacs dape-deno)} package, built from
+@code{packages/aux/dape-deno/dape-deno.el} via @code{emacs-build-system} +
+@code{emacs-substitute-variables} baking in the @code{dapDebugServer}/@code{deno}
+store paths at build time, instead of splicing gexp'd string literals into
+generated elisp.  @code{node-vscode-js-debug-latest} also moved out of
+@code{features/deno.scm} into its own
+@code{(x-files packages vscode-js-debug)}, so packages consuming it don't
+need to import a feature module (and so @code{features/deno.scm} and
+@code{dape-deno.scm} don't form a module import cycle).  The equivalent
+@code{js-attach} config for the Atlas project's TypeScript feature got the
+same treatment on the g-files side
+(@code{(atlas packages emacs-dape-typescript)}).")))
+ (entry
+  (commit "cacb8ed")
+  (title (en "nixd: Nix language server"))
+  (body (en "Added @code{nixd} 2.9.2 (nix-community/nixd), an
+evaluation-backed Language Server Protocol implementation for the Nix
+language -- unlike scope-based servers (@code{nil}), it links directly
+against @code{libnixexpr} (the same C++ library @code{nix} itself is built
+from) via the @code{nix-main}/@code{nix-expr}/@code{nix-cmd}/@code{nix-flake}
+pkg-config modules @code{nix} already exports, so completion/diagnostics
+reflect real evaluation against a live nix store.  Meson build; three source
+patches adapt it to Guix's @code{nix} 2.32.8 and @code{llvm} 22.1.8, both
+slightly behind the nixpkgs snapshot nixd 2.9.2 was built against upstream
+(@code{PrimOp::doc} optional@tie{}->@tie{}raw-pointer,
+@code{Value::type} template@tie{}->@tie{}runtime-bool,
+@code{cl::ParseCommandLineOptions} gained a @code{vfs::FileSystem*}
+parameter).")))
+ (entry
   (commit "75bd159")
   (title (en "guile-ares-rs-hot-reload + guile-fsnotify pin fix"))
   (body (en "Added @code{(x-files packages guile-ares-rs-hot-reload)}: a
