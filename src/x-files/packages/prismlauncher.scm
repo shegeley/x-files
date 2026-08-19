@@ -42,10 +42,14 @@
              (let* ((out            (assoc-ref outputs "out"))
                     (bin            (string-append out "/bin/prismlauncher"))
                     (xrandr         (assoc-ref inputs "xrandr"))
+                    (jdk            (assoc-ref inputs "openjdk"))
                     (qtwayland      (assoc-ref inputs "qtwayland"))
                     (qtsvg          (assoc-ref inputs "qtsvg")))
                (wrap-program bin
-                 `("PATH" ":" prefix (,(string-append xrandr "/bin")))
+                 ;; jdk on PATH (not propagated -- avoids clobbering whatever
+                 ;; other openjdk version is already in the caller's profile).
+                 `("PATH" ":" prefix (,(string-append xrandr "/bin")
+                                      ,(string-append jdk "/bin")))
                  `("QT_PLUGIN_PATH" ":" prefix ,(map (lambda (package)
                                                        (string-append package "/lib/qt6/plugins"))
                                                      (list qtwayland qtsvg)))
@@ -71,8 +75,8 @@
                   libxrandr
                   libxxf86vm
                   pulseaudio
-                  mesa))
-    (propagated-inputs (list `(,openjdk17 "jdk")))
+                  mesa
+                  `(,openjdk17 "jdk")))
     (home-page "https://prismlauncher.org/")
     (synopsis "Free, open source launcher for Minecraft")
     (description
