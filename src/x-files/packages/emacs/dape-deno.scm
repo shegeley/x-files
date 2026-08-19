@@ -3,33 +3,25 @@
   #:use-module ((guix packages)            #:select (package))
   #:use-module ((guix gexp)                #:select (local-file gexp))
   #:use-module ((guix build-system emacs)  #:select (emacs-build-system))
+  #:use-module ((rde lib file)             #:select (find-file-in-load-path))
   #:use-module ((gnu packages emacs-xyz)   #:select (emacs-dape))
   #:use-module ((x-files packages deno)             #:select (deno))
   #:use-module ((x-files packages vscode-js-debug)  #:select (node-vscode-js-debug-latest))
 
   #:export (emacs-dape-deno))
 
-(define (aux-directory)
-  "Locate the bundled dape-deno.el shipped inside this channel.  Searches
-%load-path the same way (x-files packages emacs jsonl)'s jsonl-mode source is
-found, so it resolves both under `-L src' locally and from a `guix pull'ed
-channel."
-  (let loop ((dirs %load-path))
-    (if (null? dirs)
-        (error "dape-deno.el source not found on %load-path")
-        (let ((candidate (string-append (car dirs)
-                                        "/x-files/packages/aux/dape-deno")))
-          (if (file-exists? candidate)
-              candidate
-              (loop (cdr dirs)))))))
-
 (define emacs-dape-deno
   (package
     (name "emacs-dape-deno")
     (version "0.1.0")
     ;; Bundled in the channel rather than fetched from a separate repo.
-    (source (local-file (aux-directory) "emacs-dape-deno-checkout"
-                        #:recursive? #t))
+    ;; #:recursive? #t: patch-exe-paths below edits dape-deno.el in place, so
+    ;; it needs the directory-unpack's writable copy, not a bare read-only
+    ;; single-file local-file.
+    (source (local-file
+             (dirname (find-file-in-load-path "x-files/packages/aux/dape-deno/dape-deno.el"))
+             "emacs-dape-deno-checkout"
+             #:recursive? #t))
     (build-system emacs-build-system)
     (arguments
      (list
