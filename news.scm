@@ -1,6 +1,15 @@
 (channel-news
  (version 0)
  (entry
+  (commit "d08297f")
+  (title (en "+ emacs-lab (GitLab integration)"))
+  (body (en "Packaged @url{https://github.com/isamert/lab.el,lab.el}: GitLab
+projects, merge requests, code review, and CI/CD pipelines/jobs from Emacs.
+@code{lab-watch-pipeline-for-last-commit} polls the pipeline for your most
+recently pushed commit and notifies on status change;
+@code{lab-act-on-last-failed-pipeline-job}/@code{lab-show-job-logs} pull up a
+failing job's log in a formatted buffer.")))
+ (entry
   (commit "332b470")
   (title (en "feature-nix-dev moved from g-files, + nixd LSP wiring"))
   (body (en "@code{feature-nix-dev} (a throwaway/dev Nix daemon via
