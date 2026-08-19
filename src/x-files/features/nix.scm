@@ -7,6 +7,7 @@
   #:use-module ((gnu services nix) #:select (nix-service-type
                                               nix-configuration))
   #:use-module ((gnu packages package-management) #:select (nix))
+  #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc))
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
 
   #:export (feature-nix-dev))
@@ -63,6 +64,21 @@
    '((require 'nix-lsp))
    #:elisp-packages (list emacs-nix-lsp)))
 
+;; envrc.el: per-directory environment (direnv, e.g. `use nix'/`use flake')
+;; loaded into Emacs buffers -- so LSP/compile/M-x shell-command run under
+;; the SAME project-local Nix environment a terminal `cd'd there would see,
+;; not just whatever this feature's own nix-daemon happens to be. Global
+;; mode is envrc.el's own intended usage (it's a silent no-op in any
+;; directory without a `.envrc'); its `envrc-direnv-executable' already
+;; comes pre-patched to an absolute store path by Guix's own emacs-envrc
+;; package, so no substitute-variables phase is needed here.
+(define (nix-envrc-service config)
+  (rde-elisp-configuration-service
+   'nix-envrc config
+   '((require 'envrc)
+     (envrc-global-mode))
+   #:elisp-packages (list emacs-envrc)))
+
 (define* (feature-nix-dev
           #:key
           (package nix)
@@ -81,7 +97,8 @@
      %nix-kvm-udev-rules))
 
   (define (get-home-services config)
-    (list (nix-lsp-service config)))
+    (list (nix-lsp-service config)
+          (nix-envrc-service config)))
 
   (feature
    (name f-name)
