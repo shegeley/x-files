@@ -1,6 +1,18 @@
 (channel-news
  (version 0)
  (entry
+  (commit "524a61f")
+  (title (en "+ yaak-home-service-type (auto-start service)"))
+  (body (en "@code{(x-files services yaak)} adds @code{yaak-home-service-type},
+which installs @code{yaak} and auto-starts it as a home Shepherd service
+(a real window comes up at login, and its built-in MCP server stays
+reachable for the whole session). Optionally installs and registers
+Yaak's official MCP-server plugin
+(@url{https://github.com/mountain-loop/yaak/tree/main/plugins-external/mcp-server})
+if a prebuilt copy is supplied via the @code{mcp-plugin-index-js}/
+@code{mcp-plugin-package-json} config keys -- upstream's in-app download
+for that plugin 500s, so there is no way to fetch it live.")))
+ (entry
   (commit "55d24f2")
   (title (en "+ yaak (offline-first API client)"))
   (body (en "Packaged @url{https://yaak.app,Yaak}, a Tauri/WebKitGTK desktop
