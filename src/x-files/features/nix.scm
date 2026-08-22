@@ -1,4 +1,6 @@
 (define-module (x-files features nix)
+  #:use-module ((guix gexp) #:select (local-file))
+  #:use-module ((rde lib file) #:select (find-file-in-load-path))
   #:use-module ((rde features) #:select (feature))
   #:use-module ((rde features emacs) #:select (rde-elisp-configuration-service))
   #:use-module ((gnu services) #:select (service))
@@ -7,7 +9,8 @@
   #:use-module ((gnu services nix) #:select (nix-service-type
                                               nix-configuration))
   #:use-module ((gnu packages package-management) #:select (nix))
-  #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc))
+  #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc
+                                                    emacs-nix-mode))
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
 
   #:export (feature-nix-dev))
@@ -79,6 +82,23 @@
      (envrc-global-mode))
    #:elisp-packages (list emacs-envrc)))
 
+;; Interactive Nix REPL (comint-based `nix-repl', bundled with nix-mode) --
+;; the Nix analogue of a Lisp inferior-process REPL. `nix-repl' alone only
+;; gives you the raw process + TAB-completion; nix-repl-config.el (loaded
+;; below, see packages/aux/nix-repl/) adds the eval-region/eval-buffer
+;; convention every other REPL integration in this config uses, and turns on
+;; `nix-prettify-global-mode' (collapses /nix/store/<hash>-foo hashes to
+;; /nix/store/…-foo everywhere, including the REPL's own output). No
+;; keybindings are assigned; bind the commands yourself if wanted.
+(define (nix-repl-service config)
+  (rde-elisp-configuration-service
+   'nix-repl config
+   `((load-file
+      ,(local-file
+        (find-file-in-load-path
+         "x-files/packages/aux/nix-repl/nix-repl-config.el"))))
+   #:elisp-packages (list emacs-nix-mode)))
+
 (define* (feature-nix-dev
           #:key
           (package nix)
@@ -98,7 +118,8 @@
 
   (define (get-home-services config)
     (list (nix-lsp-service config)
-          (nix-envrc-service config)))
+          (nix-envrc-service config)
+          (nix-repl-service config)))
 
   (feature
    (name f-name)
