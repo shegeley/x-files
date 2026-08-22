@@ -1,6 +1,28 @@
 (channel-news
  (version 0)
  (entry
+  (commit "55d24f2")
+  (title (en "+ yaak (offline-first API client)"))
+  (body (en "Packaged @url{https://yaak.app,Yaak}, a Tauri/WebKitGTK desktop
+client for REST, GraphQL, SSE, WebSocket, and gRPC, from upstream's
+prebuilt .deb release (@code{binary-build-system}, same recipe as
+@code{(x-files packages spotify)}). The bundled ~120MB Node runtime that
+hosts Yaak's JS plugins (@code{vendored/node/yaaknode}) turned out to be
+un-patchelf-able -- @code{patchelf --set-interpreter} corrupts it on both
+0.16.1 and 0.18.0 -- so it is discarded at install time in favor of a thin
+wrapper around this package's own @code{node} input; all 35 bundled
+plugins load correctly through it.")))
+ (entry
+  (commit "b7f257f")
+  (title (en "feature-nix-dev: + interactive nix-repl service"))
+  (body (en "@code{feature-nix-dev} now wires up an interactive Nix REPL
+(comint-based @code{nix-repl}, bundled with @code{nix-mode}).
+@code{packages/aux/nix-repl/nix-repl-config.el} adds the
+eval-region/eval-buffer convention every other REPL integration in this
+config uses (@code{nix-repl-send-region}/@code{-line}/@code{-buffer}) and
+turns on @code{nix-prettify-global-mode}. No keybindings are assigned by
+default.")))
+ (entry
   (commit "d08297f")
   (title (en "+ emacs-lab (GitLab integration)"))
   (body (en "Packaged @url{https://github.com/isamert/lab.el,lab.el}: GitLab
