@@ -11,6 +11,7 @@
 ;;; Code:
 
 (require 'nix-repl)
+(require 'nix-prettify-mode)
 
 (nix-prettify-global-mode 1)
 
