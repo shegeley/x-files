@@ -1,6 +1,21 @@
 (channel-news
  (version 0)
  (entry
+  (commit "796e89e")
+  (title (en "+ postman (API client)"))
+  (body (en "Packaged @url{https://www.postman.com/,Postman} from upstream's
+prebuilt Electron tarball, pinned by version rather than the \"latest\"
+alias for reproducibility (@code{binary-build-system}, same recipe as
+@code{(x-files packages spotify)}/slojka for prebuilt Electron apps).
+Simpler than either of those: a plain @code{.tar.gz} is a format
+@code{binary-build-system}'s inherited unpack phase already understands,
+so no custom unpack phase is needed. One subtlety worth knowing if you
+hit it elsewhere: Postman's own binary rpath is @code{$ORIGIN} (its
+bundled @code{libffmpeg.so} lives alongside it), which
+@code{#:patchelf-plan}'s @code{--set-rpath} overwrites; the wrapper
+script's @code{LD_LIBRARY_PATH} restores it by listing the app directory
+itself first.")))
+ (entry
   (commit "524a61f")
   (title (en "+ yaak-home-service-type (auto-start service)"))
   (body (en "@code{(x-files services yaak)} adds @code{yaak-home-service-type},
