@@ -1,6 +1,32 @@
 (channel-news
  (version 0)
  (entry
+  (commit "59e578b")
+  (title (en "+ kadr (AI video editor) + electron-42"))
+  (body (en "Packaged @code{kadr} (@url{https://github.com/HelpFreedom/kadr}),
+a GPU-accelerated multi-track video editor (Electron/React/TypeScript) with
+an embedded interactive @command{claude} session wired to the live project
+over MCP, so an AI agent can edit clips, transcribe audio, and create
+@url{https://www.remotion.dev/,Remotion} compositions on the same timeline
+the user is watching.  Upstream ships no prebuilt release, so this builds it
+from its npm/Vite source tree: a network-enabled fixed-output derivation
+runs @command{npm ci} plus @code{@@electron/rebuild} (node-pty's native
+addon has to be recompiled against Electron's ABI) once and pins the
+resulting @file{node_modules} tree by hash, then the real package build is
+fully offline.  Getting that FOD reproducible took stripping node-gyp's
+intermediate build tree (embeds this derivation's own absolute build
+directory) and its bundled Python's @file{__pycache__} (embeds source
+mtimes) before hashing.  Also required @code{(x-files packages electron)}'s
+new @code{electron-42} (kadr pins 42.4.0; @code{(nongnu packages electron)}
+tops out at 36 -- a mechanical version bump, same
+@code{chromium-binary-build-system} recipe), and a @code{substitute*} patch
+for one upstream assumption that breaks on Guix System: the embedded Claude
+session hardcodes @command{/bin/bash}, which doesn't exist here (only
+@command{/bin/sh}).  @code{make-kadr}'s @code{#:claude} argument lets a
+caller supply a @command{claude} CLI package for that session; @code{kadr}
+itself is the plain default.  The @file{.desktop} entry is generated from
+guile-ini data, matching @code{(x-files packages postman)}/spotify.")))
+ (entry
   (commit "796e89e")
   (title (en "+ postman (API client)"))
   (body (en "Packaged @url{https://www.postman.com/,Postman} from upstream's
