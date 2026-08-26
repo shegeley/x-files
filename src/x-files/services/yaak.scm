@@ -43,17 +43,38 @@
   `((package                 . ,yaak)
     (log-file                . ,(string-append %user-log-dir "/yaak.log"))
     (mcp-plugin-index-js     . #f)
-    (mcp-plugin-package-json . #f)))
+    (mcp-plugin-package-json . #f)
+    ;; Matches the MCP-server plugin's own hardcoded fallback
+    ;; (parseInt(process.env.YAAK_PLUGIN_MCP_SERVER_PORT ?? "64343", 10) in
+    ;; src/index.ts) -- kept as a sane default even for callers that don't
+    ;; override it, though yaak-shepherd-service below always sets the env
+    ;; var explicitly rather than relying on that fallback ever firing.
+    (mcp-port                . 64343)))
 
 (define (cfg c k) (assoc-ref c k))
 
 (define (yaak-shepherd-service config)
+  "Confirmed the hard way: without YAAK_PLUGIN_MCP_SERVER_PORT set here,
+whatever port the plugin ends up on drifts from whatever a caller (e.g.
+(g-files features yaak)'s register-claude-mcp) declared into ~/.claude.json
+at reconfigure time -- the two were never actually the same value, they
+just happened to coincide with the plugin's own default (64343) the first
+time. Fixing the env var pins the plugin to a port a caller can actually
+predict and register correctly, every time the service (re)starts."
   (list
    (shepherd-service
     (provision '(yaak))
-    (start #~(make-forkexec-constructor
-              (list #$(file-append (cfg config 'package) "/bin/yaak-app-client"))
-              #:log-file #$(cfg config 'log-file)))
+    (start #~(begin
+               (use-modules (srfi srfi-13))
+               (make-forkexec-constructor
+                (list #$(file-append (cfg config 'package) "/bin/yaak-app-client"))
+                #:environment-variables
+                (cons (string-append "YAAK_PLUGIN_MCP_SERVER_PORT="
+                                      (number->string #$(cfg config 'mcp-port)))
+                      (filter (lambda (kv)
+                                (not (string-prefix? "YAAK_PLUGIN_MCP_SERVER_PORT=" kv)))
+                              (environ)))
+                #:log-file #$(cfg config 'log-file))))
     (stop #~(make-kill-destructor))
     (documentation "Yaak API client -- auto-started desktop window + MCP server."))))
 
