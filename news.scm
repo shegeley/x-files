@@ -1,6 +1,22 @@
 (channel-news
  (version 0)
  (entry
+  (commit "7112a66")
+  (title (en "+ max-messenger (MAX Qt6/QML desktop client)"))
+  (body (en "Packaged @code{max-messenger} (@url{https://max.ru}), the
+Russian MAX messenger's desktop client.  Ships upstream only as a prebuilt
+Debian package (a Qt6/QML app bundling its own private Qt6, ffmpeg, and
+OpenSSL, plus a separate @code{max-service} background helper for calls and
+notifications), installed here via nonguix's @code{binary-build-system}.
+RPATHs are set in a custom phase invoking @command{patchelf} directly rather
+than through @code{#:patchelf-plan} (that field silently drops runpaths when
+given a plain, non-gexp Scheme value).  Needed several SONAME/ABI
+compatibility symlinks found by actually launching the built package and
+iterating on what crashed: Guix's non-glvnd-split mesa needs
+libGLX.so.0/libOpenGL.so.0 symlinked at its own libGL.so.1, and
+libffi/pcre2-posix needed symlinks bridging a SONAME bump from whatever
+Debian build upstream links against.")))
+ (entry
   (commit "59e578b")
   (title (en "+ kadr (AI video editor) + electron-42"))
   (body (en "Packaged @code{kadr} (@url{https://github.com/HelpFreedom/kadr}),
