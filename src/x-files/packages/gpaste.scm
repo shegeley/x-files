@@ -111,7 +111,7 @@
                            #$(plain-file
                               "wrapper.js"
                               "import GIRepository from 'gi://GIRepository';
-GIRepository.Repository.prepend_search_path('@typelibDir@');
+GIRepository.Repository.dup_default().prepend_search_path('@typelibDir@');
 export default (await import('./.@originalName@-wrapped.js')).default;"))
                           (typelibdir (string-append #$output "/lib/girepository-1.0"))]
                      (rename-file extension.js extension-wrapped.js)
