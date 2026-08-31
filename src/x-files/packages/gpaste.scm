@@ -26,21 +26,15 @@
   ;; nixpkgs wrapper.js trick: Guix patches `@typelibDir@' straight into
   ;; extension.js/prefs.js (patches/gpaste-fix-paths.patch) and fills it in
   ;; with one substitute*, no wrapper.js/ESM re-export, no `mutter' input.
-  ;; NOT identical to what we do here, and NOT flawless either -- checked
-  ;; ~/Projects/guix git history (2026-07-05, "Fix compatibility with GI
-  ;; 2.0", merges guix/guix#9741): it changed extension.js's
-  ;; `GIRepository.Repository.prepend_search_path(...)' call to
-  ;; `.dup_default().prepend_search_path(...)' because plain
-  ;; Repository.prepend_search_path stopped being a valid static call under
-  ;; GI2 (gobject-introspection >= ~1.80, we're on 1.86.0 here) -- but the
-  ;; identical call in prefs.js was never updated, so Guix's own current
-  ;; gpaste still breaks the extension's Preferences dialog specifically.
-  ;; Our wrapper.js template (below) uses the same un-fixed
-  ;; `Repository.prepend_search_path(...)' form for BOTH extension.js and
-  ;; prefs.js, so as shipped here it's likely broken the same way Guix's
-  ;; prefs.js is -- probably the "problem I've had already". Any bump/fix
-  ;; must add `.dup_default()' before `.prepend_search_path' in our own
-  ;; wrapper.js, not just copy Guix's patch verbatim.
+  ;;
+  ;; Confirmed live (2026-08-31, gobject-introspection 1.86.0): the actual
+  ;; break is NOT `Repository.prepend_search_path' needing an instance
+  ;; (`.dup_default()'/`.get_default()' before it both still throw "is not a
+  ;; function") -- it's the bare `gi://GIRepository' import resolving to the
+  ;; wrong typelib version.  `import GIRepository from
+  ;; 'gi://GIRepository?version=2.0';' + the untouched plain static call
+  ;; `Repository.prepend_search_path(...)' works, verified directly via gjs.
+  ;; wrapper.js now pins that version for both extension.js and prefs.js.
   (package
     (name "gpaste")
     (version "45.6")
@@ -110,8 +104,8 @@
                           (wrapper.js
                            #$(plain-file
                               "wrapper.js"
-                              "import GIRepository from 'gi://GIRepository';
-GIRepository.Repository.dup_default().prepend_search_path('@typelibDir@');
+                              "import GIRepository from 'gi://GIRepository?version=2.0';
+GIRepository.Repository.prepend_search_path('@typelibDir@');
 export default (await import('./.@originalName@-wrapped.js')).default;"))
                           (typelibdir (string-append #$output "/lib/girepository-1.0"))]
                      (rename-file extension.js extension-wrapped.js)
