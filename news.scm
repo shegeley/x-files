@@ -1,6 +1,28 @@
 (channel-news
  (version 0)
  (entry
+  (commit "eb59b98")
+  (title (en "+ dozor (polkit authentication agent) + dozor-service-type"))
+  (body (en "Packaged @code{dozor} (@url{https://github.com/Toxblh/dozor}), a
+GTK4/libadwaita polkit authentication agent that shows what is actually
+asking for root (application, command, process ancestry, cwd, tty) before
+prompting.  Upstream ships no build system at all, just @file{agent.py} plus
+a root/sudo/systemd @file{install.sh}; this pins a commit and wraps the
+script with @code{GI_TYPELIB_PATH}/@code{GUIX_PYTHONPATH} for its
+GTK4/libadwaita/Polkit/PyGObject/cairo typelibs.  Its two PAM helper scripts
+(@file{dozor-sudo.sh}, @file{lid-open.sh}) run as root from @command{pam_exec.so}
+with whatever minimal @code{PATH} @command{sudo}/PAM hands them, so every
+external command they call is patched to its exact store path at build time
+instead of trusted to @code{$PATH}.  Added @code{dozor-service-type}
+(@code{(x-files services dozor)}), which registers the polkit action and
+extends @code{sudo}'s PAM stack with a @code{sufficient pam_exec.so} entry
+that falls through to the normal password prompt on any failure, and,
+when @code{fingerprint?} is set, gates @code{polkit-1}'s
+@code{pam_fprintd.so} behind @file{lid-open.sh}.  GNOME Shell extension
+enablement (dconf) and autostarting the agent are per-user desktop
+concerns, left to a home feature (see how @code{(x-files packages ntfyr)}
+is wired up in @code{(g-files features ntfyr)}), not this service.")))
+ (entry
   (commit "7112a66")
   (title (en "+ max-messenger (MAX Qt6/QML desktop client)"))
   (body (en "Packaged @code{max-messenger} (@url{https://max.ru}), the
