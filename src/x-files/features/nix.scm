@@ -103,8 +103,14 @@
           #:key
           (package nix)
           (sandbox? #t)
-          (extra-config (list "experimental-features = nix-command flakes"
-                               "system-features = kvm nixos-test benchmark big-parallel")))
+          ;; Guix's own nix-configuration serializer (gnu/services/nix.scm)
+          ;; just `display's each extra-config string back to back with no
+          ;; separator -- without a trailing "\n" here, this line runs
+          ;; straight into the next one in the generated nix.conf, and Nix
+          ;; parses the merged line as garbage `experimental-features`
+          ;; tokens ("warning: unknown experimental feature '...'").
+          (extra-config (list "experimental-features = nix-command flakes\n"
+                               "system-features = kvm nixos-test benchmark big-parallel\n")))
   (define f-name 'nix-dev)
 
   (define (get-system-services config)
