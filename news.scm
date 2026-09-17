@@ -1,6 +1,30 @@
 (channel-news
  (version 0)
  (entry
+  (commit "790f567")
+  (title (en "+ emacs-org-mcp (Org-mode MCP server) + emacs-mcp-server-lib 0.4.0 override"))
+  (body (en "Packaged @code{emacs-org-mcp}
+(@url{https://github.com/laurynas-biveinis/org-mcp}), a Model Context
+Protocol server for Org-mode: MCP clients such as AI assistants get a
+structured read/write API over Org files (raw files, outlines,
+headlines, Org-ID nodes, grep, agenda views; TODO state updates,
+headlines/bodies editing, SCHEDULED/DEADLINE timestamps, refile,
+archive), restricted to the absolute paths in
+@code{org-mcp-allowed-files}.  Its hard dependency wants
+@code{mcp-server-lib} >= 0.4.0 per @code{Package-Requires}, while
+@code{(gnu packages emacs-xyz)} is still at 0.3.0, so the channel
+redefines @code{emacs-mcp-server-lib} at the tagged 0.4.0 (recipe
+modeled on upstream's: @code{#:include} ships the
+@file{emacs-mcp-stdio.sh} stdio transport wrapper next to the .el
+files, since @code{mcp-server-lib-install} copies it out of the
+package directory) and shadows the Guix one by name -- mind that any
+other consumer of @code{emacs-mcp-server-lib} in a profile built from
+this channel silently gets 0.4.0 too.  Both packages' ERT suites
+assert English day-of-week abbreviations inside org-generated
+timestamps, so they fail under any non-C time locale (observed live:
+@code{<2020-01-02 Чт +1d>} vs the expected @code{... Thu ...}); tests
+are off, run them under @code{LC_TIME=C} if you hack on upstream.")))
+ (entry
   (commit "eb59b98")
   (title (en "+ dozor (polkit authentication agent) + dozor-service-type"))
   (body (en "Packaged @code{dozor} (@url{https://github.com/Toxblh/dozor}), a
