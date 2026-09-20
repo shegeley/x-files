@@ -28,7 +28,7 @@
     ;; .dir-locals.el out -- re-add it (native-compiler-error-empty-byte).
     (arguments (list #:tests? #f
                      #:exclude #~(list "^[^/]*-test.el$"
-                                       "^\\.dir-locals\\.el$"))))
+                                       "^\\.dir-locals\\.el$")))
     ;; Hard dependency per Package-Requires; propagate so both end up in the
     ;; same profile and `mcp-server-lib-install' can find the stdio wrapper.
     (propagated-inputs (list emacs-mcp-server-lib))
