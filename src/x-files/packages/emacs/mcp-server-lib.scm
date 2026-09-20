@@ -32,9 +32,13 @@
       #:tests? #f
       ;; emacs-build-system installs only *.el/*.elc by default; the stdio
       ;; transport wrapper is a runtime artifact (the one
-      ;; `mcp-server-lib-install' copies out), so ship it too.
+      ;; `mcp-server-lib-install' copies out), so ship it too.  Specifying
+      ;; #:exclude replaces the build system's defaults, which filter
+      ;; .dir-locals.el out -- re-add it, or the native-compilation phase
+      ;; dies on it (native-compiler-error-empty-byte).
       #:include #~(list "^[^/]*.el$" "^emacs-mcp-stdio.sh$")
-      #:exclude #~(list "^[^/]*-test.el$" "^emacs-mcp-stdio-test.sh$")))
+      #:exclude #~(list "^[^/]*-test.el$" "^emacs-mcp-stdio-test.sh$"
+                        "^\\.dir-locals\\.el$")))
     (home-page "https://github.com/laurynas-biveinis/mcp-server-lib.el")
     (synopsis "Model Context Protocol server library")
     (description
