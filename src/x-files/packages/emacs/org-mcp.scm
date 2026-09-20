@@ -24,8 +24,11 @@
         (base32 "1b9a29rp503h4xddrm7mcamqdnqsfn6g2nzj2m38l4v9pizxligb"))))
     (build-system emacs-build-system)
     ;; Same locale-sensitive ERT suite issue as emacs-mcp-server-lib.
+    ;; #:exclude replaces the build system's defaults, which filter
+    ;; .dir-locals.el out -- re-add it (native-compiler-error-empty-byte).
     (arguments (list #:tests? #f
-                     #:exclude #~(list "^[^/]*-test.el$")))
+                     #:exclude #~(list "^[^/]*-test.el$"
+                                       "^\\.dir-locals\\.el$")))
     ;; Hard dependency per Package-Requires; propagate so both end up in the
     ;; same profile and `mcp-server-lib-install' can find the stdio wrapper.
     (propagated-inputs (list emacs-mcp-server-lib))
