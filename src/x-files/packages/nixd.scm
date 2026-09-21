@@ -34,16 +34,16 @@
 (define nixd
   (package
     (name "nixd")
-    (version "2.9.2")
+    (version "2.9.3")
     (source
      (origin
        (method url-fetch)
-       ;; Pinned to the commit the "2.9.2" annotated tag resolves to (tags
+       ;; Pinned to the commit the "2.9.3" annotated tag resolves to (tags
        ;; are mutable refs; the commit is not).
        (uri (string-append
              "https://github.com/nix-community/nixd/archive/"
-             "2307b620d3ba35fe4b0131ecbf70aea63b63e82e.tar.gz"))
-       (sha256 (base32 "08x8qspw1wk5a63v3vjh4a1x7mzyqf6v3gq28grpy4zjfnlj3ym1"))
+             "bb5030707c8c7f2ec5c848a7f1f96a65cebf83b9.tar.gz"))
+       (sha256 (base32 "08hmmsq7pynmmvw57fvq4kcm07gbrc4mmv8a9lyxj9lr52i40f4z"))
        (file-name (string-append name "-" version ".tar.gz"))))
     (build-system meson-build-system)
     (arguments
