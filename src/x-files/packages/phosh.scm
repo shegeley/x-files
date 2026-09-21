@@ -213,24 +213,38 @@
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.freedesktop.org/wlroots/wlroots.git")
-          (commit "0.20.0")))
+          (commit "0.20.2")))
     (file-name "wlroots-for-phoc-checkout")
     (sha256
-     (base32 "1gdmy4mpi7x23g81cdmcr9aakk3g6csl69h9j98yzssa48k6all5"))))
+     (base32 "15jizs8487pq8mi06rn2jvwds5734dnjnh4yvg8sz9yqzjd35mjm"))))
 
 (define-public phoc
   (package
     (name "phoc")
-    (version "0.56.0")
+    (version "0.57.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://gitlab.gnome.org/World/Phosh/phoc")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
+              (snippet
+               #~(begin
+                   (use-modules (guix build utils))
+                   ;; examples/wlls.c uses the pidfd_info uapi that only
+                   ;; exists in kernel headers >= 6.15; guix builds against
+                   ;; older ones.  The example is not installed anywhere, so
+                   ;; stub it out (unlink first: checkout files are
+                   ;; read-only).  substitute* is line-based and cannot drop
+                   ;; the multi-line executable() block from
+                   ;; examples/meson.build, hence the stub instead.
+                   (delete-file "examples/wlls.c")
+                   (call-with-output-file "examples/wlls.c"
+                     (lambda (out)
+                       (display "int main (void) { return 0; }\n" out)))))
               (sha256
                (base32
-                "1g83lm6k4f4v37hqrj9rrf8hcrrh0hd9gn7kgjz38xjsqq5zndjz"))))
+                "1sl05qyq2pvmvhhgsshnqkdh0mk0q20mvbii7m4qk72nzb251x0c"))))
     (build-system meson-build-system)
     (arguments
      (list
