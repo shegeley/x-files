@@ -7,6 +7,7 @@
   #:use-module ((gnu packages pkg-config) #:select (pkg-config))
   #:use-module ((gnu packages qt) #:select (qtbase qtsvg qttools qtwayland))
   #:use-module ((gnu packages xml) #:select (xerces-c))
+  #:use-module ((gnu packages cpp) #:select (immer))
   #:use-module ((x-files packages qt) #:select (qbs))
 
   #:export (valentina))
@@ -15,7 +16,7 @@
   ;; TODO: remove when deployed https://codeberg.org/guix/guix/pulls/8587
   (package
     (name "valentina")
-    (version "1.1.0")
+    (version "1.1.1")
     (source
      (origin
        (method url-fetch)
@@ -23,7 +24,7 @@
              "https://gitlab.com/smart-pattern/valentina/-/archive/v"
              version "/valentina-v" version ".tar.gz"))
        (sha256
-        (base32 "1w1b0mf0g7lzzwhnbny0vmpyd0bzxp50qlhjgpv8flfs0lw49rp3"))))
+        (base32 "1yp7h07nhsd420zicq1wrx40hfll0xzc5m9qvwqajilmqic6cg2n"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -39,6 +40,15 @@
                 (("if \\(country == \"ru\".*\\)")
                  "if (false)")
                 (("qFatal\\(\"country not detected\"\\);") ""))))
+          (add-after 'unpack 'setup-immer
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; 1.1.1 grew a hard dependency on the header-only immer
+              ;; library.  Its qbs module probes only FHS prefixes
+              ;; (/usr/include, ...), so point the probe at the guix input.
+              (substitute* "qbs/modules/immersystem/immersystem.qbs"
+                (("\\[\"/usr/include\"")
+                 (string-append "[\"" (assoc-ref inputs "immer")
+                                "/include\"")))))
           (add-before 'build 'set-home
             (lambda* (#:key inputs #:allow-other-keys)
               (setenv "HOME" (getcwd))
@@ -186,7 +196,7 @@ HostBinaries=~a/bin
                           (find-files (string-append out "/bin")
                                       "\\.debug$")))))))))
     (native-inputs (list qbs qttools pkg-config))
-    (inputs (list qtbase qtsvg qtwayland xerces-c))
+    (inputs (list qtbase qtsvg qtwayland xerces-c immer))
     (home-page "https://smart-pattern.com.ua/valentina/")
     (synopsis "Pattern making program for sewing")
     (description
