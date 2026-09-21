@@ -18,14 +18,14 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "19sq3b1nza1qsfqqb1q61ays8cgisc3hjmiyq297rdc9lyccaaba")
-    ("aarch64-linux" . "0jdxawgbl2rdb210hi6lhif0n9md0mj0j3qszqaipkcgd7j9h0n5")))
+  '(("x86_64-linux"  . "0zyw0vz86nx4k9376dv8gzxasrm2xjysv7rsmm8iw4g198ii49cf")
+    ("aarch64-linux" . "0hcws85by431sxdz2722am21ivlkr121a63279cr7v6985w7vjzw")))
 
 (define-public officecli
   (let* [(target        (or (%current-target-system) (%current-system)))
          (officecli.bin (assoc-ref target->bin-name target))
          (hash          (assoc-ref target->hash target))
-         (version       "1.0.143")
+         (version       "1.0.151")
          (uri           (string-append
                          "https://github.com/iOfficeAI/"
                          "OfficeCLI/releases/download/"
