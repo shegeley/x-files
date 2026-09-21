@@ -9,7 +9,7 @@
 (define-public bsl-language-server
   (package
     (name "bsl-language-server")
-    (version "0.29.0")
+    (version "1.0.7")
     (source
      (origin
        (method url-fetch)
@@ -17,7 +17,7 @@
              "https://github.com/1c-syntax/bsl-language-server/releases/download/v"
              version "/bsl-language-server-" version "-exec.jar"))
        (sha256
-        (base32 "02ygkdvqy50dc11yx925b0w05rp4ihgsv20b4rg8alds73b9mynn"))))
+        (base32 "0r4zj0002836wkzamrchdv2h6fk2mxp90k52dm2nck9lvmg7cqlz"))))
     (build-system copy-build-system)
     (inputs (list openjdk))
     (arguments
