@@ -1,6 +1,63 @@
 (channel-news
  (version 0)
  (entry
+  (commit "a913a64")
+  (title (en "+ emacs-dslide (declarative org-mode presentations)"))
+  (body (en "Packaged @code{emacs-dslide}
+(@url{https://github.com/positron-solutions/dslide}), a presentation
+system that turns org mode headings into programmable, extensible
+slides and presentation steps: per-element actions, Org Babel
+scripting, and keyboard-macro playback, so live demos of real Emacs
+workflows become part of the deck.  A descendant of org-tree-slide;
+needs Emacs >= 29.2 and nothing else.  Upstream tags no releases
+(development happens on an @code{unstable} branch), so this pins
+master @code{be47f2d} -- one commit past the 0.6.1 bump, whose
+@file{dslide.el} header already declares 0.6.2.")))
+ (entry
+  (commit "be2e09c")
+  (title (en "2026-09 version bumps (28 packages)"))
+  (body (en "Updated @code{officecli} 1.0.151, @code{remark42} 1.17.1,
+@code{zellij} 0.45.1, @code{wg-fake} 1.0.1, @code{kubectl} 1.36.4,
+@code{k0s} 1.36.4+k0s.1, @code{helm} 4.3.0, @code{coder} 2.37.2,
+@code{deno} 2.9.7, @code{stalwart} 0.16.23, @code{task} 3.53.1,
+@code{jackett} 0.24.2631, @code{yaak} 2026.8.0, @code{postman}
+12.26.3, @code{grafana-bin} 13.2.2, @code{vscode-js-debug} 1.117.0,
+@code{electron-42} 42.11.6 (patch-level, ABI major 42 kept for kadr's
+@code{electron-rebuild}), @code{bsl-language-server} 1.0.7 (0.29 to
+1.x), @code{yandex-cloud-cli} 0.199.0, @code{clickhouse-bin}
+26.8.10.6-lts (the 26.3 LTS line has no newer patch), @code{nixd}
+2.9.3, @code{gsecrets} 14.0, @code{gmobile-next} 0.7.3, @code{phoc}
+0.57.0, @code{phosh} 0.57.0, @code{ntfyr} 0.7.2, @code{clojure-tools}
+1.12.6.1673, and @code{valentina} 1.1.1 -- every one verified with a
+real @command{guix build}; hashes recomputed from the actual artifacts
+as nix-base32 (careful: @command{guix hash -f base32} emits RFC-4648,
+which origins reject -- @code{invalid-base32-character} at load).  The
+non-mechanical ones: @code{valentina} 1.1.1 grew a hard dependency on
+the header-only @code{immer} library and its qbs module probes only
+FHS prefixes, so the probe is pointed at the guix input;
+@code{phoc} 0.57.0 wants wlroots 0.20.2 and its
+@file{examples/wlls.c} uses the @code{pidfd_info} uapi newer than
+Guix's kernel headers, so the uninstalled example is stubbed out;
+@code{ntfyr} 0.7.2 needed its vendored-crates fixed-output derivation
+re-hashed; @code{clojure-tools}' tarball now comes from the
+@code{clojure/brew-install} GitHub release (byte-identical to
+download.clojure.org, sha256 cross-checked against nixpkgs, whose host
+resets mid-transfer from some networks).  Checked but deliberately
+held back: @code{vault} 2.1.1 exists but HashiCorp geo-blocks this
+region -- even the currently-packaged 2.0.4 zip is unreachable, so
+there is no verifiable hash here; MinIO OSS is archived upstream and
+@code{dl.min.io} now answers 410 Gone for both packaged RELEASE tags,
+so @code{minio-server}/@code{minio-client} can no longer be rebuilt
+from upstream binaries at all; @code{citations} 0.11.0 still
+hard-requires gtk4 >= 4.23 (devel); @code{emacs-tramp-rpc} and
+@code{tramp-rpc-server} 0.13.1 need a full rust-crates regen;
+@code{sunshine}, @code{prismlauncher} 11.x, @code{mission-center}
+1.2.0 and @code{rust-mcp-filesystem} 0.4.5 need vendored-deps
+regeneration; @code{yandex-tracker-mcp} 0.10.0 drags its python dep
+pins along; @code{gpaste} 50.x/51.0 exists but this channel's GI2
+compat patches must be reworked against it first; @code{max-messenger}
+version discovery is blocked from this network.")))
+ (entry
   (commit "790f567")
   (title (en "+ emacs-org-mcp (Org-mode MCP server) + emacs-mcp-server-lib 0.4.0 override"))
   (body (en "Packaged @code{emacs-org-mcp}
