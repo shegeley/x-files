@@ -12,17 +12,17 @@
 ;; https://git.sr.ht/~abcdw/cons.town/tree/master/item/src/guile/cons/guix/packages/kubernetes.scm
 
 (define-public k0s
-  (let ((version-suffix "+k0s.0"))
+  (let ((version-suffix "+k0s.1"))
     (package
       (name "k0s")
-      (version "1.36.3")
+      (version "1.36.4")
       (source (origin
                 (method url-fetch)
                 (uri (string-append
                       "https://github.com/k0sproject/k0s/releases/download/v"
                       version version-suffix
                       "/k0s-v" version version-suffix "-amd64"))
-                (sha256 (base32 "1wp6vmpgw9j3mhh66qq99dlnd5iy541ig814pcipw9dhfl2n05fb"))))
+                (sha256 (base32 "0caad4sr26i7hmqpx7aphjxz1zmld6r5kf66k5g0jw6x7kah9hqq"))))
       (native-inputs (list binutils coreutils))
       (build-system trivial-build-system)
       (arguments
