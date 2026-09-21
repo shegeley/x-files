@@ -7,9 +7,9 @@
   #:use-module (guix download))
 
 (define hashes
-  `(("amd64" . "1fxkvp7d42kcs79ms8vzh31bmac5hapmz74hz86jba2s7my8bw0n")
-    ("386"   . "1j9ilrwrmdzmai2f27ma1hnaak9fkx3ah1988f8bl42ddfx3b9lq")
-    ("arm64" . "0i3812lgxdh247cfyiv34ijcfpkrw1f7242rv7f8kykd97229bv4")))
+  `(("amd64" . "120kv20v2a4i7mxlwy3281abfjfsdf0mn2q979s0lhhidk0jxmnc")
+    ("386"   . "0h39bgnc1ghn740cdkkci8ay2qdngflmhsvijgvnw2wr8wipng8y")
+    ("arm64" . "1inax1jqlhxnj2hyxnpg88ynk7wc74nm5c7ic8ijviz0xbpmxd80")))
 
 (define target->arch
   `(("x86_64-linux"  . "amd64")
@@ -21,7 +21,7 @@
          (arch   (assoc-ref target->arch target))]
     (package
       (name "yandex-cloud-cli")
-      (version "0.173.0")
+      (version "0.199.0")
       (source
        (origin
          (method url-fetch)
