@@ -78,7 +78,7 @@ exec env \\
 (define-public postman
   (package
     (name "postman")
-    (version "12.24.6")
+    (version "12.26.3")
     (source
      (origin
        (method url-fetch)
@@ -86,7 +86,7 @@ exec env \\
                            version "/linux64"))
        (file-name (string-append "postman-" version ".tar.gz"))
        (sha256
-        (base32 "1b7405k61jhzkizpjr9hsyr0hjs40zi8qx2kcha6ddr1dl91v50m"))))
+        (base32 "1j1q24ingsb7wm5x8ci6kxli1fpwfkqy801s6i3hswgdcll35snr"))))
     (build-system binary-build-system)
     (arguments
      (list
