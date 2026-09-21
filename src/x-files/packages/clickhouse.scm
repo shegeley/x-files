@@ -11,8 +11,8 @@
 
   #:use-module ((nonguix build-system binary) #:select (binary-build-system)))
 
-(define %clickhouse-version "26.3.17.110")
-(define %clickhouse-release-tag "v26.3.17.110-lts")
+(define %clickhouse-version "26.8.10.6")
+(define %clickhouse-release-tag "v26.8.10.6-lts")
 
 (define (clickhouse-url file)
   (string-append
@@ -27,12 +27,12 @@
     ("_"             . "amd64")))
 
 (define %hashes
-  '((common ("aarch64-linux" . "0pm2vv1fffmpi74am7ihxkgsrgf4djkymqnhx4g7yds4dx4srh7h")
-            ("_"             . "1ganrxf5z9i3770ai5l5nhjqpmpica9i60lh6z1jjz2l3q556bs9"))
-    (server ("aarch64-linux" . "1wqj4ib8af610815jcwwip6j6kj3g9xb42gnzadwkdhxqzm4fnly")
-            ("_"             . "14f7a54b7q2nysw41wic06dzqfm65fjngqwrm44j7lg0hhb50wpg"))
-    (client ("aarch64-linux" . "1wdqfyfrnmxyig60i74kvlqvdg0bn3ka9fgx3jln1cabla668387")
-            ("_"             . "0mnjwq3wsr4vzzby1hrww3dipkh68j4lfs07dbjp8bll6scxsn3i"))))
+  '((common ("aarch64-linux" . "1bhnqmirqkwc2cnp60b2z2bg9xgzf5jxdgf0giqkv533317b12n5")
+            ("_"             . "040gmi2wbiprq276wmqggjm1lbbd72csd4vlhsxh1c4m7a9dxp9a"))
+    (server ("aarch64-linux" . "1v2sv03h0ljkc280ygpbsjz9avi9118bfvy0cr7xil0b8bvsjg5j")
+            ("_"             . "1kr1z0nac0xivn13f98mv3y583v4yy0gdqz6s3zwhsbjx47ghhmm"))
+    (client ("aarch64-linux" . "17s0dfqn61jwp2nglqxydhr7h2min7lspnwpqdwr2n98v6l2x67v")
+            ("_"             . "02w75r6z1qzagmkpjny38hb9pxqbp192qxnbkzzycx9n2wqj5nyv"))))
 
 (define (current-system*) (or (%current-target-system) (%current-system)))
 
