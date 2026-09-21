@@ -14,12 +14,12 @@
 ;; package definition (and so features/deno.scm and dape-deno.scm don't form
 ;; a module cycle importing each other).
 (define node-vscode-js-debug-latest
-  (let* [(version "1.97.1")
+  (let* [(version "1.117.0")
          (uri (string-append
                "https://github.com/microsoft/vscode-js-debug/"
                "releases/download/v" version
                "/js-debug-dap-v" version ".tar.gz"))
-         (hash "135dj20maszb1xwsqq4mh3ah3rzbv2j3y066z56p4ilwbn4lgv9x")]
+         (hash "0wh715pv719426v09xh4dmw6z827a2k3hm7xj315rdylx7nh93dd")]
     (package
       (inherit node-vscode-js-debug-1.86.0)
       (version version)
