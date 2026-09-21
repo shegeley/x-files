@@ -10,22 +10,19 @@
   #:export (datomic-clone-script
             datomic-clone-services))
 
-(define (sql-uri db sql-url user password)
-  "The datomic:sql:// URI for DB in the storage at SQL-URL.  PASSWORD may be #f
-for a trust-authenticated role."
-  (string-append "datomic:sql://" db "?" sql-url
-                 "?user=" user
-                 (if password (string-append "&password=" password) "")))
-
 (define* (datomic-clone-script
           #:key
           (source-db "source")
           (target-db "target")
           (sql-url "jdbc:postgresql://localhost:5432/datomic")
           (db-user "datomic")
-          (password #f)
+          (password-file #f)
           (work-dir "/var/lib/datomic/clone"))
   "A standalone program that replaces TARGET-DB with a copy of SOURCE-DB.
+
+PASSWORD-FILE is read at RUN time, never inlined: a store file is world
+readable, so a password spliced into this gexp would be a password published to
+every user on the machine.  #f for a trust-authenticated role.
 
 Datomic has no copy operation, so a clone is `backup-db' then `restore-db',
 both against the same storage -- nothing leaves the host.  The target is
@@ -40,6 +37,7 @@ trigger on demand is worth more than one that only happens on a schedule."
         (use-modules (ice-9 format)
                      (ice-9 popen)
                      (ice-9 rdelim)
+                     (srfi srfi-13)
                      (srfi srfi-19))
 
         (define datomic-bin (string-append #$datomic "/bin/datomic"))
@@ -47,8 +45,19 @@ trigger on demand is worth more than one that only happens on a schedule."
         (define rm-bin      (string-append #$coreutils "/bin/rm"))
 
         (define backup-dir (string-append #$work-dir "/" #$source-db))
-        (define source-uri #$(sql-uri source-db sql-url db-user password))
-        (define target-uri #$(sql-uri target-db sql-url db-user password))
+
+        (define (password)
+          (let ((f #$(or password-file #f)))
+            (and f (file-exists? f)
+                 (string-trim-both (call-with-input-file f read-line)))))
+
+        (define (uri db)
+          (string-append "datomic:sql://" db "?" #$sql-url "?user=" #$db-user
+                         (let ((p (password)))
+                           (if p (string-append "&password=" p) ""))))
+
+        (define source-uri (uri #$source-db))
+        (define target-uri (uri #$target-db))
 
         (define (log fmt . args)
           (apply format #t (string-append "~a " fmt "~%")
@@ -101,7 +110,7 @@ with `bin/run -e' -- the escape hatch datomic-backup already uses."
           (target-db "target")
           (sql-url "jdbc:postgresql://localhost:5432/datomic")
           (db-user "datomic")
-          (password #f)
+          (password-file #f)
           (work-dir "/var/lib/datomic/clone")
           (log-file "/var/log/datomic/clone.log")
           (user "datomic")
@@ -121,7 +130,7 @@ leaves the application whole."
                                       #:target-db target-db
                                       #:sql-url   sql-url
                                       #:db-user   db-user
-                                      #:password  password
+                                      #:password-file password-file
                                       #:work-dir  work-dir)))
     (list
      (simple-service
