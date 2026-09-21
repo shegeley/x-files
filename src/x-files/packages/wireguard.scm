@@ -20,13 +20,13 @@
            ("aarch64-linux" "arm64"))))
         (hash
          (match target
-          ("x86_64-linux"  "1zlp9zvwfslbs8iannxn5qc6lvlswmkc6xmn5w66van7vv6ynyj4")
-          ("i686-linux"    "16x74x7xxpna7wchsl2wgpvmcj1drpv5zy4vcd1sv27hyxlm31sn")
-          ("armv7-linux"   "0n4xanjwc7n0qn3yv8gkiq1j4pflpn1dfqxassg934j5g0fbdkgs")
-          ("aarch64-linux" "10p32acf2r57nh2xqaki618hadnzpc4hnh93vy3l71h335nawvp")))]
+          ("x86_64-linux"  "18axl9i504mm6h013lmfragn696nkrd7yfy30alkdnjvgz3qd3yf")
+          ("i686-linux"    "0m23gwlwfbjiq7yb45s97dscgdlkil725x8kifawiv18zd5rwqsg")
+          ("armv7-linux"   "1qywfhm0kmq05wj2v7yzgvg939jzgky854cp9gg7qhvgxaqwvfrj")
+          ("aarch64-linux" "07q3rarb9ni2qfpjd2w9h9bi5rjz30gdj2pm7xf6w5f2pg8xdkhi")))]
   (package
    (name "wg-fake")
-   (version "0.0.1")
+   (version "1.0.1")
    (source
     (origin
      (method url-fetch)
