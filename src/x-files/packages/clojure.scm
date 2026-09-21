@@ -10,12 +10,16 @@
 (define-public clojure-tools
   (package
     (name "clojure-tools")
-    (version "1.12.5.1654")
+    (version "1.12.6.1673")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://download.clojure.org/install/clojure-tools-" version ".tar.gz"))
-       (sha256 (base32 "0hmkbwxx0r43hy1phd24bz7n2jzb7rll8zyqggqcwbrppibcr1nw"))))
+       ;; Byte-identical to download.clojure.org/install/..., but that host
+       ;; resets mid-transfer from some networks (nixpkgs switched to the
+       ;; GitHub release for the same reason; sha256 cross-checked).
+       (uri (string-append "https://github.com/clojure/brew-install/releases/download/"
+                           version "/clojure-tools-" version ".tar.gz"))
+       (sha256 (base32 "0g02xj14vnd7j0pv9wh5a6ydax06f4nzkbz2q89szmbmis2r94gy"))))
     (build-system copy-build-system)
     (arguments
      (list
