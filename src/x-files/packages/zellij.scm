@@ -10,8 +10,8 @@
     ("aarch64-linux" . "aarch64")))
 
 (define target->zellij-hash
-  '(("x86_64-linux"  . "0lfpr8768jr6z0wsf8n89zrcycw6fqbnaa9819n50zv2i1kk8z0g")
-    ("aarch64-linux" . "1ys53g41cgwp2zcx7852l7bcz7bk9465jv0k7nbnckb4896m7rhm")))
+  '(("x86_64-linux"  . "1z7f30vlr0wmlmmrj1hmhxqan4pyh5h6g7z3akhfhnjx7zhc5g20")
+    ("aarch64-linux" . "0sx18hqfw5m898lvhd8vxlpl7s4s7kjwmrqljpdzhlyxz8m81w05")))
 
 (define-public zellij
   (let* [(target (or (%current-target-system) (%current-system)))
@@ -19,7 +19,7 @@
          (hash   (assoc-ref target->zellij-hash target))]
     (package
       (name "zellij")
-      (version "0.44.3")
+      (version "0.45.1")
       (source
        (origin
          (method url-fetch/tarbomb)
