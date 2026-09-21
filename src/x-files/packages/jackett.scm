@@ -26,14 +26,14 @@
 (define targets (map car target->tarball))
 
 (define target->hash
-  '(("x86_64-linux"  . "1pvj483ngl49fhggg8lz7y4cg033qrkv6f7mqhvfh2gr5xk66rgl")
-    ("aarch64-linux" . "0zrrp9kfk8na350fdf6cxgc4n5cxq7vw04gpp0z1qkp65im71912")))
+  '(("x86_64-linux"  . "1xw3l1kdz99hv6m8gy2r0y9i49b1kxwkcr25jm0hraqgrgvxh3q6")
+    ("aarch64-linux" . "1jrgz0jlvvjnq9bw2qma5m9fjs8bd35pm6b5w9z7xhqawlwax0am")))
 
 (define-public jackett
   (let* ((target  (or (%current-target-system) (%current-system)))
          (tarball (assoc-ref target->tarball target))
          (hash    (assoc-ref target->hash target))
-         (version "0.24.2330"))
+         (version "0.24.2631"))
     (package
       (name "jackett")
       (version version)
