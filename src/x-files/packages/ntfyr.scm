@@ -18,7 +18,7 @@
   #:use-module (guix git-download)
   #:use-module (guix packages))
 
-(define %ntfyr-version "0.7.1")
+(define %ntfyr-version "0.7.2")
 
 (define ntfyr-source
   (origin
@@ -28,7 +28,7 @@
           (commit (string-append "v" %ntfyr-version))))
     (file-name (git-file-name "ntfyr" %ntfyr-version))
     (sha256
-     (base32 "0z97pbaran8b4cz8d777xkbpk0paaa0142my56g48rpf6ab5skks"))))
+     (base32 "1nflddvrh08yc2nxx6m722xqcbys76q4vxqyvw4v4whr3npkn4k9"))))
 
 ;; Ntfyr's meson build shells out to "cargo build".  Guix builds run offline,
 ;; so pre-fetch every crate from Cargo.lock into a vendored directory.  This is
@@ -65,7 +65,7 @@
          (chdir "source")
          (invoke "cargo" "vendor" "--locked" (ungexp output))))
    #:options (list #:hash-algo 'sha256
-                   #:hash (base32 "1nm2a2y12yg2xdirf2asb8dssjzhlvl9s3wr4li8wfz59prpx0d5")
+                   #:hash (base32 "1gv2995ymy75vli4k1zzxc27xfny0750p233kaik6hk2ss1lx4vq")
                    #:recursive? #t)))
 
 (define-public ntfyr
