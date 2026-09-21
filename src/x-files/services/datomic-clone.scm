@@ -10,39 +10,6 @@
   #:export (datomic-clone-script
             datomic-clone-services))
 
-;;; Clone one Datomic database onto another INSIDE THE SAME STORAGE.
-;;;
-;;; Why this exists: an environment that must show real production data while
-;;; being unable to affect production.  Pointing it at the production database
-;;; read-only works but leaves every write path dead; pointing it at a periodic
-;;; COPY leaves the whole application usable and makes "cannot affect
-;;; production" true by construction rather than by discipline.
-;;;
-;;; Datomic has no "copy database" operation, so the copy is `backup-db`
-;;; followed by `restore-db` — both against the same SQL storage, so nothing
-;;; leaves the host.  The target is DELETED first: `restore-db` onto a database
-;;; whose history has diverged from the backup fails, and a clone is a
-;;; replacement, not a merge.
-;;;
-;;; Peers connected to the TARGET while this runs will see their database
-;;; disappear and come back.  That is fine for the preview environments this
-;;; serves (they reconnect, or are restarted by their own supervision), and is
-;;; the reason the job is scheduled for the small hours by default.
-;;;
-;;; Usage (values, no records — see the channel's other services):
-;;;
-;;;   (service datomic-clone-service-type)   ; ← no: this module exports a
-;;;                                          ;   services LIST, like
-;;;                                          ;   datomic-backup-services, so it
-;;;                                          ;   composes into an existing
-;;;                                          ;   operating-system services list
-;;;
-;;;   (append (datomic-clone-services
-;;;            #:source-db "pitomniki"
-;;;            #:target-db "pitomniki.staging"
-;;;            #:password  "…")
-;;;           %other-services)
-
 (define (sql-uri db sql-url user password)
   "The datomic:sql:// URI for DB in the storage at SQL-URL.  PASSWORD may be #f
 for a trust-authenticated role."
@@ -59,9 +26,15 @@ for a trust-authenticated role."
           (password #f)
           (work-dir "/var/lib/datomic/clone"))
   "A standalone program that replaces TARGET-DB with a copy of SOURCE-DB.
-Callable by hand as well as from the timer below, which is the point: a clone
-you can trigger on demand (\"refresh the preview data\") is worth more than one
-that only ever happens on a schedule."
+
+Datomic has no copy operation, so a clone is `backup-db' then `restore-db',
+both against the same storage -- nothing leaves the host.  The target is
+DELETED first: restore-db onto a database whose history has diverged fails, and
+a clone is a replacement, not a merge.  Peers connected to the target see it
+disappear and come back.
+
+Callable by hand as well as from the timer, which is the point: a clone you can
+trigger on demand is worth more than one that only happens on a schedule."
   (program-file "datomic-clone"
     #~(begin
         (use-modules (ice-9 format)
@@ -91,10 +64,10 @@ that only ever happens on a schedule."
               (exit 1))
             rc))
 
-        ;; Datomic Pro has no CLI to drop a database; the peer API does. `bin/run
-        ;; -e` evaluates a form with the peer classpath — the same escape hatch
-        ;; (x-files services datomic-backup) uses to list databases.
         (define (delete-target!)
+          "Datomic Pro has no CLI to drop a database, so evaluate the peer call
+with `bin/run -e' -- the escape hatch datomic-backup already uses."
+
           (log "dropping ~a" #$target-db)
           (let* ((form (string-append
                         "(do (require '[datomic.api :as d])"
@@ -134,13 +107,16 @@ that only ever happens on a schedule."
           (user "datomic")
           (group "datomic")
           (requirement '(datomic-postgres-transactor))
-          ;; daily at 04:00 — after the 03:00 backup job, so a clone never
-          ;; competes with it for the transactor.
+          ;; 04:00: after the 03:00 backup, so the two never compete.
           (scheduling #~(calendar-event #:hours '(4) #:minutes '(0))))
   "A shepherd timer that keeps TARGET-DB a copy of SOURCE-DB.  Returns a LIST of
 services to splice into an operating-system, mirroring
 @code{datomic-backup-services}.  Trigger a clone out of schedule with
-@command{herd trigger @var{job-name}}."
+@command{herd trigger @var{job-name}}.
+
+For environments that must show real production data while being unable to
+affect it: reading production read-only leaves every write path dead, a copy
+leaves the application whole."
   (let ((script (datomic-clone-script #:source-db source-db
                                       #:target-db target-db
                                       #:sql-url   sql-url
