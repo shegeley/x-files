@@ -23,9 +23,10 @@
 
 ;; Upstream (GNOME World / Secrets, aka "GSecrets") does not tag releases in
 ;; git; `meson.build' carries the released version number as plain data.
-;; Pin to the commit checked out locally, which already declares 13.0.1.
-(define %gsecrets-version "13.0.1")
-(define %gsecrets-commit "18aab6b6f3fdd7e548258631e5807f94b1aceda1")
+;; Pin to the commit the "14.0" tag resolves to (tags are mutable refs; the
+;; commit is not).
+(define %gsecrets-version "14.0")
+(define %gsecrets-commit "ef69d44d5b10e241a8208fbbee9f1ecd4dfd41a1")
 
 (define gsecrets-source
   (origin
@@ -35,7 +36,7 @@
           (commit %gsecrets-commit)))
     (file-name (git-file-name "gsecrets" %gsecrets-version))
     (sha256
-     (base32 "197gw6w2ppg3i40n9xjw2lvcjb2vml9vs1ph022bmiarh3zb2wq9"))))
+     (base32 "0w2s3720hqwhmxaf94r3kaw4dwh23c3m8fiv6ysd4s28ff2wy3ms"))))
 
 (define-public gsecrets
   (package
