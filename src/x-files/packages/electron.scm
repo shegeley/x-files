@@ -14,11 +14,11 @@
 (define-public electron-42
   (package
     (inherit electron-36)
-    (version "42.4.0")
+    (version "42.11.6")
     (source
      (origin
        (method url-fetch/zipbomb)
        (uri (string-append "https://github.com/electron/electron/releases/download/v"
                            version "/electron-v" version "-linux-x64.zip"))
        (sha256
-        (base32 "195xpiib5a6m0qjlgr6y6ilfb2kk2sqw5i4w15b0lja8amir90cs"))))))
+        (base32 "0wnnjh8hxdgk0ag3i6rixyparirgz1w7i6fhqf3xwl2akqmgsqz6"))))))
