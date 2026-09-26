@@ -1,0 +1,57 @@
+Register Hermes callback tools per worker without modifying Codex config.toml.
+The explicit codex_hermes_tools option is enabled by the Guix managed overlay.
+Only runtime paths and proxy settings are forwarded to this MCP child.
+
+Upstream: https://github.com/NousResearch/hermes-agent
+Status: local integration, covered by hermes-guix-test.py
+
+--- a/agent/transports/codex_app_server.py
++++ b/agent/transports/codex_app_server.py
+@@ -108,7 +108,37 @@
+         if codex_home:
+             spawn_env["CODEX_HOME"] = codex_home
+ 
+-        cmd = [codex_bin, "app-server", *(extra_args or [])]
++        # Register the callback for this worker only.  Guix owns config.toml;
++        # no runtime migration should rewrite another agent's MCP settings.
++        from hermes_cli.config import load_config
++        try:
++            model_config = load_config().get("model") or {}
++        except FileNotFoundError:
++            model_config = {}  # Transport probes may precede profile creation.
++        callback_args = []
++        self._required_mcp_startup_timeout = 0.0
++        if isinstance(model_config, dict) and model_config.get("codex_hermes_tools", False):
++            from hermes_cli.codex_runtime_plugin_migration import _build_hermes_tools_mcp_entry
++            entry = _build_hermes_tools_mcp_entry()
++            # Cold imports from the Guix closure can exceed upstream's 30s.
++            entry["startup_timeout_sec"] = 120.0
++            entry["required"] = True
++            self._required_mcp_startup_timeout = 130.0
++            for key in (
++                "GUIX_PYTHONPATH", "HERMES_HOME", "HERMES_MANAGED_DIR",
++                "HERMES_BUNDLED_SKILLS", "HERMES_OPTIONAL_SKILLS",
++                "HERMES_BUNDLED_PLUGINS", "HERMES_BUNDLED_LOCALES",
++                "HERMES_OPTIONAL_MCPS", "HERMES_DISABLE_LAZY_INSTALLS",
++                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
++                "http_proxy", "https_proxy", "all_proxy", "no_proxy",
++            ):
++                if key in os.environ:
++                    entry["env"][key] = os.environ[key]
++            for key, value in entry.items():
++                pairs = ((f"env.{name}", val) for name, val in value.items()) if key == "env" else [(key, value)]
++                for name, val in pairs:
++                    callback_args += ["-c", f"mcp_servers.{HERMES_TOOLS_MCP_SERVER_NAME}.{name}={json.dumps(val)}"]
++        cmd = [codex_bin, "app-server", *callback_args, *(extra_args or [])]
+         from agent.delegation_context import (
+             DELEGATED_CHILD_ENV_MARKER, KANBAN_ENV_KEYS,
+             delegated_child_subprocess_env, is_dispatcher_owned_worker_context,
+@@ -227,6 +257,8 @@
+ 
+     def request(self, method: str, params: Optional[dict] = None, timeout: float = 30.0) -> dict:
+         """Send a request and block for ``result``; raise CodexAppServerError on ``error``."""
++        if method in {"thread/start", "thread/resume"}:
++            timeout = max(timeout, self._required_mcp_startup_timeout)
+         rid, self._next_id = self._next_id, self._next_id + 1
+         q: queue.Queue = queue.Queue(maxsize=1)
+         with self._pending_lock:

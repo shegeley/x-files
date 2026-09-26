@@ -1,0 +1,43 @@
+#+TITLE: Hermes on Guix with a Codex CLI worker
+#+AUTHOR: GPT-6 (Codex)
+#+OPTIONS: toc:2 num:nil
+
+* Packages
+
+~(x-files packages hermes)~ provides the pinned Hermes 0.21.4 headless gateway, CLI and ACP adapter. ~emacs-hermes~ remains in ~guix-ai-cloud~. This package includes Anthropic's SDK, ACP 0.9 and MCP 2 with their HTTP dependencies, and installs bundled skills, optional skills, plugins, locales and the optional MCP catalog in the store.
+
+The Python metadata conversion is a separate file: [[file:../src/x-files/packages/aux/python-release-metadata.py][release metadata helper]]. Hermes's separate [[file:../src/x-files/packages/aux/hermes-build-metadata.py][metadata helper]] uses the Guix dependency closure rather than pip's exact version pins. Installed imports and requirement checks remain enabled. Guix's dependency versions are not identical to the upstream lockfile; passing the selected tests does not certify every optional provider or integration.
+
+* Codex login
+
+Select ~model.provider: openai-codex~ and ~model.openai_runtime: codex_app_server~, with ~model.codex_bin~ pointing at the existing Codex executable. Codex owns its login and selects its model from its own configuration. Hermes neither copies credentials nor constructs an OpenAI API client for this runtime. The regular API-provider path remains separate.
+
+~model.codex_hermes_tools: true~ registers the bundled callback MCP server through per-process Codex arguments. Callback registration does not persist MCP entries in ~~/.codex/config.toml~ and forwards Guix's Python paths, managed configuration and bundled assets to the callback. It is required for that worker, with 120 seconds for cold Guix imports and a matching thread-start/resume timeout. This prevents the first model turn from losing its tools while the callback is still starting; see [[https://learn.chatgpt.com/docs/extend/mcp][Codex MCP startup semantics]]. It does not run upstream's config migration or duplicate the user's other MCP servers. Codex itself can still record normal project-trust metadata in its writable configuration.
+
+~hermes-acp~ is Hermes's editor-facing ACP adapter. The Hermes-to-Codex connection uses Codex's app-server protocol, not ACP.
+
+* Immutable code, writable data
+
+Package updates belong to Guix; ~hermes update~ reports this instead of attempting pip/git mutations inside the store. The package's code-scoped install stamp does not make the whole user configuration read-only.
+
+For declarative settings, point ~HERMES_MANAGED_DIR~ at a directory containing ~config.yaml~. Only leaves in this overlay are owned. Other settings, sessions, memories and credentials remain in the writable user home. Changing the wrapper's store path changes the overlay without modifying the user's config file.
+
+Set ~security.allow_lazy_installs: false~ in the managed overlay. The wrapper also sets ~HERMES_DISABLE_LAZY_INSTALLS=1~; the config switch additionally blocks installs into a separate writable target.
+
+* Boundaries
+
+- The Electron dashboard and Node terminal frontend are not built; Emacs attaches to ~hermes serve~.
+- Native ~nemo-relay~ and ~firecrawl-anydoc~ are not installed. Upstream has reduced-capability fallbacks; Hermes PDF/legacy Office extraction is unavailable through that optional native dependency.
+- The Codex runtime exposes Hermes tools through its callback MCP integration where supported. Hermes's native ~delegate_task~, ~memory~, ~session_search~ and ~todo~ require its own agent loop and are not available through this worker path.
+- Disable ~auxiliary.background_review.enabled~ and ~auxiliary.title_generation.model_upgrade_enabled~ for CLI-only use: these background model calls require an API runtime. Instant titles still work. API-dependent optional tools still need their own services or credentials.
+- Multi-host operation and the interactive Emacs UI are separate acceptance checks; they were not exercised by the package tests.
+
+* Validation
+
+The package runs selected upstream Codex transport, lifecycle, resume and managed-config tests, plus [[file:../src/x-files/packages/aux/hermes-guix-test.py][Guix contracts]]. These cover credential-free construction and a mocked turn, provider disablement, protocol imports, SDK construction, self-update refusal, user config writes and overlay A→B→A rollback. The g-files repository adds a Marionette service/Home lifecycle test. The selected suite has 130 passing tests; the Guix HTTP variants also passed FastAPI's 1,926 tests and SSE Starlette's 77 tests. Installed CLI version, Guix updater guidance, all five asset directories and an ACP initialize handshake were checked. An isolated loopback gateway completed a real Codex model turn using the existing ChatGPT login, with API-key environment variables removed.
+
+Build the binding from this module explicitly: the ai-cloud channel also has a package named ~hermes-agent~.
+
+#+begin_src sh :eval never
+guix build -L src -e '(@ (x-files packages hermes) hermes-agent)'
+#+end_src

@@ -1,0 +1,44 @@
+Let an explicitly selected Codex app-server authenticate through its own CLI
+login.  The normal provider ladder and OpenAI client are unused by this runtime;
+requiring their credentials prevents CLI-only installations from starting.
+
+Upstream: https://github.com/NousResearch/hermes-agent
+Status: local integration fix, covered by hermes-guix-test.py
+
+diff --git a/hermes_cli/runtime_provider.py b/hermes_cli/runtime_provider.py
+--- a/hermes_cli/runtime_provider.py
++++ b/hermes_cli/runtime_provider.py
+@@ -979,7 +979,17 @@
+     target_model overrides model_cfg["default"] when computing provider-specific api_mode (e.g.
+     OpenCode Zen/Go where different models route through different API surfaces)."""
+     requested_provider = resolve_requested_provider(requested)
+     _raise_if_provider_disabled(requested_provider)
++    model_cfg = _get_model_config()
++    if (requested_provider in {"openai", "openai-codex"}
++            and str(model_cfg.get("openai_runtime") or "").strip().lower()
++            == "codex_app_server"):
++        # Codex owns authentication.  Do not read, refresh, or copy OAuth tokens
++        # into Hermes, or require an unrelated provider key before spawning it.
++        return _runtime(
++            requested_provider, "codex_app_server", None, None,
++            source="codex-cli", requested_provider=requested_provider,
++        )
+     # Same alias expansion the auxiliary client applies, so ``provider: openai`` means one thing on
+     # every path (background review, curator, MoA slots, delegation) instead of "Unknown provider".
+     # The pre-expansion name is what the codex_app_server overlay judges: ``openai`` is eligible,
+diff --git a/agent/agent_init.py b/agent/agent_init.py
+--- a/agent/agent_init.py
++++ b/agent/agent_init.py
+@@ -958,7 +958,11 @@
+     agent._anthropic_client = None
+     agent._is_anthropic_oauth = False
+     _provider_timeout = get_provider_request_timeout(agent.provider, agent.model)
+-    if agent.api_mode == "anthropic_messages":
++    if agent.api_mode == "codex_app_server":
++        agent.client = None
++        agent._client_kwargs = {}
++        agent.api_key = None
++    elif agent.api_mode == "anthropic_messages":
+         _init_anthropic_client(agent, api_key, base_url, _provider_timeout)
+     elif agent.provider == "moa":
+         _init_moa_client(agent, api_key)
