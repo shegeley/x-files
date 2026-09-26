@@ -1,0 +1,26 @@
+Copy VFS entries when cloning contexts, so child mutations remain staged
+until explicitly merged.  copy-tree copies lists but shares cl-defstruct
+records; the old clone retained its parent's mutable VFS entry objects.
+
+Upstream: https://github.com/elij/macher-agent
+Status: local regression fix, covered by macher-agent-smoke-test.el
+
+diff --git a/macher-agent-macher.el b/macher-agent-macher.el
+--- a/macher-agent-macher.el
++++ b/macher-agent-macher.el
+@@ -410,8 +410,13 @@
+   (cl-check-type ctx macher-agent-context)
+   (let* ((new-ctx (macher-agent--copy-context ctx))
+          (orig-plugins (macher-agent-context-plugins ctx))
+-         (new-plugins (macher-agent--copy-context-hash-tables orig-plugins)))
+-    (setf (macher-agent-context-plugins new-ctx) (copy-tree new-plugins))
++         (new-plugins (copy-tree
++                       (macher-agent--copy-context-hash-tables orig-plugins)))
++         (vfs (plist-get new-plugins :vfs)))
++    (when vfs
++      (setf (plist-get vfs :contents)
++            (mapcar #'copy-macher-agent-vfs-entry (plist-get vfs :contents))))
++    (setf (macher-agent-context-plugins new-ctx) new-plugins)
+     (when-let* ((tools (macher-agent-context-tools ctx)))
+       (setf (macher-agent-context-tools new-ctx)
+             (if (hash-table-p tools) (copy-hash-table tools) (copy-tree tools))))

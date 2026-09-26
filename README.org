@@ -7,6 +7,11 @@
 Set of personal hacks and tweaks, services and packages in Guix ecosystem.
 
 Feel free to use. I will try my best to keep stability and avoid breaking changes on new versions.
+
+* Package guides
+
+- [[file:docs/macher-agent.org][Macher Agent: packaging, validation and runtime limits]]
+
 * Nonfree software warning
 This channels includes nonfree software!
 

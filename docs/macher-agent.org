@@ -1,0 +1,38 @@
+#+TITLE: Macher Agent on Guix
+#+AUTHOR: GPT-6 (Codex)
+#+OPTIONS: toc:2 num:t
+
+* Packages
+
+~(x-files packages emacs macher)~ exports ~emacs-macher~ and ~emacs-macher-agent~. Add ~emacs-macher-agent~ to the Emacs packages in a Home configuration. Its propagated inputs provide gptel, Macher, Git, rsync and Bash. The bundled ~skills/scripts~ directory is part of the installed package.
+
+The sources are pinned to [[https://github.com/kmontag/macher/tree/e0378fa9a292f715962eef465c35e990cc4cff4a][Macher e0378fa]], [[https://github.com/elij/macher-agent/tree/344c65a4157e97730bc381c4bda9dd3b6bde0bef][Macher Agent 344c65a]], and [[https://github.com/elij/macher-agent-tests/tree/1647dda198ba27154fd6265f1713b229bc47a338][its matching test submodule 1647dda]]. Markdown mode is an explicit runtime dependency because subagent buffers require it.
+
+* Running it
+
+Load ~macher-agent~, call ~macher-agent-install~, open a gptel buffer inside a local Git project, and enable ~macher-agent-mode~ in that buffer. Choose a gptel backend supporting tool calls before sending a prompt. Keep changes staged until you review the generated patch.
+
+The package does not enable itself in every gptel buffer. Upstream's install function adds global gptel hooks; use a separate Emacs session for an initial trial. After removing the package/configuration, restart that trial session to discard those hooks and in-memory contexts.
+
+* Authentication and scope
+
+Macher Agent owns the agent loop inside Emacs and uses gptel for inference. It does not launch Codex or Claude Code workers and does not speak ACP. A gptel ChatGPT subscription backend is an available no-API-key route, but is separate from using the signed-in Codex CLI as a worker. No credentials or backend choice are embedded in this package.
+
+Macher itself has TRAMP tests. Macher Agent's additional VFS copying uses local ~call-process~ and rsync shell commands; remote orchestration from one Emacs instance is not validated. Run it on local projects until that layer is adapted and tested. Its VFS is an editing mechanism, not an operating-system security boundary.
+
+* Validation
+
+Run ~guix build -L src emacs-macher-agent --no-offload~ from this checkout. Tests remain enabled in both packages.
+
+The checks run on x86_64-linux: 515 Macher unit tests, 84 mocked integration tests, 379 Macher Agent tests and 4 installed-package checks. The module also loads and evaluates through an isolated Ares nREPL. No model requests or live Home changes are made during validation.
+
+- Macher's unit and mocked integration suites run in separate Emacs processes to avoid leaking test buffers between suites.
+- The simulated TRAMP shell receives a writable home, the build's command paths and an explicit store shell.
+- JSON Schema checks use Guix's Python validator against Draft 2020-12 instead of downloading an npm validator. A misspelled upstream cleanup variable is corrected in the test fixture.
+- Macher Agent runs its pinned upstream Buttercup suite and additional checks against the installed package: bundled tools load, child edits merge into staged parent changes, a review patch is generated, and rsync copies tracked/untracked files while honoring Git ignores.
+- The installed-package regression exposed shared mutable VFS entries in cloned contexts. A local source patch copies those entries before a child can edit them; the regression checks that the parent and disk remain unchanged until the appropriate merge/apply operation.
+- Authenticated model requests, live user Emacs integration, and multi-host operation require separate validation. They are not covered by a successful package build.
+
+* Rollback
+
+Packaging adds no activation or Shepherd service. Building does not change a system or Home generation. If later added to Guix Home, return to the previous Home generation with ~guix home roll-back~ and restart Emacs after saving work; the package's in-memory hooks cannot be removed by a generation switch alone.
