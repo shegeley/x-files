@@ -1,0 +1,43 @@
+Recognize Guix installations without making the user's entire configuration
+read-only.  Only keys in HERMES_MANAGED_DIR are declarative; program updates
+belong to Guix and must not invoke the self-updater in the store.
+
+Upstream: https://github.com/NousResearch/hermes-agent
+Status: local Guix integration, covered by hermes-guix-test.py
+
+diff --git a/hermes_cli/config.py b/hermes_cli/config.py
+--- a/hermes_cli/config.py
++++ b/hermes_cli/config.py
+@@ -310,6 +310,11 @@
+ )
+ 
+ 
++_GUIX_UPDATE_MSG = "Update Hermes through Guix, then rebuild your Guix System/Home generation."
++
++
+ def get_managed_update_command() -> Optional[str]:
+     """Return the preferred upgrade command for a managed install."""
++    if get_managed_system() == "guix":
++        return _GUIX_UPDATE_MSG
+     return _NIX_UPDATE_MSG if get_managed_system() in _NIX_MANAGED_SYSTEMS else None
+@@ -320,1 +324,1 @@
+-_SUPPORTED_INSTALL_METHODS = frozenset({"apt", "docker", "nix", "nixos", "home-manager", "git", "unknown"})
++_SUPPORTED_INSTALL_METHODS = frozenset({"apt", "docker", "nix", "nixos", "home-manager", "guix", "git", "unknown"})
+@@ -405,3 +409,4 @@
+ _UPDATE_COMMAND_BY_METHOD = {
++    "guix": _GUIX_UPDATE_MSG,
+     "docker": "docker pull nousresearch/hermes-agent:latest",
+     "apt": "pkg upgrade hermes-agent",  # "apt" == Termux APT by contract; uses Termux's `pkg`.
+diff --git a/hermes_cli/main.py b/hermes_cli/main.py
+--- a/hermes_cli/main.py
++++ b/hermes_cli/main.py
+@@ -2338,4 +2338,9 @@
+         return True
+ 
++    from hermes_cli.config import detect_install_method, recommended_update_command_for_method
++    if detect_install_method() == "guix":
++        print(recommended_update_command_for_method("guix"))
++        return True
++
+     # --plan is read-only and deployment-kind aware, so it runs BEFORE the
+     # docker/nix/apt refusal gates: on an image/package-managed install the
