@@ -4,6 +4,8 @@
   #:use-module (gnu services shepherd)
 
   #:use-module ((gnu packages base) #:select (coreutils))
+  #:use-module ((gnu packages bash) #:select (bash))
+  #:use-module ((gnu packages java) #:select (openjdk))
 
   #:use-module ((x-files packages datomic) #:select (datomic))
 
@@ -39,6 +41,15 @@ trigger on demand is worth more than one that only happens on a schedule."
                      (ice-9 rdelim)
                      (srfi srfi-13)
                      (srfi srfi-19))
+
+        ;; datomic's bin/datomic and bin/run are shell wrappers whose first line
+        ;; is `cd `dirname $0`/..' followed by a RELATIVE bin/run: without
+        ;; coreutils on PATH `dirname' is missing, bin/run resolves to nothing
+        ;; and every invocation dies with 127.  Set PATH in the script rather
+        ;; than only in the timer, so a hand-run clone works the same way.
+        (setenv "PATH" (string-append #$coreutils "/bin:"
+                                      #$bash "/bin:"
+                                      #$openjdk "/bin"))
 
         (define datomic-bin (string-append #$datomic "/bin/datomic"))
         (define run-bin     (string-append #$datomic "/bin/run"))
