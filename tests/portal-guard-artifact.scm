@@ -5,13 +5,16 @@
              ((gnu packages glib) #:select (dbus glib))
              ((gnu packages freedesktop) #:select (elogind))
              ((rde features) #:select (feature-home-services-getter))
-             ((srfi srfi-1) #:select (filter find second))
+             ((srfi srfi-1) #:select (append-map filter find second))
              ((x-files features desktop) #:select (feature-desktop-services)))
 
 (define (inputs expression)
   "Return the file-like inputs referenced by @var{expression}."
-  (map gexp-input-thing
-       (filter gexp-input? ((@@ (guix gexp) gexp-references) expression))))
+  (append-map
+   (lambda (reference)
+     (let ((input (gexp-input-thing reference)))
+       (if (list? input) input (list input))))
+   (filter gexp-input? ((@@ (guix gexp) gexp-references) expression))))
 
 (define (portal-guard-test-artifacts)
   "Return buildable guard, activation, and D-Bus test programs.

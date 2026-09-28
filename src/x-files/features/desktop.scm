@@ -4,7 +4,6 @@
   #:use-module (guix gexp)
   #:use-module ((guix modules) #:select (source-module-closure))
   #:use-module ((srfi srfi-1) #:select (first))
-  #:use-module ((ini) #:select (scm->ini))
 
   #:use-module ((gnu services avahi) #:select (avahi-service-type
                                                avahi-configuration))
@@ -200,28 +199,16 @@ to inspect source masks without restarting an existing owner."
                 1)))))))
 
   (define portal-backend-guard-desktop
-    (let ((template
-           (with-output-to-string
-             (lambda ()
-               (scm->ini
-                `(("Desktop Entry"
-                   ("Type" . "Application")
-                   ("Name" . "GNOME ScreenCast portal guard")
-                   ("Comment" . "Repair stale ScreenCast backend and frontend portal state after GNOME Shell starts")
-                   ("Exec" . "@GUARD@")
-                   ("Terminal" . "false")
-                   ("NoDisplay" . "true")
-                   ("X-GNOME-Autostart-enabled" . "true"))))))))
-      (computed-file
-       "gnome-portal-backend-guard.desktop"
-       #~(begin
-           (use-modules ((ice-9 string-fun) #:select (string-replace-substring)))
-           (call-with-output-file #$output
-             (lambda (out)
-               (display (string-replace-substring #$template
-                                                  "@GUARD@"
-                                                  #$gnome-portal-guard)
-                        out)))))))
+    (mixed-text-file
+     "gnome-portal-backend-guard.desktop"
+     "[Desktop Entry]\n"
+     "Type=Application\n"
+     "Name=GNOME ScreenCast portal guard\n"
+     "Comment=Repair stale ScreenCast backend and frontend portal state after GNOME Shell starts\n"
+     "Exec=" gnome-portal-guard "\n"
+     "Terminal=false\n"
+     "NoDisplay=true\n"
+     "X-GNOME-Autostart-enabled=true\n"))
 
   (define (get-home-services _)
     (list (service home-dbus-service-type
