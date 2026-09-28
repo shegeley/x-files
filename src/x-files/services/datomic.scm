@@ -131,7 +131,7 @@
 
 ;; POSTGRES [DRAFT]
 
-(define (transactor/postgres-config config)
+(define (transactor/postgres-config/base config)
   `(("protocol"               . "sql")
     ("sql-driver-class"       . "org.postgresql.Driver")
     ("sql-url"                . ,(assoc-ref config 'sql-url))
@@ -145,12 +145,27 @@
     ("memory-index-max"       . ,(or (assoc-ref config 'memory-index-max) "256m"))
     ("object-cache-max"       . ,(or (assoc-ref config 'object-cache-max) "128m"))
     ;; The transactor kills itself when a heartbeat WRITE to storage times out
-    ;; (`{:event :transactor/heartbeat-failed, :cause :timeout}'), which on a
+    ;; (`{:event :transactor/heartbeat-failed, :cause :timeout}`), which on a
     ;; box that also runs pg_dump and datomic backup-db against the same
     ;; postgres happens whenever those saturate it -- with heap and memory
     ;; index perfectly healthy.  Raising the interval widens that window.
     ("heartbeat-interval-msec"
      . ,(or (assoc-ref config 'heartbeat-interval-msec) "5000"))))
+
+(define (transactor/postgres-config config)
+  (append
+   (transactor/postgres-config/base config)
+   ;; Prometheus exposition, generic: Datomic periodically calls the
+   ;; METRICS-CALLBACK fn (written verbatim to the properties file) with its
+   ;; alpha-format metric map; METRICS-CLASSPATH is the store dir the fn's
+   ;; source lives in (appended to the classpath via DATOMIC_EXT_CLASSPATH).
+   ;; Both keys must be set to enable; #f either disables.  The callback
+   ;; implementation itself is not this channel's concern — e.g. the
+   ;; tech.grigory channel ships tech-grigory-datomic-callback.
+   (let ((cb (assoc-ref config 'metrics-callback)))
+     (if (and cb (assoc-ref config 'metrics-classpath))
+         `(("metrics-callback" . ,cb))
+         '()))))
 
 (define (datomic-postgres-roles config)
  (let* [(username      (assoc-ref config 'sql-user))
@@ -219,27 +234,41 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
           (execl #$bin #$bin #$@java-opts #$props-file)))))
 
 (define (datomic-postgres-transactor-shepherd-service config)
-  (shepherd-service
-   (documentation "Datomic Transactor (PostgreSQL)")
-   (provision '(datomic-postgres-transactor))
-   ;; postgres-roles uses make-forkexec-constructor so shepherd considers it
-   ;; "running" as soon as the PID is returned — before role/database creation
-   ;; finishes.  The wrapper script handles the timing with its own retry loop.
-   (requirement '(file-systems networking postgres postgres-roles))
-   (start #~(make-forkexec-constructor
-             (list #$(datomic-postgres-transactor-wrapper config))
-             #:user "datomic"
-             #:group "datomic"
-             #:log-file (string-append #$(log-dir config) "/transactor.log")
-             #:environment-variables
-             (list
-              (string-append "PATH="
-                             (string-append #$coreutils "/bin") ":"
-                             (string-append #$bash "/bin") ":"
-                             (string-append #$openjdk "/bin"))
-              (string-append "DATOMIC_HOME="   #$datomic)
-              (string-append "XDG_STATE_HOME=" #$(data-dir config)))))
-   (stop #~(make-kill-destructor))))
+  (let* ((metrics-classpath (assoc-ref config 'metrics-classpath))
+         (metrics-port      (assoc-ref config 'metrics-port)))
+    (shepherd-service
+     (documentation "Datomic Transactor (PostgreSQL)")
+     (provision '(datomic-postgres-transactor))
+     ;; postgres-roles uses make-forkexec-constructor so shepherd considers it
+     ;; "running" as soon as the PID is returned — before role/database creation
+     ;; finishes.  The wrapper script handles the timing with its own retry loop.
+     (requirement '(file-systems networking postgres postgres-roles))
+     (start #~(make-forkexec-constructor
+               (list #$(datomic-postgres-transactor-wrapper config))
+               #:user "datomic"
+               #:group "datomic"
+               #:log-file (string-append #$(log-dir config) "/transactor.log")
+               #:environment-variables
+               (append
+                (list
+                 (string-append "PATH="
+                                (string-append #$coreutils "/bin") ":"
+                                (string-append #$bash "/bin") ":"
+                                (string-append #$openjdk "/bin"))
+                 (string-append "DATOMIC_HOME="   #$datomic)
+                 (string-append "XDG_STATE_HOME=" #$(data-dir config)))
+                ;; Native-spliced so a metrics-classpath given as a
+                ;; lowerable object (file-append, package) reaches the
+                ;; runtime env as its store path — plain strings work too.
+                #+(if metrics-classpath
+                      #~(list (string-append "DATOMIC_EXT_CLASSPATH="
+                                             #$metrics-classpath))
+                      #~())
+                #+(if metrics-port
+                      #~(list (string-append "DATOMIC_METRICS_PORT="
+                                             #$metrics-port))
+                      #~()))))
+     (stop #~(make-kill-destructor)))))
 
 (define (datomic-postgres-shepherd-services config)
   (list (datomic-postgres-transactor-shepherd-service config)))
@@ -254,7 +283,15 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
     ;; bin/transactor before the props file (e.g. ("-Xmx4g" "-Xms1g")); the
     ;; memory-* / object-cache-max / heartbeat-interval-msec strings are
     ;; Datomic transactor properties.
-    (java-opts        . ())))
+    (java-opts        . ())
+    ;; Prometheus exposition, all three required to enable: metrics-callback
+    ;; (ns/fn string for the transactor properties), metrics-classpath (store
+    ;; dir whose classpath root carries the callback source — exported as
+    ;; DATOMIC_EXT_CLASSPATH) and metrics-port (exported as
+    ;; DATOMIC_METRICS_PORT for the callback to bind).
+    (metrics-callback . #f)
+    (metrics-classpath . #f)
+    (metrics-port     . #f)))
 
 (define-public datomic-postgres-transactor-service-type
   (service-type
