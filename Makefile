@@ -23,6 +23,12 @@ check/recovery:
 check/portal-guard: check/recovery
 	guix repl -L $(src) $(tests)/portal-guard-test.scm
 
+.PHONY: check/portal-guard-dbus
+check/portal-guard-dbus:
+	@artifacts=$$(guix build -L $(src) -f $(tests)/portal-guard-artifact.scm) && \
+	  guix repl -- $(tests)/portal-guard-dbus.scm "$$artifacts" \
+	  $(tests)/portal-dbus-fixture.scm "$$artifacts/libgio.so"
+
 guix-shell/check:
 	if [ -d $(tmp) ]; then rm -rf $(tmp); fi
 	guix shell guix guile-next guile-ares-rs -- \
