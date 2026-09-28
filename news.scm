@@ -1,6 +1,37 @@
 (channel-news
  (version 0)
  (entry
+  (commit "ddc386c")
+  (title (en "+ GNOME ScreenCast portal recovery"))
+  (body (en "@code{(x-files features desktop)} now provides
+@code{feature-desktop-services}, including a login guard for GNOME
+ScreenCast portals.  It waits for GNOME Shell, checks the backend and
+public portal in dependency order, and restarts each unhealthy owner at
+most once.  This recovers portals activated before the compositor and
+public portals retaining a zero source mask.  Recovery was tested with
+the stock GNOME portal 49.0 under GNOME 49.4 Wayland.
+
+Add the feature to your RDE configuration.  Home activation installs
+@file{~/.config/autostart/gnome-portal-backend-guard.desktop}; run its
+@code{Exec} command with @option{--check} to inspect source masks without
+restarting existing owners.  Reopen OBS if it loaded its PipeWire module
+before portal recovery.  Activation safely replaces read-only entries
+from earlier generations and catches installation failures.")))
+ (entry
+  (commit "b6cc3c4")
+  (title (en "+ Reusable ordered recovery plans"))
+  (body (en "@code{(x-files utils recovery)} provides
+@code{recover-in-order!} for dependency-ordered health checks and repair.
+Describe each step with an alist containing @code{name}, @code{probe},
+@code{healthy?}, and optional @code{repair!} and @code{attempts} fields.
+
+The runner polls before repairing, attempts each repair at most once,
+checks its result by probing again, and stops at the first unavailable
+dependency.  Its result is an alist containing status, the failed step,
+last observations, and attempted actions.  Injected callbacks and a
+@code{pause} procedure support REPL use and tests without touching live
+services.  The GNOME ScreenCast recovery policy uses this runner.")))
+ (entry
   (commit "a913a64")
   (title (en "+ emacs-dslide (declarative org-mode presentations)"))
   (body (en "Packaged @code{emacs-dslide}
