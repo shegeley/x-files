@@ -1,7 +1,7 @@
 (channel-news
  (version 0)
  (entry
-  (commit "ddc386c")
+  (commit "ddc386cc44ee24efddd2ee5e3ad2b146c622682a")
   (title (en "+ GNOME ScreenCast portal recovery"))
   (body (en "@code{(x-files features desktop)} now provides
 @code{feature-desktop-services}, including a login guard for GNOME
@@ -18,7 +18,7 @@ restarting existing owners.  Reopen OBS if it loaded its PipeWire module
 before portal recovery.  Activation safely replaces read-only entries
 from earlier generations and catches installation failures.")))
  (entry
-  (commit "b6cc3c4")
+  (commit "b6cc3c46c8890713db6b8d2477e418a18eaecad8")
   (title (en "+ Reusable ordered recovery plans"))
   (body (en "@code{(x-files utils recovery)} provides
 @code{recover-in-order!} for dependency-ordered health checks and repair.
@@ -32,7 +32,7 @@ last observations, and attempted actions.  Injected callbacks and a
 @code{pause} procedure support REPL use and tests without touching live
 services.  The GNOME ScreenCast recovery policy uses this runner.")))
  (entry
-  (commit "a913a64")
+  (commit "a913a642703c4b61ff68742d4d8ea6b0053bc6e7")
   (title (en "+ emacs-dslide (declarative org-mode presentations)"))
   (body (en "Packaged @code{emacs-dslide}
 (@url{https://github.com/positron-solutions/dslide}), a presentation
