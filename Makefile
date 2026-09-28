@@ -19,6 +19,10 @@ check:
 check/recovery:
 	guix repl -L $(src) -L $(tests) $(tests)/recovery-test.scm
 
+.PHONY: check/portal-guard
+check/portal-guard: check/recovery
+	guix repl -L $(src) $(tests)/portal-guard-test.scm
+
 guix-shell/check:
 	if [ -d $(tmp) ]; then rm -rf $(tmp); fi
 	guix shell guix guile-next guile-ares-rs -- \
