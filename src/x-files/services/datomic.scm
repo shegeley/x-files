@@ -143,7 +143,14 @@
     ("log-dir"                . ,(assoc-ref config 'log-dir))
     ("memory-index-threshold" . ,(or (assoc-ref config 'memory-index-threshold) "32m"))
     ("memory-index-max"       . ,(or (assoc-ref config 'memory-index-max) "256m"))
-    ("object-cache-max"       . ,(or (assoc-ref config 'object-cache-max) "128m"))))
+    ("object-cache-max"       . ,(or (assoc-ref config 'object-cache-max) "128m"))
+    ;; The transactor kills itself when a heartbeat WRITE to storage times out
+    ;; (`{:event :transactor/heartbeat-failed, :cause :timeout}'), which on a
+    ;; box that also runs pg_dump and datomic backup-db against the same
+    ;; postgres happens whenever those saturate it -- with heap and memory
+    ;; index perfectly healthy.  Raising the interval widens that window.
+    ("heartbeat-interval-msec"
+     . ,(or (assoc-ref config 'heartbeat-interval-msec) "5000"))))
 
 (define (datomic-postgres-roles config)
  (let* [(username      (assoc-ref config 'sql-user))
@@ -245,7 +252,8 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
     (sql-password-file . "")
     ;; Tunables (all optional). java-opts is a list of args passed to
     ;; bin/transactor before the props file (e.g. ("-Xmx4g" "-Xms1g")); the
-    ;; memory-* / object-cache-max strings are Datomic transactor properties.
+    ;; memory-* / object-cache-max / heartbeat-interval-msec strings are
+    ;; Datomic transactor properties.
     (java-opts        . ())))
 
 (define-public datomic-postgres-transactor-service-type

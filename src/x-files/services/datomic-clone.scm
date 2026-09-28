@@ -50,6 +50,10 @@ trigger on demand is worth more than one that only happens on a schedule."
         (setenv "PATH" (string-append #$coreutils "/bin:"
                                       #$bash "/bin:"
                                       #$openjdk "/bin"))
+        ;; datomic's logback config writes to ${XDG_STATE_HOME}/log/datomic; with
+        ;; it unset, restore-db dies (255) in SLF4J init trying to open the
+        ;; literal path "XDG_STATE_HOME_IS_UNDEFINED/log/datomic/<date>.log".
+        (setenv "XDG_STATE_HOME" #$work-dir)
 
         (define datomic-bin (string-append #$datomic "/bin/datomic"))
         (define run-bin     (string-append #$datomic "/bin/run"))
