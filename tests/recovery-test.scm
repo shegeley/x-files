@@ -1,0 +1,15 @@
+(use-modules ((ares suitbl) #:select (current-test-runner get-state make-suitbl))
+             ((ares suitbl state) #:select (get-run-history))
+             ((srfi srfi-1) #:select (every))
+             ((x-files tests utils recovery) #:select (recovery-tests)))
+
+(let ((runner (make-suitbl)))
+  (parameterize ((current-test-runner runner))
+    (recovery-tests))
+  (let ((history (get-run-history (get-state runner))))
+    (exit (if (and (pair? history)
+                   (every (lambda (test-run)
+                            (eq? 'pass (assq-ref test-run 'test-run/outcome)))
+                          history))
+              0
+              1))))

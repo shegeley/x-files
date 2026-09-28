@@ -15,6 +15,10 @@ check:
 	if [ -d $(tmp) ]; then rm -rf $(tmp); fi
 	guile --no-auto-compile -L $(tests) -L $(src) $(tests)/runner.scm
 
+.PHONY: check/recovery
+check/recovery:
+	guix repl -L $(src) -L $(tests) $(tests)/recovery-test.scm
+
 guix-shell/check:
 	if [ -d $(tmp) ]; then rm -rf $(tmp); fi
 	guix shell guix guile-next guile-ares-rs -- \
