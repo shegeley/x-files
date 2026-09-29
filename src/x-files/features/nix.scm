@@ -13,7 +13,7 @@
   #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc
                                                     emacs-nix-mode))
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
-  #:use-module ((srfi srfi-1) #:select (filter))
+  #:use-module ((srfi srfi-1) #:select (filter member remove))
   #:use-module ((srfi srfi-13) #:select (string-join))
 
   #:export (feature-nix-dev))
@@ -26,6 +26,12 @@
 (define %nix-options
   '(("experimental-features" . ("nix-command" "flakes"))
     ("system-features" . ("kvm" "nixos-test" "benchmark" "big-parallel"))))
+
+;; Restricted daemon-side settings: nix-daemon ignores them with a
+;; warning when an untrusted client sends them, so they must never end
+;; up in the client-side nix.conf.
+(define %nix-daemon-only-options
+  '("system-features"))
 
 (define (nix-option->line option)
   (string-append (car option)
@@ -41,6 +47,12 @@
           (filter (lambda (default)
                     (not (assoc (car default) options)))
                   %nix-options)))
+
+(define (client-nix-options options)
+  "OPTIONS without daemon-only restricted settings."
+  (remove (lambda (option)
+            (member (car option) %nix-daemon-only-options string=?))
+          options))
 
 (define (nix-lsp-service config)
   (rde-elisp-configuration-service
@@ -71,6 +83,7 @@
           (options %nix-options)
           (extra-config #f))
   "Configure Nix from OPTIONS, an alist with string keys and string or string-list values.
+Daemon-only restricted settings are kept out of the client nix.conf.
 EXTRA-CONFIG keeps the legacy daemon configuration override."
   (define f-name 'nix-dev)
   (define resolved-options (merge-nix-options options))
@@ -92,7 +105,8 @@ EXTRA-CONFIG keeps the legacy daemon configuration override."
              ,(plain-file
                "nix.conf"
                (apply string-append
-                      (map nix-option->line resolved-options))))))
+                      (map nix-option->line
+                           (client-nix-options resolved-options)))))))
           (nix-lsp-service config)
           (nix-envrc-service config)
           (nix-repl-service config)))
