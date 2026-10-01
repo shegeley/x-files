@@ -19,6 +19,14 @@ check:
 check/recovery:
 	guix repl -L $(src) -L $(tests) $(tests)/recovery-test.scm
 
+.PHONY: check/podman-storage system-test-podman-storage
+check/podman-storage:
+	guix repl -L $(src) $(tests)/podman-storage-test.scm
+
+system-test-podman-storage:
+	guix build -L $(src) -L $(tests) --no-offload \
+	  -e '(@ (x-files tests services podman-storage) %test-podman-storage)'
+
 .PHONY: check/portal-guard
 check/portal-guard: check/recovery
 	guix repl -L $(src) $(tests)/portal-guard-test.scm

@@ -1,5 +1,5 @@
 (define-module (x-files features oci-via-podman)
-  #:use-module (rde features)
+  #:use-module ((rde features) #:select (feature get-value))
   #:use-module (guix gexp)
   #:use-module ((gnu packages containers) #:select (podman
                                                     podman-compose))
@@ -17,8 +17,11 @@
                                                 user-group
                                                 subid-range))
 
-  #:use-module ((gnu system shadow) #:select (account-service-type))
-  #:use-module ((gnu packages admin) #:select (shadow))
+  #:use-module ((gnu system file-systems)
+                #:select (file-system-mount-point file-system-mount?))
+  #:use-module ((x-files services podman-storage)
+                #:select (podman-storage-service-type))
+  #:use-module ((srfi srfi-1) #:select (any))
 
   #:export (feature-oci-via-podman))
 
@@ -29,7 +32,12 @@ driver = \"btrfs\"
 "))))
 
 (define* (feature-oci-via-podman
-          #:key (podman-container-storage-driver 'btrfs))
+          #:key (podman-container-storage-driver 'btrfs)
+          (storage-mount-point "/oci"))
+  "Use Podman, binding its graph roots to STORAGE-MOUNT-POINT when that
+filesystem is declared by feature-file-systems.  Hosts without it retain
+their usual storage.  Existing stores must be migrated before enabling the
+binding; the feature deliberately never copies or hides live data."
 
   (define (get-home-services _)
     (list
@@ -55,7 +63,19 @@ driver = \"btrfs\"
        ;; nobody is requrired for podman system migrate script that's sometime applied
        (subid-range (name "nobody"))))
 
-    (list
+    (append
+     (if (and storage-mount-point
+              (any (lambda (fs)
+                     (and (file-system-mount? fs)
+                          (string=? storage-mount-point
+                                    (file-system-mount-point fs))))
+                   (get-value 'file-systems config '())))
+         (list (service podman-storage-service-type
+                        `((directory . ,storage-mount-point)
+                          (users . ("root" "oci-container"
+                                    ,(get-value 'user-name config))))))
+         '())
+     (list
      (service iptables-service-type)
      (service oci-service-type
               (oci-configuration
@@ -65,7 +85,7 @@ driver = \"btrfs\"
               (rootless-podman-configuration
                (subgids subs)
                (subuids subs)
-               (containers-storage storage-driver)))))
+               (containers-storage storage-driver))))))
 
   (feature
    (name 'oci-via-podman)
