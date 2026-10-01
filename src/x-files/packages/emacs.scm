@@ -38,6 +38,33 @@
 Provides support for indentation, font-locking, imenu, and structural navigation.")
       (license license:gpl3+))))
 
+(define-public emacs-ultra-scroll
+  (let [(url "https://github.com/jdtsmith/ultra-scroll")
+        (commit "8aa8e7496b06fd7c3585fcae8275300a77e57730")
+        (version "0.7.1")
+        (hash "10gnwssk8s8y4krpiqipj2s12v17zslkik0h36b1wfrdvlqp5hmn")]
+    (package
+      (name "emacs-ultra-scroll")
+      (version (git-version version "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url url)
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256 (base32 hash))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ;; no test suite in repo
+      (home-page url)
+      (synopsis "Fast, smooth pixel-precision scrolling")
+      (description "Ultra-scroll provides smooth, flicker-free pixel scrolling
+for Emacs 29.1+, replacing the scrolling of pixel-scroll-precision-mode with a
+faster implementation that correctly handles images taller than the window and
+works with native compilation.  It requires pixel-level scroll data from the
+window system (verified with @code{M-x ultra-scroll-check}).")
+      (license license:gpl3+))))
+
 (define-public emacs-gptel-got
   (let [(url "https://codeberg.org/bajsicki/gptel-got")
         (commit "f25c56c4b3fae3bf435e3a82723438b49ac6878b")
