@@ -1,5 +1,5 @@
 (define-module (x-files features nix)
-  #:use-module ((guix gexp) #:select (local-file plain-file))
+  #:use-module ((guix gexp) #:select (local-file plain-file file-append))
   #:use-module ((rde lib file) #:select (find-file-in-load-path))
   #:use-module ((rde features) #:select (feature))
   #:use-module ((rde features emacs) #:select (rde-elisp-configuration-service))
@@ -8,11 +8,15 @@
   #:use-module ((gnu services base) #:select (udev-rule
                                               udev-rules-service))
   #:use-module ((gnu services nix) #:select (nix-service-type
-                                              nix-configuration))
+                                             nix-configuration))
   #:use-module ((gnu packages package-management) #:select (nix))
   #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc
-                                                    emacs-nix-mode))
+                                                   emacs-nix-mode
+                                                   emacs-consult-recoll))
+  #:use-module ((gnu packages search) #:select (recoll-cli))
+  #:use-module ((gnu packages tree-sitter) #:select (tree-sitter-nix))
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
+  #:use-module ((x-files packages nix) #:select (nix-manuals nix-manuals-index))
   #:use-module ((srfi srfi-1) #:select (filter member remove))
   #:use-module ((srfi srfi-13) #:select (string-join))
 
@@ -20,8 +24,8 @@
 
 (define %nix-kvm-udev-rules
   (udev-rules-service 'nix-kvm-access
-    (udev-rule "99-nix-kvm.rules"
-      "KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0666\"")))
+                      (udev-rule "99-nix-kvm.rules"
+               "KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0666\"")))
 
 (define %nix-options
   '(("experimental-features" . ("nix-command" "flakes"))
@@ -76,14 +80,38 @@
          "x-files/packages/aux/nix-repl/nix-repl-config.el"))))
    #:elisp-packages (list emacs-nix-mode)))
 
+(define (nix-manual-service config)
+  (rde-elisp-configuration-service
+   'nix-docs config
+   `((load-file
+      ,(local-file
+        (find-file-in-load-path "x-files/packages/aux/nix-docs/nix-docs.el")))
+     (setq nix-docs/directory
+           ,(file-append nix-manuals "/share/doc/nix-manuals")
+           nix-docs/index-directory
+           ,(file-append nix-manuals-index "/share/nix-manuals-recoll")
+           nix-docs/program ,(file-append recoll-cli "/bin/recollq"))
+     (with-eval-after-load 'treesit
+                           (add-to-list 'treesit-extra-load-path
+                    ,(file-append tree-sitter-nix "/lib/tree-sitter")))
+     (add-hook 'nix-mode-hook #'nix-docs/enable)
+     (add-hook 'nix-ts-mode-hook #'nix-docs/enable)
+     (with-eval-after-load 'eglot
+                           (add-hook 'eglot-managed-mode-hook #'nix-docs/enable))
+     (with-eval-after-load 'lsp-mode
+                           (add-hook 'lsp-managed-mode-hook #'nix-docs/enable)))
+   #:elisp-packages (list emacs-consult-recoll)))
+
 (define* (feature-nix-dev
           #:key
           (package nix)
           (sandbox? #t)
+          (documentation? #t)
           (options %nix-options)
           (extra-config #f))
   "Configure Nix from OPTIONS, an alist with string keys and string or string-list values.
 Daemon-only restricted settings are kept out of the client nix.conf.
+DOCUMENTATION? adds offline HTML manuals, Recoll search and Eldoc excerpts.
 EXTRA-CONFIG keeps the legacy daemon configuration override."
   (define f-name 'nix-dev)
   (define resolved-options (merge-nix-options options))
@@ -99,17 +127,20 @@ EXTRA-CONFIG keeps the legacy daemon configuration override."
      %nix-kvm-udev-rules))
 
   (define (get-home-services config)
-    (list (simple-service 'nix-client-config
-                          home-xdg-configuration-files-service-type
-          `(("nix/nix.conf"
-             ,(plain-file
-               "nix.conf"
-               (apply string-append
-                      (map nix-option->line
-                           (client-nix-options resolved-options)))))))
-          (nix-lsp-service config)
-          (nix-envrc-service config)
-          (nix-repl-service config)))
+    (append
+     (list (simple-service
+            'nix-client-config
+            home-xdg-configuration-files-service-type
+            `(("nix/nix.conf"
+               ,(plain-file
+                 "nix.conf"
+                 (apply string-append
+                        (map nix-option->line
+                             (client-nix-options resolved-options)))))))
+           (nix-lsp-service config)
+           (nix-envrc-service config)
+           (nix-repl-service config))
+     (if documentation? (list (nix-manual-service config)) '())))
 
   (feature
    (name f-name)
