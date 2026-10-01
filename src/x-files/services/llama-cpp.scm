@@ -66,6 +66,11 @@
                     (default #f))                      ;;      #f = let llama-cpp auto-detect
   (extra-args       llama-cpp-model-extra-args         ;; list of extra CLI flags,
                     (default '()))                     ;;   e.g. '("--numa" "distribute")
+  ;; #f = shepherd registers the service but does not start it at boot; start
+  ;; manually with `herd start llama-cpp-<name>'.  Keeps VRAM/RAM free for
+  ;; gaming while the model stays available on demand.
+  (auto-start?      llama-cpp-model-auto-start?        ;; shepherd auto-start?
+                    (default #t))
   ;; Extra "VAR=value" strings added to the server process environment (merged
   ;; on top of the inherited shepherd env, not replacing it).  The shepherd env
   ;; is minimal, so GPU backends that resolve their driver via a loader need
@@ -116,6 +121,7 @@
          (flash-attention? (llama-cpp-model-flash-attention? model))
          (threads          (llama-cpp-model-threads model))
          (extra-args       (llama-cpp-model-extra-args model))
+         (auto-start?      (llama-cpp-model-auto-start? model))
          (environment      (llama-cpp-model-environment model))
          (pkg              (llama-cpp-model-package model))
          (log-file         (string-append "/var/log/llama-cpp-" name ".log"))
@@ -141,7 +147,7 @@
                         ;; Merge extra vars on top of the inherited env (empty
                         ;; list => unchanged behavior).  See `environment' field.
                         #:environment-variables (append '#$environment (environ))))
-      (auto-start?   #t)
+      (auto-start?   auto-start?)
       (stop          #~(make-kill-destructor))
       (documentation (string-append "Run llama-cpp server for model: " name)))))
 
