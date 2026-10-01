@@ -1,6 +1,31 @@
 (channel-news
  (version 0)
  (entry
+  (commit "b0da82feef3629d3487244b375d5a5e0a89bf0ab")
+  (title (en "+ Offline Nix manuals and Emacs documentation lookup")
+         (ru "+ Офлайн-руководства Nix и поиск документации в Emacs"))
+  (body
+   (en "@code{(x-files packages nix)} provides @code{nix-manuals} and
+@code{nix-manuals-index}: Nix 2.35.2, a Nixpkgs snapshot, and NixOS
+26.05, 25.11 and 25.05, with a prebuilt Recoll index of the HTML manuals.
+
+@code{feature-nix-dev} enables @code{nix-docs/open},
+@code{nix-docs/search}, and @code{nix-docs/at-point} (@kbd{C-c C-d}).
+Tree-sitter reads static Nix attribute paths; asynchronous Eldoc excerpts
+coexist with Eglot and lsp-mode.  Search with @kbd{C-u} adds snippets;
+extracting them from large manuals can take several seconds, while
+repeated lookups are cached.  Set @code{#:documentation? #f} to opt out.")
+   (ru "Модуль @code{(x-files packages nix)} предоставляет
+@code{nix-manuals} и @code{nix-manuals-index}: Nix 2.35.2, снимок Nixpkgs
+и NixOS 26.05, 25.11, 25.05 с готовым индексом HTML для Recoll.
+
+@code{feature-nix-dev} подключает @code{nix-docs/open},
+@code{nix-docs/search}, @code{nix-docs/at-point} (@kbd{C-c C-d}).
+Tree-sitter читает статические пути атрибутов; асинхронные фрагменты Eldoc
+работают вместе с Eglot и lsp-mode.  Префикс @kbd{C-u} добавляет фрагменты
+к поиску: первый запрос большого руководства может занять несколько
+секунд, повторные берутся из кэша.  Отключение: @code{#:documentation? #f}.")))
+ (entry
   (commit "ddc386cc44ee24efddd2ee5e3ad2b146c622682a")
   (title (en "+ GNOME ScreenCast portal recovery"))
   (body (en "@code{(x-files features desktop)} now provides
