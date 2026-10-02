@@ -1,0 +1,38 @@
+#+TITLE: Canvas Browser on Guix
+#+AUTHOR: GPT-6
+#+DATE: 2026-10-02
+#+OPTIONS: toc:2 num:t
+
+* Packages
+~(x-files packages emacs canvas)~ exports ~emacs-canvas-keys~, ~emacs-canvas-diagram~, and ~emacs-canvas-browser~. Sources are pinned to complete Git commits with recursive hashes.
+
+Canvas Diagram includes ~canvas-cairo.so~, built against Guix's Emacs 32 headers. Cairo, Pango, librsvg and GdkPixbuf provide text, SVG, PNG, JPEG and GIF rendering. Canvas Browser refers to Guix store paths for Xvfb and unzip; its Lisp dependencies are propagated.
+
+* Requirements
+Use an Emacs 32 build with canvas image support and dynamic modules. Emacs 30 cannot load the native canvas module. A running Emacs process keeps its old version even after its profile changes.
+
+Install Chromium or Google Chrome separately. The default lookup checks ~chromium~, ~chromium-browser~, then ~google-chrome~. ~canvas-browser-chromium~ accepts a list of executable names or absolute paths, not a single string. The package preserves this choice instead of forcing another browser installation.
+
+* Build and use
+From this checkout, ~guix build -L src emacs-canvas-browser~ builds the package and runs the upstream unit suites. On Grigory's machine, launch this command through ~aao/detached~ so its output remains tracked in Emacs.
+
+For an imperative installation, ~guix install -L ~/Projects/x-files/src emacs-canvas-browser~ installs the browser and its Lisp dependencies. A declarative Home configuration can instead import the module and include ~emacs-canvas-browser~ among its Emacs packages.
+
+In Emacs 32 with the package available, ~M-x canvas-browser~ asks for a URL. ~M-x canvas-browser-browse-url~ is the corresponding browse-url entry point.
+
+The browser creates a dedicated profile under the XDG cache directory when using a normal, non-Snap Chromium. It does not reuse the user's everyday Chrome profile. Upstream starts a private Xvfb display without a TCP listener; Chromium's DevTools port is chosen dynamically.
+
+* Validation on 2026-10-02
+- Canvas Keys: 35 of 35 upstream tests passed.
+- Canvas Diagram: 254 of 254 upstream tests passed, including the native module and JPEG/GIF decoding.
+- Canvas Browser: 288 of 288 upstream tests passed using the stubbed DevTools transport.
+- All three packages completed Guix builds, byte compilation and autoload validation.
+- Guix description and synopsis lint checks passed, including Texinfo parsing.
+- The Scheme module loaded and evaluated through Ares in the running Emacs.
+
+The interactive browser and the upstream real-Chromium suite have not been exercised. The running editor remained Emacs 30.2; it was not restarted or given the incompatible native module. These builds do not clear the separately recorded Optimus memory-integrity fault.
+
+* Upstream
+- [[https://github.com/Daskeladden/canvas-keys][Canvas Keys]]
+- [[https://github.com/Daskeladden/canvas-diagram][Canvas Diagram]]
+- [[https://github.com/Daskeladden/canvas-browser][Canvas Browser]]
