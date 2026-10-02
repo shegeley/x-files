@@ -94,12 +94,12 @@
      (with-eval-after-load 'treesit
                            (add-to-list 'treesit-extra-load-path
                     ,(file-append tree-sitter-nix "/lib/tree-sitter")))
-     (add-hook 'nix-mode-hook #'nix-docs/enable)
-     (add-hook 'nix-ts-mode-hook #'nix-docs/enable)
+     (add-hook 'nix-mode-hook (function nix-docs/enable))
+     (add-hook 'nix-ts-mode-hook (function nix-docs/enable))
      (with-eval-after-load 'eglot
-                           (add-hook 'eglot-managed-mode-hook #'nix-docs/enable))
+                           (add-hook 'eglot-managed-mode-hook (function nix-docs/enable)))
      (with-eval-after-load 'lsp-mode
-                           (add-hook 'lsp-managed-mode-hook #'nix-docs/enable)))
+                           (add-hook 'lsp-managed-mode-hook (function nix-docs/enable))))
    #:elisp-packages (list emacs-consult-recoll)))
 
 (define* (feature-nix-dev

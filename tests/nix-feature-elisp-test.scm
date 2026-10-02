@@ -1,0 +1,28 @@
+(use-modules ((ares suitbl) #:select (suite test is current-test-runner get-state make-suitbl))
+             ((ares suitbl state) #:select (get-run-history))
+             ((gnu services) #:select (service-value))
+             ((rde features) #:select (rde-config))
+             ((srfi srfi-1) #:select (append-map every)))
+
+(define (hook-forms tree)
+  (cond ((not (pair? tree)) '())
+        ((eq? (car tree) 'add-hook) (list tree))
+        (else (append-map hook-forms tree))))
+
+(define runner (make-suitbl))
+(current-test-runner runner)
+(suite "Nix documentation Emacs configuration"
+  (test "Every emitted mode hook receives an Emacs function reference" ()
+    (let* ((service ((@@ (x-files features nix) nix-manual-service) (rde-config)))
+           (forms ((@@ (rde home services emacs) home-elisp-configuration-config)
+                   (service-value service)))
+           (hooks (hook-forms forms)))
+      (is (= 4 (length hooks)))
+      (is (every (lambda (form)
+                   (equal? '(function nix-docs/enable) (caddr form)))
+                 hooks)))))
+
+(let ((history (get-run-history (get-state runner))))
+  (exit (if (and (pair? history)
+                 (every (lambda (run) (eq? 'pass (assq-ref run 'test-run/outcome))) history))
+            0 1)))
