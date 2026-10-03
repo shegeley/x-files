@@ -27,6 +27,10 @@ check/podman-storage:
 check/nix-feature-elisp:
 	guix repl -L $(src) $(tests)/nix-feature-elisp-test.scm
 
+.PHONY: check/nix-trusted-users
+check/nix-trusted-users:
+	guix repl -L $(src) $(tests)/nix-trusted-users-test.scm
+
 system-test-podman-storage:
 	guix build -L $(src) -L $(tests) --no-offload \
 	  -e '(@ (x-files tests services podman-storage) %test-podman-storage)'

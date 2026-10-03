@@ -9,6 +9,8 @@
                                               udev-rules-service))
   #:use-module ((gnu services nix) #:select (nix-service-type
                                              nix-configuration))
+  #:use-module ((gnu system accounts) #:select (user-account? user-account-name
+                                                              user-group? user-group-name))
   #:use-module ((gnu packages package-management) #:select (nix))
   #:use-module ((gnu packages emacs-xyz) #:select (emacs-envrc
                                                    emacs-nix-mode
@@ -18,7 +20,7 @@
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
   #:use-module ((x-files packages nix) #:select (nix-manuals nix-manuals-index))
   #:use-module ((srfi srfi-1) #:select (filter member remove))
-  #:use-module ((srfi srfi-13) #:select (string-join))
+  #:use-module ((srfi srfi-13) #:select (string-every string-join string-null?))
 
   #:export (feature-nix-dev))
 
@@ -35,7 +37,7 @@
 ;; warning when an untrusted client sends them, so they must never end
 ;; up in the client-side nix.conf.
 (define %nix-daemon-only-options
-  '("system-features"))
+  '("system-features" "trusted-users" "extra-trusted-users"))
 
 (define (nix-option->line option)
   (string-append (car option)
@@ -57,6 +59,20 @@
   (remove (lambda (option)
             (member (car option) %nix-daemon-only-options string=?))
           options))
+
+(define (nix-trusted-entry->name entry)
+  "Serialize a Guix account, group, or Nix user/group name."
+  (let ((name (cond ((user-account? entry) (user-account-name entry))
+                    ((user-group? entry) (user-group-name entry))
+                    (else entry))))
+    (unless (and (string? name)
+                 (not (string-null? name))
+                 (string-every (lambda (char)
+                                 (and (not (char-whitespace? char))
+                                      (not (char=? char #\#))))
+                               name))
+      (error "Nix trusted entries require nonempty names without whitespace or #"))
+    (if (user-group? entry) (string-append "@" name) name)))
 
 (define (nix-lsp-service config)
   (rde-elisp-configuration-service
@@ -108,13 +124,22 @@
           (sandbox? #t)
           (documentation? #t)
           (options %nix-options)
-          (extra-config #f))
+          (extra-config #f)
+          (nix-trusted-users #f))
   "Configure Nix from OPTIONS, an alist with string keys and string or string-list values.
 Daemon-only restricted settings are kept out of the client nix.conf.
 DOCUMENTATION? adds offline HTML manuals, Recoll search and Eldoc excerpts.
-EXTRA-CONFIG keeps the legacy daemon configuration override."
+EXTRA-CONFIG keeps the legacy daemon configuration override.
+NIX-TRUSTED-USERS is #f to preserve the daemon trust policy, or a list of
+Guix user-account/user-group records and user/@group strings overriding
+OPTIONS and EXTRA-CONFIG. Records select existing accounts; they do not create them.
+Trusted users may perform privileged Nix operations."
   (define f-name 'nix-dev)
   (define resolved-options (merge-nix-options options))
+  (define trusted-names
+    (cond ((not nix-trusted-users) #f)
+          ((list? nix-trusted-users) (map nix-trusted-entry->name nix-trusted-users))
+          (else (error "nix-trusted-users must be #f or a list of accounts, groups, or names"))))
 
   (define (get-system-services config)
     (list
@@ -122,8 +147,14 @@ EXTRA-CONFIG keeps the legacy daemon configuration override."
               (nix-configuration
                (package package)
                (sandbox sandbox?)
-               (extra-config (or extra-config
-                                 (map nix-option->line resolved-options)))))
+               (extra-config
+                (append (or extra-config (map nix-option->line resolved-options))
+                        (if trusted-names
+                            (list (string-append
+                                   "\n"
+                                   (nix-option->line
+                                    (cons "trusted-users" trusted-names))))
+                            '())))))
      %nix-kvm-udev-rules))
 
   (define (get-home-services config)
