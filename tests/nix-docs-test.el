@@ -2,6 +2,76 @@
 (require 'ert)
 (require 'cl-lib)
 (require 'nix-docs)
+(require 'eww)
+(require 'nix-mode)
+
+(defun nix-docs/test-render (dom &optional plain)
+  "Render DOM through EWW's SHR setup, without Nix highlighting if PLAIN."
+  (with-temp-buffer
+    (eww-mode)
+    (let ((inhibit-read-only t)
+          (shr-use-fonts nil)
+          (shr-inhibit-images t)
+          (shr-width 80)
+          (shr-external-rendering-functions
+           (unless plain shr-external-rendering-functions)))
+      (shr-insert-document (copy-tree dom)))
+    (buffer-string)))
+
+(defun nix-docs/test-face-p (text needle face)
+  "Whether NEEDLE in TEXT starts with FACE."
+  (let ((faces (get-text-property (string-match (regexp-quote needle) text) 'face text)))
+    (if (listp faces) (memq face faces) (eq face faces))))
+
+(ert-deftest nix-docs/test-eww-nix-blocks ()
+  (let ((code "let x = \"hello & goodbye\"; # comment\nin\n  <nixpkgs>"))
+    (dolist (dom `((pre nil (code ((class . "language-nix")) ,code))
+                  (pre nil (code ((class . "programlisting  nix")) ,code))
+                  (pre ((class . "nix")) ,code)))
+      (let ((text (nix-docs/test-render dom)))
+        (should (equal (substring-no-properties text)
+                       (substring-no-properties (nix-docs/test-render dom t))))
+        (should (nix-docs/test-face-p text "let" 'nix-keyword-face))
+        (should (nix-docs/test-face-p text "hello" 'font-lock-string-face))
+        (should (nix-docs/test-face-p text "comment" 'font-lock-comment-face))))))
+
+(ert-deftest nix-docs/test-eww-other-blocks ()
+  (let ((code "let x = 1; in x"))
+    (dolist (dom `((pre nil (code ((class . "language-console")) ,code))
+                  (pre nil (code ((class . "language-nix-repl")) ,code))
+                  (pre nil (code ((class . "programlisting ShellSession")) ,code))
+                  (pre nil (code nil ,code))
+                  (p nil (code ((class . "language-nix")) ,code))))
+      (let ((text (nix-docs/test-render dom)))
+        (should-not (nix-docs/test-face-p text "let" 'nix-keyword-face))))))
+
+(ert-deftest nix-docs/test-eww-links-and-mode-hooks ()
+  (let* ((nix-mode-hook (list (lambda () (ert-fail "Ran Nix editing hooks"))))
+         (prog-mode-hook (list (lambda () (ert-fail "Ran programming hooks"))))
+         (text (nix-docs/test-render
+                '(pre nil
+                  (code ((class . "nix"))
+                   "let x = "
+                   (a ((href . "https://example.org/manual")) "true")
+                   "; in x")))))
+    (should (nix-docs/test-face-p text "let" 'nix-keyword-face))
+    (should (equal (get-text-property (string-match "true" text) 'shr-url text)
+                   "https://example.org/manual"))))
+
+(ert-deftest nix-docs/test-eww-setup-preserves-renderers ()
+  (let* ((called 0)
+         (renderer (lambda (dom) (cl-incf called) (shr-tag-pre dom)))
+         (shr-external-rendering-functions `((pre . ,renderer) (span . shr-generic))))
+    (with-temp-buffer
+      (eww-mode)
+      (nix-docs/eww-setup)
+      (nix-docs/eww-setup)
+      (should (eq (alist-get 'span shr-external-rendering-functions) #'shr-generic))
+      (let ((inhibit-read-only t))
+        (shr-insert-document '(pre nil (code ((class . "nix")) "let x = 1; in x"))))
+      (should (= called 1))
+      (should (nix-docs/test-face-p (buffer-string) "let" 'nix-keyword-face)))
+    (should (eq (alist-get 'pre shr-external-rendering-functions) renderer))))
 
 (ert-deftest nix-docs/test-decode-utf8-and-markup ()
   (let* ((record (concat

@@ -3,6 +3,7 @@
 ;;; Commentary:
 ;; `nix-docs/at-point' shows excerpts; `nix-docs/search' searches all releases.
 ;; Eldoc uses the same asynchronous lookup, alongside Eglot or lsp-mode.
+;; EWW highlights explicitly marked Nix blocks using `nix-mode' faces.
 ;; This is textual search, not Nix evaluation or semantic option resolution.
 
 ;;; Code:
@@ -13,11 +14,13 @@
 (require 'url-util)
 (require 'browse-url)
 (require 'dom)
+(require 'shr)
 (require 'thingatpt)
 (require 'treesit nil t)
 
 (declare-function consult-recoll "consult-recoll")
 (declare-function eww-open-file "eww")
+(declare-function nix-mode "nix-mode")
 (defvar consult-recoll-program)
 (defvar consult-recoll-search-flags)
 (defvar consult-recoll-open-fn)
@@ -44,7 +47,48 @@
 (defvar nix-docs/cache (make-hash-table :test #'equal))
 (defvar-local nix-docs/request nil)
 (defvar-local nix-docs/saved-strategy nil)
+(defvar-local nix-docs/pre-renderer #'shr-tag-pre)
 (defvar nix-docs/mode)
+
+(defun nix-docs/nix-block-p (dom)
+  "Whether preformatted DOM or its code elements explicitly name Nix."
+  (cl-some (lambda (node)
+             (let ((classes (split-string (or (dom-attr node 'class) ""))))
+               (or (member "nix" classes) (member "language-nix" classes))))
+           (cons dom (dom-by-tag dom 'code))))
+
+(defun nix-docs/render-pre (dom)
+  "Render preformatted DOM normally, then add Nix faces if labelled.
+Only faces are copied; links and whitespace retain SHR's rendering.
+Fontification does not run editing hooks or evaluate the example."
+  (let ((start (point)))
+    (funcall nix-docs/pre-renderer dom)
+    (when (and (nix-docs/nix-block-p dom) (require 'nix-mode nil t))
+      (let ((target (current-buffer))
+            (code (buffer-substring-no-properties start (point))))
+        (with-temp-buffer
+          (insert code)
+          (delay-mode-hooks (nix-mode))
+          (font-lock-ensure)
+          (let ((position (point-min)))
+            (while (< position (point-max))
+              (let ((end (next-single-property-change position 'face nil (point-max)))
+                    (face (get-text-property position 'face)))
+                (when face
+                  (with-current-buffer target
+                    (add-face-text-property (+ start (1- position))
+                                            (+ start (1- end)) face)))
+                (setq position end)))))))))
+
+(defun nix-docs/eww-setup ()
+  "Enable Nix block highlighting locally, preserving existing renderers."
+  (unless (eq (alist-get 'pre shr-external-rendering-functions) #'nix-docs/render-pre)
+    (setq-local nix-docs/pre-renderer
+                (or (alist-get 'pre shr-external-rendering-functions) #'shr-tag-pre))
+    (setq-local shr-external-rendering-functions
+                (cons '(pre . nix-docs/render-pre) shr-external-rendering-functions))))
+
+(add-hook 'eww-mode-hook #'nix-docs/eww-setup)
 
 (defun nix-docs/static-path (node)
   "Read a static identifier path from tree-sitter NODE; never evaluate Nix."
