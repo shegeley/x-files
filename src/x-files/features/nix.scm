@@ -18,6 +18,7 @@
   #:use-module ((gnu packages search) #:select (recoll-cli))
   #:use-module ((gnu packages tree-sitter) #:select (tree-sitter-nix))
   #:use-module ((x-files packages emacs nix-lsp) #:select (emacs-nix-lsp))
+  #:use-module ((x-files packages emacs ob-nix) #:select (emacs-ob-nix))
   #:use-module ((x-files packages nix) #:select (nix-manuals nix-manuals-index))
   #:use-module ((srfi srfi-1) #:select (filter member remove))
   #:use-module ((srfi srfi-13) #:select (string-every string-join string-null?))
@@ -96,6 +97,13 @@
          "x-files/packages/aux/nix-repl/nix-repl-config.el"))))
    #:elisp-packages (list emacs-nix-mode)))
 
+(define (nix-ob-service config)
+  (rde-elisp-configuration-service
+   'ob-nix config
+   '((with-eval-after-load 'ob
+       (require 'ob-nix)))
+   #:elisp-packages (list emacs-ob-nix)))
+
 (define (nix-manual-service config)
   (rde-elisp-configuration-service
    'nix-docs config
@@ -170,7 +178,8 @@ Trusted users may perform privileged Nix operations."
                              (client-nix-options resolved-options)))))))
            (nix-lsp-service config)
            (nix-envrc-service config)
-           (nix-repl-service config))
+           (nix-repl-service config)
+           (nix-ob-service config))
      (if documentation? (list (nix-manual-service config)) '())))
 
   (feature
