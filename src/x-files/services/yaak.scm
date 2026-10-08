@@ -91,8 +91,19 @@ output was supplied in CONFIG.  A no-op gexp otherwise."
                    (plugin-dir (string-append data-dir "/plugins/@yaak/mcp-server"))
                    (db-path    (string-append data-dir "/db.sqlite")))
               (mkdir-p (string-append plugin-dir "/build"))
-              (copy-file #$index-js (string-append plugin-dir "/build/index.js"))
-              (copy-file #$pkg-json (string-append plugin-dir "/package.json"))
+              ;; Store sources are 0444 and copy-file copies mode bits, so a
+              ;; naive copy over an existing target fails with EACCES on
+              ;; every activation after the first.  Replace atomically-ish
+              ;; and pin readable mode, keeping the activation idempotent.
+              (for-each
+               (lambda (src dst)
+                 (let ((tmp (string-append dst ".new")))
+                   (copy-file src tmp)
+                   (chmod tmp #o644)
+                   (rename-file tmp dst)))
+               (list #$index-js #$pkg-json)
+               (list (string-append plugin-dir "/build/index.js")
+                     (string-append plugin-dir "/package.json")))
               ;; Only register once Yaak has run at least once (db.sqlite
               ;; exists); harmless no-op activation runs before that.
               (when (file-exists? db-path)
