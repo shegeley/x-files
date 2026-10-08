@@ -1,7 +1,7 @@
 (define-module (x-files packages nix)
   #:use-module ((guix packages) #:select (package origin base32))
   #:use-module ((guix download) #:select (url-fetch))
-  #:use-module ((guix gexp) #:select (gexp file-append))
+  #:use-module ((guix gexp) #:select (gexp local-file file-append))
   #:use-module ((guix modules) #:select (source-module-closure))
   #:use-module ((guix build-system trivial) #:select (trivial-build-system))
   #:use-module ((guix licenses) #:select (expat lgpl2.1+))
@@ -43,7 +43,7 @@
 (define nix-manuals
   (package
     (name "nix-manuals")
-    (version "2026-10-01")
+    (version "2026-10-08")
     (source #f)
     (build-system trivial-build-system)
     (arguments
@@ -60,8 +60,17 @@
            ((sxml simple) #:select (sxml->xml)))
           (define directory (string-append #$output "/share/doc/nix-manuals"))
           (mkdir-p directory)
-          (copy-file #$%nix-manual (string-append directory "/nix-2.35.2.html"))
-          (copy-file #$%nixpkgs-manual (string-append directory "/nixpkgs-unstable.html"))
+          ;; mdBook print.html files concatenate the whole book into one
+          ;; multi-megabyte page, which shr/EWW renders pathologically
+          ;; slowly.  Split them into one page per heading instead.
+          (load #$(local-file (search-path %load-path
+                               "x-files/packages/aux/nix-manuals/split-mdbook.scm")))
+          (split-mdbook-print #$%nix-manual
+                              (string-append directory "/nix") 1
+                              #:book-title "Nix 2.35.2")
+          (split-mdbook-print #$%nixpkgs-manual
+                              (string-append directory "/nixpkgs") 3
+                              #:book-title "Nixpkgs unstable")
           (for-each
            (lambda (entry)
              (match entry
@@ -101,8 +110,8 @@
                   (h1 "Руководства Nix и NixOS — офлайн")
                   (p "Снимок 01.10.2026. Поиск: Ctrl-f в браузере, C-s в EWW.")
                   (ul
-                   (li (a (@ (href "nix-2.35.2.html")) "Nix 2.35.2: язык и команды"))
-                   (li (a (@ (href "nixpkgs-unstable.html")) "Nixpkgs unstable: рецепты и библиотека"))
+                   (li (a (@ (href "nix/index.html")) "Nix 2.35.2: язык и команды"))
+                   (li (a (@ (href "nixpkgs/index.html")) "Nixpkgs unstable: рецепты и библиотека"))
                    ,@(map
                       (lambda (version)
                         `(li ,(string-append "NixOS " version ": ")
@@ -119,8 +128,11 @@
     (description
      "Official HTML manuals for Nix 2.35.2, Nixpkgs and NixOS 26.05,
 25.11 and 25.05, including the NixOS option reference and release notes.
-Open share/doc/nix-manuals/index.html in EWW or a web browser.  No Nix,
-Python, documentation converter or network connection is needed to read them.
+The mdBook manuals (Nix and Nixpkgs) are split into one page per heading so
+that EWW can render them quickly; intra-book links are rewritten to the page
+containing their target.  Open share/doc/nix-manuals/index.html in EWW or a
+web browser.  No Nix, Python, documentation converter or network connection
+is needed to read them.
 The rolling Nixpkgs and Nix manual URLs are guarded by snapshot hashes;
 updating the snapshot requires updating those hashes.")
     (license (list expat lgpl2.1+))))
@@ -167,3 +179,5 @@ updating the snapshot requires updating those hashes.")
 Queries use share/nix-manuals-recoll as their Recoll configuration directory.
 Only the packaged HTML manuals are indexed; no user files or background
 indexing service are involved.")))
+
+nix-manuals

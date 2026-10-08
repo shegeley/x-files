@@ -150,7 +150,7 @@ Dynamic attributes, comments and literal strings are deliberately ignored."
     (user-error "Not a Nix identifier: %s" term))
   (let ((query (format "\"%s\"" (string-remove-prefix "pkgs." term))))
     (if nix-docs/nixos-release
-        (format "%s (dir:nixos-%s OR filename:nix-*.html OR filename:nixpkgs-*.html)"
+        (format "%s (dir:nixos-%s OR dir:nix OR dir:nixpkgs)"
                 query nix-docs/nixos-release)
       query)))
 
