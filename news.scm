@@ -1,6 +1,38 @@
 (channel-news
  (version 0)
  (entry
+  (commit "bb477a284e45877e21ed9d07bfd4833692ea78e0")
+  (title (en "+ RS-Key hardware passkey support")
+         (ru "+ Поддержка аппаратного ключа RS-Key"))
+  (body
+   (en "@code{(x-files packages rs-key)} provides @code{ccid-rs-key} (the CCID
+driver with the key's USB identity in its reader list -- without it pcscd
+skips the key silently and its OpenPGP, PIV, OATH and Yubico-OTP applets look
+absent), @code{rs-key-udev-rules}, the @command{rsk} host CLI, and
+@code{rs-key-firmware-for}: the upstream-signed UF2 images of release 0.4.11.
+
+@code{feature-rs-key} wires all of it: udev rules, @command{pcscd} with the
+patched driver, and the tooling on the profile.  @code{#:firmware-variants}
+selects which images to install, @code{#:pcscd? #f} leaves the smart-card
+daemon alone.  @code{make system-test-rs-key} checks the booted result.
+
+The firmware is NOT built from source: that needs a thumbv8m rust-std Guix
+does not ship, 291 vendored crates, and @code{picotool}/@code{flip-link}.")
+   (ru "Модуль @code{(x-files packages rs-key)} предоставляет
+@code{ccid-rs-key} (драйвер CCID со USB-идентификатором ключа в списке
+считывателей: без него pcscd молча пропускает ключ, а его апплеты OpenPGP,
+PIV, OATH и Yubico-OTP выглядят отсутствующими), @code{rs-key-udev-rules},
+CLI @command{rsk} и @code{rs-key-firmware-for} -- подписанные образы UF2
+выпуска 0.4.11.
+
+@code{feature-rs-key} связывает всё вместе: правила udev, @command{pcscd} с
+патченым драйвером и инструменты в профиле.  @code{#:firmware-variants}
+выбирает образы, @code{#:pcscd? #f} не трогает демон смарт-карт.
+@code{make system-test-rs-key} проверяет результат в загруженной системе.
+
+Прошивка НЕ собирается из исходников: нужен rust-std для thumbv8m, которого
+нет в Guix, 291 вендоренный crate и @code{picotool}/@code{flip-link}.")))
+ (entry
   (commit "b0da82feef3629d3487244b375d5a5e0a89bf0ab")
   (title (en "+ Offline Nix manuals and Emacs documentation lookup")
          (ru "+ Офлайн-руководства Nix и поиск документации в Emacs"))
