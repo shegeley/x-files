@@ -13,6 +13,10 @@
 ;;; regexp engine is far too slow on multi-megabyte strings.  Loaded with
 ;;; (load ...) from the nix-manuals builder and from tests; depends only on
 ;;; Guile core.
+;;;
+;;; Hence the .tmpl extension: it is NOT a module, and the channel build
+;;; resolve-interfaces every .scm below the channel directory ("no code for
+;;; module (x-files packages aux nix-manuals split-mdbook)").
 
 (use-modules (ice-9 match)
              (ice-9 textual-ports)

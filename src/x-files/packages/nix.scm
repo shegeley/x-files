@@ -64,7 +64,7 @@
           ;; multi-megabyte page, which shr/EWW renders pathologically
           ;; slowly.  Split them into one page per heading instead.
           (load #$(local-file (search-path %load-path
-                               "x-files/packages/aux/nix-manuals/split-mdbook.scm")))
+                               "x-files/packages/aux/nix-manuals/split-mdbook.scm.tmpl")))
           (split-mdbook-print #$%nix-manual
                               (string-append directory "/nix") 1
                               #:book-title "Nix 2.35.2")

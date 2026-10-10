@@ -3,7 +3,7 @@
              ((ice-9 textual-ports) #:select (get-string-all))
              ((srfi srfi-1) #:select (every)))
 
-(load (string-append (getcwd) "/src/x-files/packages/aux/nix-manuals/split-mdbook.scm"))
+(load (string-append (getcwd) "/src/x-files/packages/aux/nix-manuals/split-mdbook.scm.tmpl"))
 
 (define %fixture
   (string-append
