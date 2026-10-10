@@ -35,6 +35,11 @@ system-test-podman-storage:
 	guix build -L $(src) -L $(tests) --no-offload \
 	  -e '(@ (x-files tests services podman-storage) %test-podman-storage)'
 
+.PHONY: system-test-rs-key
+system-test-rs-key:
+	guix build -L $(src) -L $(tests) \
+	  -e '(@ (x-files tests services rs-key) %test-rs-key)'
+
 .PHONY: check/portal-guard
 check/portal-guard: check/recovery
 	guix repl -L $(src) $(tests)/portal-guard-test.scm
