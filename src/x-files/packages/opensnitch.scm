@@ -133,6 +133,17 @@ only judges the packets some other firewall rule sends to its netfilter queue
                             ;; the rules checker expects 2 connection + 1 DNS rule
                             (substitute* "monitor.go"
                               (("nRules != 3") "nRules != 1")))))))
+            (add-before 'build 'read-env-at-connection-time
+              ;; The exec-event cache keeps the environment of a PID's first
+              ;; exec, so process.env.* rules miss variables a wrapper set
+              ;; before exec'ing the real binary; re-read it per connection,
+              ;; as the proc monitor does.
+              (lambda* (#:key import-path #:allow-other-keys)
+                (with-directory-excursion
+                    (string-append "src/" import-path "/procmon/ebpf")
+                  (substitute* "find.go"
+                    (("(\t\tproc = &ev\\.Proc\n)" all)
+                     (string-append all "\t\tproc.ReadEnv()\n"))))))
             (add-after 'install-default-config 'install-ebpf-modules
               (lambda _
                 (for-each (lambda (o)
