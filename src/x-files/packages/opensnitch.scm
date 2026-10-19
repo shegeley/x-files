@@ -55,13 +55,17 @@ configured headers, so the objects only load on that exact kernel."
             ;; -march=bpf'; LLVM >= 17 rejects the mismatched DataLayout, so
             ;; drop it and let llc apply BPF's own.
             (lambda _
-              (substitute* "ebpf_prog/Makefile"
-                (("\\$\\(CC\\) \\$\\(CFLAGS\\) -c \\$<")
-                 (string-append
-                  "$(CC) $(CFLAGS) -S -o $*.ll $<\n"
-                  "\tsed -e '/^target datalayout/d'"
-                  " -e 's/^target triple = .*/target triple = \"bpf\"/'"
-                  " $*.ll | llvm-as -o $@")))))
+              (let ((emit-ir    "-S -o $*.ll $<")
+                    (retarget   (string-join
+                                 '("sed"
+                                   "-e '/^target datalayout/d'"
+                                   "-e 's/^target triple = .*/target triple = \"bpf\"/'"
+                                   "$*.ll")))
+                    (assemble   "llvm-as -o $@"))
+                ;; %.bc rule: `$(CC) $(CFLAGS) -c $<'
+                (substitute* "ebpf_prog/Makefile"
+                  (("-c \\$<")
+                   (string-append emit-ir "\n\t" retarget " | " assemble))))))
           (replace 'build
             (lambda _
               (let ((tree (canonicalize-path "../linux")))
