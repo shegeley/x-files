@@ -1,6 +1,33 @@
 (channel-news
  (version 0)
  (entry
+  (commit "b2590f32a29f8e4bd6db627146350027a9daeed8")
+  (title (en "+ OpenSnitch eBPF modules")
+         (ru "+ eBPF-модули OpenSnitch"))
+  (body
+   (en "Guix's @code{opensnitch-daemon} ships no eBPF objects, so the daemon
+silently falls back to its @code{proc} monitor, which scans @file{/proc} on
+every new connection and can saturate a CPU.
+
+@code{(x-files packages opensnitch)} provides @code{opensnitch-ebpf-modules}
+(connection, process and DNS probes) and @code{opensnitch-daemon/ebpf}, the
+daemon with those objects installed where it already looks for them.  The
+modules are not CO-RE and only load on the kernel they were built against:
+use @code{make-opensnitch-ebpf-modules} and @code{make-opensnitch-daemon/ebpf}
+with your system's kernel package (e.g. nonguix's @code{linux}).")
+   (ru "@code{opensnitch-daemon} из Guix поставляется без eBPF-объектов,
+поэтому демон молча переходит на монитор @code{proc}: он сканирует
+@file{/proc} при каждом новом соединении и может загрузить ядро процессора
+целиком.
+
+@code{(x-files packages opensnitch)} предоставляет
+@code{opensnitch-ebpf-modules} (пробы соединений, процессов и DNS) и
+@code{opensnitch-daemon/ebpf} -- демон с этими объектами там, где он их уже
+ищет.  Модули не CO-RE и загружаются только на ядре, под которое собраны:
+используйте @code{make-opensnitch-ebpf-modules} и
+@code{make-opensnitch-daemon/ebpf} с пакетом ядра вашей системы (например,
+@code{linux} из nonguix).")))
+ (entry
   (commit "bb477a284e45877e21ed9d07bfd4833692ea78e0")
   (title (en "+ RS-Key hardware passkey support")
          (ru "+ Поддержка аппаратного ключа RS-Key"))
