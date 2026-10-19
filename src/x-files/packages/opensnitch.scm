@@ -101,11 +101,18 @@ done on every new connection in the @code{proc} monitor method.")
   (make-opensnitch-ebpf-modules))
 
 (define* (make-opensnitch-daemon/ebpf #:optional
-                                      (modules opensnitch-ebpf-modules))
+                                      (modules opensnitch-ebpf-modules)
+                                      #:key
+                                      (queue-connections? #t))
   "Return @code{opensnitch-daemon} with the eBPF objects of @var{modules}
 installed in its @file{etc/opensnitchd}.  Guix's daemon already rewrites
 @file{/etc/opensnitchd} to that directory, one of the daemon's module search
-paths, so no configuration key is needed."
+paths, so no configuration key is needed.
+
+With @var{queue-connections?} @code{#f} the daemon no longer queues every new
+outbound connection of the host to itself: it keeps tracking DNS replies, but
+only judges the packets some other firewall rule sends to its netfilter queue
+(e.g. a cgroup-scoped @code{queue num 0} without @code{bypass})."
   (package
     (inherit opensnitch-daemon)
     (name "opensnitch-daemon-ebpf")
@@ -113,6 +120,19 @@ paths, so no configuration key is needed."
      (substitute-keyword-arguments (package-arguments opensnitch-daemon)
        ((#:phases phases)
         #~(modify-phases #$phases
+            #$@(if queue-connections?
+                   '()
+                   (list
+                    #~(add-before 'build 'judge-only-externally-queued-packets
+                        (lambda* (#:key import-path #:allow-other-keys)
+                          (with-directory-excursion
+                              (string-append "src/" import-path "/firewall/nftables")
+                            (substitute* "nftables.go"
+                              (("n\\.QueueConnections\\(common\\.EnableRule, common\\.EnableRule\\)")
+                               "error(nil), error(nil)"))
+                            ;; the rules checker expects 2 connection + 1 DNS rule
+                            (substitute* "monitor.go"
+                              (("nRules != 3") "nRules != 1")))))))
             (add-after 'install-default-config 'install-ebpf-modules
               (lambda _
                 (for-each (lambda (o)
