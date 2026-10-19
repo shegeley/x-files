@@ -90,7 +90,7 @@ configured headers, so the objects only load on that exact kernel."
      (list clang llvm bison flex bc perl elfutils openssl zlib))
     (supported-systems '("x86_64-linux" "aarch64-linux"))
     (home-page "https://github.com/evilsocket/opensnitch")
-    (synopsis "eBPF modules for the OpenSnitch daemon")
+    (synopsis "eBPF modules for @command{opensnitchd}")
     (description
      "Kernel probes OpenSnitch uses to attribute connections, process
 executions and DNS replies to processes, replacing the expensive @file{/proc} scan
