@@ -75,15 +75,15 @@ exec env \\
 (define-public spotify
   (package
     (name "spotify")
-    (version "1.2.92.147.g5b8f9367")
+    (version "1.2.95.453.g0eeebbed")
     (source
      (origin
        (method url-fetch)
        ;; Snapcraft provides indefinite version history; Debian repos only keep
        ;; the last two releases.
-       (uri "https://api.snapcraft.io/api/v1/snaps/download/pOBIoZ2LrCB3rDohMxoYGnbN14EHOgD7_97.snap")
+       (uri "https://api.snapcraft.io/api/v1/snaps/download/pOBIoZ2LrCB3rDohMxoYGnbN14EHOgD7_99.snap")
        (sha256
-        (base32 "1l3qhmiwjd0syndxm7w0vb0gj8wq45db41nkbjz6afanfc0k3acq"))))
+        (base32 "1081yrvpv9z24b84v2dhg9ssr83ppqqvy7xx3pka6zzsliqnwr29"))))
     (build-system binary-build-system)
     (arguments
      (list
