@@ -5,28 +5,42 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system guile)
   #:use-module (gnu packages guile)
+  #:use-module ((gnu packages guile-xyz) #:select (guile-ares-rs))
 
   #:export (guile-fsnotify))
 
 (define-public guile-fsnotify
   (package
    (name "guile-fsnotify")
-   (version "3.0.0")
+   (version
+    (git-version "3.0.0" "0"
+                 "2c203ec6154cbb6ae9b3ac7bdc34189e5570453f"))
    (source
     (origin
      (method git-fetch)
      (uri (git-reference
            (url "https://codeberg.org/shegeley/guile-fsnotify")
-           (commit "f96dd6b27fd37cf252f8ae02ce05125cdd3f1d31")))
+           (commit "2c203ec6154cbb6ae9b3ac7bdc34189e5570453f")))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "0mjdscxwgm2azqqa3db89g8j8wh86rzk2hjh3wfg4gcbf7vrxnac"))))
+      (base32 "1wi6i40nb1mhljf73ghyvmgask6dcjiyxxl5cdn4c3k0q6qgbb29"))))
    (build-system guile-build-system)
    (arguments
     ;; Upstream moved linux/ under guile/ (f96dd6b) so guile/ is the module
     ;; root and tests.scm/tests/ stay out of the build.
-    (list #:source-directory "guile"))
-   (native-inputs (list guile-3.0-latest))
+    (list #:source-directory "guile"
+          #:phases
+          #~(modify-phases %standard-phases
+              (add-after 'unpack 'update-test-runner-name
+                (lambda _
+                  (substitute* "tests.scm"
+                    (("test-runner\\*") "current-test-runner"))))
+              (add-after 'build 'check
+                (lambda* (#:key (tests? #t) #:allow-other-keys)
+                  (when tests?
+                    (invoke "guile" "--no-auto-compile"
+                            "-L" "guile" "-L" "tests" "-s" "tests.scm")))))))
+   (native-inputs (list guile-3.0-latest guile-ares-rs))
    (synopsis "Linux inotify and fanotify bindings for GNU Guile")
    (description
     "Guile-fsnotify provides pure Scheme FFI bindings to the Linux

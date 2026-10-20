@@ -13,16 +13,18 @@
 (define-public guile-ares-rs-hot-reload
   (package
    (name "guile-ares-rs-hot-reload")
-   (version "0.1.0")
+   (version
+    (git-version "0.1.0" "0"
+                 "9fcdbac6d4730bbe8f4256d39174bd286f180c5c"))
    (source
     (origin
      (method git-fetch)
      (uri (git-reference
            (url "https://codeberg.org/shegeley/guile-ares-rs-hot-reload")
-           (commit "ec32b043bb0a63fb794471f36a544a659e74e2fa")))
+           (commit "9fcdbac6d4730bbe8f4256d39174bd286f180c5c")))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "17ik3inmi0lrrdwpmbr4vaf9s9sa26w2l7n7blff0qwngrr6l4q1"))))
+      (base32 "15nkk72gcpy88ahgglc1060aj1bjraxkmmkm81lf1kddihw3p8lz"))))
    (build-system guile-build-system)
    (arguments
     (list
@@ -32,6 +34,15 @@
      #:source-directory "guile"
      #:phases
      #~(modify-phases %standard-phases
+         (add-after 'unpack 'update-suitbl-tests
+           (lambda _
+             (substitute* "tests.scm"
+               (("test-runner\\*") "current-test-runner"))
+             ;; Without explicit arguments, Suitbl treats the initial
+             ;; (stop-hot-reload!) as a context parameter binding.
+             (substitute* "tests/ares-extension/nrepl/hot-reload-test.scm"
+               (("\\(test (\"[^\"]*\")" _ description)
+                (string-append "(test " description " ()")))))
          (add-after 'build 'check
            (lambda* (#:key inputs #:allow-other-keys)
              (invoke "guile"
