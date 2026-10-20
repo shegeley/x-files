@@ -16,14 +16,14 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "1nglanc0mvc8bpmlpwk5kknf66zfladgb6qjraw1idw7zgpwm16d")
-    ("aarch64-linux" . "0bnd80694p9ir4kx88qdj1hf1ybxcqk7xsmdqhqv56s61xnhgrj7")))
+  '(("x86_64-linux"  . "037061mg7cm2nqbymdvgh758k1bfrdp0n2v150lvsm8ydz87ysjc")
+    ("aarch64-linux" . "0453ys9a59p02isc9lfn5n2m1g4hbmsbbqq2xyk78askhqp05w3r")))
 
 (define-public rust-mcp-filesystem
   (let* [(target   (or (%current-target-system) (%current-system)))
          (mcp.bin  (assoc-ref target->bin-name target))
          (hash     (assoc-ref target->hash target))
-         (version  "0.4.2")
+         (version  "0.4.5")
          (uri      (string-append
                     "https://github.com/rust-mcp-stack/"
                     "rust-mcp-filesystem/"
