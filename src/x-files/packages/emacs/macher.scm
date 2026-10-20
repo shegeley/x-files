@@ -20,10 +20,10 @@
                            (string-append "x-files/packages/aux/" name))))
 
 (define-public emacs-macher
-  (let ((commit "e0378fa9a292f715962eef465c35e990cc4cff4a"))
+  (let ((commit "66fac138a09f02edc0750218180db65ec3e25b1f"))
     (package
       (name "emacs-macher")
-      (version (git-version "0.5.2" "0" commit))
+      (version (git-version "0.5.2" "1" commit))
       (source
        (origin
          (method git-fetch)
@@ -32,7 +32,7 @@
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0yz3ky30y74fnr1h44nja604lcja7ypj6spkdn62vpfqrn1xcdh1"))))
+          (base32 "10xiywz455166p1hiycv4qbiraldvzf8ybnny5lwn3vfzsszprc9"))))
       (build-system emacs-build-system)
       (arguments
        (list
