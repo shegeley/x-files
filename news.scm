@@ -1,6 +1,37 @@
 (channel-news
  (version 0)
  (entry
+  (commit "940c66255892a91481771407379c82a1806c0bfd")
+  (title (en "October 2026 package updates")
+         (ru "Обновления пакетов за октябрь 2026"))
+  (body
+   (en "Updated @code{clickhouse-bin} 26.8.31.2, @code{coder} 2.37.5, @code{commit} 4.6, @code{emacs-canvas-diagram} 0.1.0-1.5c6d2cd, @code{emacs-lab} 3.10.0-1.180148f, @code{emacs-macher} 0.5.2-1.66fac13, @code{emacs-macher-agent} 0.8.3.12-0.f607863, @code{emacs-ntfy} 0.3.0, @code{errands} 46.2.10-2.c8a6729, @code{etcd} 3.7.2, @code{feedbackd-next} 0.8.10, @code{glab} 1.124.0, @code{gmobile-next} 0.7.4, @code{grafana-bin} 13.2.4, @code{guile-ares-rs-hot-reload} 0.1.0-0.9fcdbac, @code{guile-fsnotify} 3.0.0-0.2c203ec, @code{helm} 4.3.1, @code{iotas} 2026.10-0.6c0819a, @code{jackett} 0.24.2884, @code{kubectl} 1.37.1, @code{libayatana-appindicator} 0.6.1, @code{max-messenger} 26.36.0, @code{node-vscode-js-debug-latest} 1.140.0, @code{ntfyr} 0.8.0, @code{officecli} 1.0.158, @code{penguin-mail} 1.0.10, @code{pgbouncer} 1.26.1, @code{phosh} 0.58.0, @code{python-agent-client-protocol} 0.12.1, @code{python-google-genai} 2.31.0, @code{python-httpcore2} 2.15.1, @code{python-httpx2} 2.15.1, @code{python-mcp-2} 2.3.0, @code{python-mcp-types} 2.3.0, @code{python-recurring-ical-events} 3.8.2, @code{python-starlette-hermes} 1.9.0, @code{python-yandexcloud} 0.412.0, @code{remark42} 1.18.0, @code{rust-mcp-filesystem} 0.4.5, @code{spotify} 1.2.95.453.g0eeebbed, @code{stalwart} 0.16.27, @code{task} 3.54.0, @code{yaak} 2026.9.0, @code{yandex-cloud-cli} 1.41.0.
+
+The versioned etcd binding is now @code{etcd-3.7.2} instead of @code{etcd-3.7.1}; the generic @code{etcd} binding remains available.
+
+Iotas now includes its installed Python modules in its launcher search path. The ntfy Emacs command again supplies its default notification title. Guile file watching and hot reload were updated together.
+
+PgBouncer now handles DNS resolver initialization failure without a segmentation fault. The new @command{make system-test-pgbouncer} target checks pooling, restart, invalid configuration and missing resolver configuration in an isolated VM.
+
+Grafana installs bundled plugins from the release's data directory, without requiring the removed top-level plugin directory.
+
+The upstream Stalwart binary now requires an x86-64-v2 compatible CPU on x86_64. Its VM test uses a Nehalem CPU model to exercise this requirement.
+
+Ntfyr creates the database parent directory on first launch, avoiding a crash when the XDG data directory does not yet exist.")
+   (ru "Обновлены @code{clickhouse-bin} 26.8.31.2, @code{coder} 2.37.5, @code{commit} 4.6, @code{emacs-canvas-diagram} 0.1.0-1.5c6d2cd, @code{emacs-lab} 3.10.0-1.180148f, @code{emacs-macher} 0.5.2-1.66fac13, @code{emacs-macher-agent} 0.8.3.12-0.f607863, @code{emacs-ntfy} 0.3.0, @code{errands} 46.2.10-2.c8a6729, @code{etcd} 3.7.2, @code{feedbackd-next} 0.8.10, @code{glab} 1.124.0, @code{gmobile-next} 0.7.4, @code{grafana-bin} 13.2.4, @code{guile-ares-rs-hot-reload} 0.1.0-0.9fcdbac, @code{guile-fsnotify} 3.0.0-0.2c203ec, @code{helm} 4.3.1, @code{iotas} 2026.10-0.6c0819a, @code{jackett} 0.24.2884, @code{kubectl} 1.37.1, @code{libayatana-appindicator} 0.6.1, @code{max-messenger} 26.36.0, @code{node-vscode-js-debug-latest} 1.140.0, @code{ntfyr} 0.8.0, @code{officecli} 1.0.158, @code{penguin-mail} 1.0.10, @code{pgbouncer} 1.26.1, @code{phosh} 0.58.0, @code{python-agent-client-protocol} 0.12.1, @code{python-google-genai} 2.31.0, @code{python-httpcore2} 2.15.1, @code{python-httpx2} 2.15.1, @code{python-mcp-2} 2.3.0, @code{python-mcp-types} 2.3.0, @code{python-recurring-ical-events} 3.8.2, @code{python-starlette-hermes} 1.9.0, @code{python-yandexcloud} 0.412.0, @code{remark42} 1.18.0, @code{rust-mcp-filesystem} 0.4.5, @code{spotify} 1.2.95.453.g0eeebbed, @code{stalwart} 0.16.27, @code{task} 3.54.0, @code{yaak} 2026.9.0, @code{yandex-cloud-cli} 1.41.0.
+
+Версионная переменная etcd теперь называется @code{etcd-3.7.2} вместо @code{etcd-3.7.1}; общая переменная @code{etcd} по-прежнему доступна.
+
+В запуск Iotas добавлен путь к установленным модулям Python. Команда ntfy для Emacs снова передаёт заголовок уведомления по умолчанию. Наблюдение за файлами и горячая перезагрузка Guile обновлены совместно.
+
+PgBouncer теперь обрабатывает ошибку инициализации DNS без сегментации. Новая цель @command{make system-test-pgbouncer} проверяет пул соединений, повторный запуск, неверную конфигурацию и отсутствие конфигурации DNS в изолированной виртуальной машине.
+
+Grafana устанавливает встроенные плагины из каталога data дистрибутива и больше не требует удалённый каталог плагинов верхнего уровня.
+
+Готовый бинарный файл Stalwart для x86_64 теперь требует процессор с поддержкой x86-64-v2. Тест в виртуальной машине использует модель процессора Nehalem.
+
+Ntfyr создаёт родительский каталог базы данных при первом запуске и больше не падает, если каталог данных XDG ещё не существует.")))
+ (entry
   (commit "b2590f32a29f8e4bd6db627146350027a9daeed8")
   (title (en "+ OpenSnitch eBPF modules")
          (ru "+ eBPF-модули OpenSnitch"))
