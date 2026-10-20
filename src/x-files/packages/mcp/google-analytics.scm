@@ -306,16 +306,16 @@ dimensions/metrics, audiences, etc).")
 (define-public python-google-genai
   (package
     (name "python-google-genai")
-    (version "2.18.0")
+    (version "2.31.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://files.pythonhosted.org/packages/5f/2f/"
-             "f8839312750ca9633606f187943eb9f73e6c44729d8fb67783c039f1680b/"
+             "https://files.pythonhosted.org/packages/34/69/"
+             "6a3d3839ab56ec17d7923c8679b38955e286e0a9793df10ce6d13bc5f122/"
              "google_genai-" version ".tar.gz"))
        (sha256
-        (base32 "0klla2556i7liy3amvwbfc3jl1392irv79743a6kbp0i8x9karl3"))))
+        (base32 "07jl2ci16zcilq0nqwh7zza3vjhxd52aijv036k6ga9bvqvqalbi"))))
     (build-system pyproject-build-system)
     ;; Test suite hits the live Gemini/Vertex AI API.
     (arguments (list #:tests? #f))
