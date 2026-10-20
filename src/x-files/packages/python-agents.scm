@@ -112,13 +112,13 @@ Agent Client Protocol, including typed messages and stdio transport.")
   (package
     (inherit python-httpcore)
     (name "python-httpcore2")
-    (version "2.7.0")
+    (version "2.15.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "httpcore2" version))
        (sha256
-        (base32 "1z4ywidmwayysw6yl057iq8q3smszvnpjm8ajf8ajlls6bgzxh3d"))))
+        (base32 "1w3sfj5gjz125rj4nm1b9j28xp6pvk9hhm4i6pqa7qb0c8z6njx9"))))
     (arguments
      %release-arguments)
     (native-inputs (list python-hatchling python-hatch-fancy-pypi-readme
@@ -129,13 +129,13 @@ Agent Client Protocol, including typed messages and stdio transport.")
   (package
     (inherit python-httpx)
     (name "python-httpx2")
-    (version "2.7.0")
+    (version "2.15.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "httpx2" version))
        (sha256
-        (base32 "01sv6z8f0lgm1amh0bbsgsgggj01wffc159vvnq6b12wxnd70c4b"))))
+        (base32 "1xzyzkc5wcvr3wf79ag187gq9n3q9rp5860jbgkl3r7v119lhxgz"))))
     (arguments
      %release-arguments)
     (native-inputs (list python-hatchling python-hatch-fancy-pypi-readme
