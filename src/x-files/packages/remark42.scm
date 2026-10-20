@@ -10,8 +10,8 @@
     ("aarch64-linux" . "arm64")))
 
 (define target->remark42-hash
-  '(("x86_64-linux"  . "1m0rhmal6bj9q8nqng2pa5m6si30jbllfh3ca3l2il0317y68kj3")
-    ("aarch64-linux" . "0h7qdfcb4wq22ylgw1x32v0s5zph0mn02yf3lf5wd8icqbnhhk11")))
+  '(("x86_64-linux"  . "16hdffz078v003icx6b7bmxkv8ay6gy5cadgpsxj60g362gs6zqg")
+    ("aarch64-linux" . "11axjj0rl0l1kk3cnq1ndvqhjl6wy0kjn9szqcabmm5wsg92a7cf")))
 
 (define-public remark42
   (let* [(target (or (%current-target-system) (%current-system)))
@@ -19,7 +19,7 @@
          (hash   (assoc-ref target->remark42-hash target))]
     (package
       (name "remark42")
-      (version "1.17.1")
+      (version "1.18.0")
       (source
        (origin
          (method url-fetch)
