@@ -35,14 +35,14 @@
 (define-public yaak
   (package
     (name "yaak")
-    (version "2026.8.0")
+    (version "2026.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/mountain-loop/yaak/releases/download/v"
                            version "/yaak_" version "_amd64.deb"))
        (sha256
-        (base32 "01hkqm3gl72x54b513lwgm38nm2hkc4yc40vq0i45q7i1ja7q1sz"))))
+        (base32 "08b8nmwz58jihjh5qa4w5y2bs90x70fglj5k2cyhg5mci7ig6a7s"))))
     (build-system binary-build-system)
     (arguments
      (list
