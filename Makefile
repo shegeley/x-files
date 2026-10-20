@@ -81,6 +81,10 @@ system-test-clickhouse:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services clickhouse) %test-clickhouse)'
 
+system-test-pgbouncer:
+	guix build -L $(src) -L $(tests) \
+	  -e '(@ (x-files tests packages pgbouncer) %test-pgbouncer)'
+
 system-test-etcd:
 	guix build -L $(src) -L $(tests) \
 	  -e '(@ (x-files tests packages etcd) %test-etcd)'

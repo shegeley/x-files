@@ -18,7 +18,7 @@
 (define pgbouncer
   (package
     (name "pgbouncer")
-    (version "1.25.2")
+    (version "1.26.1")
     (source
      (origin
        (method url-fetch)
@@ -26,7 +26,10 @@
              "https://github.com/pgbouncer/pgbouncer/releases/download/"
              "pgbouncer_" (string-map (lambda (c) (if (char=? c #\.) #\_ c)) version)
              "/pgbouncer-" version ".tar.gz"))
-       (sha256 (base32 "0cmk72ifwfwq9259yymknzi34ma40dfmps6vwb4722px2d8x6jlj"))))
+       (sha256 (base32 "1na27yd51figr0i0ah2clx1gqb3pfzvhv5qhf79lr15ljhlnm200"))
+       (patches
+        (list (search-path %load-path
+                           "x-files/packages/aux/pgbouncer-evdns-cleanup.patch")))))
     (build-system gnu-build-system)
     (arguments
      (list

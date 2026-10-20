@@ -1,0 +1,13 @@
+Avoid dereferencing a null resolver when evdns_base_new fails, for example
+when /etc/resolv.conf is missing.  The PgBouncer VM test covers this path.
+
+--- a/src/dnslookup.c
++++ b/src/dnslookup.c
+@@ -408,5 +408,6 @@
+ static void impl_release(struct DNSContext *ctx)
+ {
+ 	struct evdns_base *dns = ctx->edns;
+-	evdns_base_free(dns, 0);
++	if (dns)
++		evdns_base_free(dns, 0);
+ }
