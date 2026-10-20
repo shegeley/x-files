@@ -22,12 +22,12 @@
 ;; gresource blob is committed to the troll repository), so pulling the
 ;; submodule in via `recursive?' is enough -- no bootstrapping of
 ;; gjspack's own JS toolchain is required.
-(define %commit-commit "22d182bbf79ee13d829b4bce937a977a61400a87")
+(define %commit-commit "2cd9a1a00bc25e34f8f6c8a6cc5c1ffd63e6e84b")
 
 (define-public commit
   (package
     (name "commit")
-    (version "4.5")
+    (version "4.6")
     (source
      (origin
        (method git-fetch)
@@ -37,7 +37,7 @@
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m6dpjwmpqag4xmkc0pa29zdrhf6v6a4bbmz59wz0aykmg542b1z"))))
+        (base32 "1ynr9h44krw73sv2k856w0ggw1s6hrx3mm4iw8gjkqc9xyaxg8km"))))
     (build-system meson-build-system)
     (arguments
      (list
