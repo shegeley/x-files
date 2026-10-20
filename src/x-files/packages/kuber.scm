@@ -78,14 +78,14 @@
 (define-public helm
   (package
     (name "helm")
-    (version "4.3.0")
+    (version "4.3.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://get.helm.sh/helm-v"
                                   version "-linux-amd64.tar.gz"))
               (sha256
                (base32
-                "1ysl9x4ms80128nf6yk3i5kdbzixqlf13xb6ixap0dgpvra4ln46"))))
+                "0jz5gwszb4irkmmxldhpb2kzw8bp1187nim220dx24q9wa5ah0q4"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
