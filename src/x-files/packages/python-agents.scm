@@ -87,13 +87,13 @@ streaming, typed messages and synchronous and asynchronous clients.")
 (define-public python-agent-client-protocol
   (package
     (name "python-agent-client-protocol")
-    (version "0.9.0")
+    (version "0.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "agent_client_protocol" version))
        (sha256
-        (base32 "02z3kgj6vlszxkzddryv4rybkjhvssc59az5a920n3xgp65c8i7p"))))
+        (base32 "1580rgxz84p1kqdf4qk53imwfvv7j0z0571cakfdg5pdj2swqqwr"))))
     (build-system pyproject-build-system)
     ;; The release archive does not include upstream's test suite.
     (arguments
