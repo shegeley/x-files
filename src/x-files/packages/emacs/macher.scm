@@ -74,10 +74,10 @@ Changes are staged in memory and presented as patches for review.")
       (license license:gpl3+))))
 
 (define-public emacs-macher-agent
-  (let ((commit "344c65a4157e97730bc381c4bda9dd3b6bde0bef"))
+  (let ((commit "f60786359a175d6c7f0c56ec3faeb74ae2bda22d"))
     (package
       (name "emacs-macher-agent")
-      (version (git-version "0.8.3.11" "0" commit))
+      (version (git-version "0.8.3.12" "0" commit))
       (source
        (origin
          (method git-fetch)
@@ -86,7 +86,7 @@ Changes are staged in memory and presented as patches for review.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "062fvgvs1hra9d3z3kspmxlzcjlmdqrgdwdn7b1a2fkc1j9g6cc6"))
+          (base32 "0mwafim44gk22zl72qlykn1dhggvc4bsljmdjmds2s2r113czbky"))
          (patches
           (list (search-path
                  %load-path
