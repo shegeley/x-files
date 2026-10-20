@@ -81,6 +81,10 @@ system-test-clickhouse:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services clickhouse) %test-clickhouse)'
 
+system-test-etcd:
+	guix build -L $(src) -L $(tests) \
+	  -e '(@ (x-files tests packages etcd) %test-etcd)'
+
 system-test-remark42:
 	guix build -L $(src) -L $(tests) --no-grafts --no-offload \
 	  -e '(@ (x-files tests services remark42) %test-remark42)'
