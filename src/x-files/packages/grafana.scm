@@ -10,16 +10,16 @@
 (define-public grafana-bin
   (package
     (name "grafana-bin")
-    (version "13.2.2")
+    (version "13.2.4")
     (source
      (let* ((arch (match (or (%current-target-system) (%current-system))
                     ("aarch64-linux" "arm64")
                     (_ "amd64")))
             (hash (match (or (%current-target-system) (%current-system))
                     ("aarch64-linux"
-                     "0wksfhnf3r1wqh87j96szdldgj3abfl49cv3c97g26grfsjzjs3j")
+                     "1av7bnq8ysyc0ncrw5yab4la9fwq6s021mzv452va1i73v9a05wm")
                     (_
-                     "13scaignw7h1lng60g8gn90zab5n8pfzpxp5faqgs94ql0wchqln"))))
+                     "1awjgdcg79k7rzrx0q73nd5fda7q38jp19jfgrh751fqiyc6b1y4"))))
        (origin
          (method url-fetch)
          (uri (string-append
@@ -44,7 +44,7 @@
                 (for-each
                  (lambda (dir)
                    (copy-recursively dir (string-append share "/" dir)))
-                 '("conf" "public" "plugins-bundled" "data" "tools"))
+                 '("conf" "public" "data" "tools"))
                 (copy-file "bin/grafana"
                            (string-append bin "/grafana"))
                 (chmod (string-append bin "/grafana") #o755)))))))
