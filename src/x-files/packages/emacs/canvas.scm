@@ -48,10 +48,10 @@ for packages that display Emacs 32 @code{canvas} images.")
       (license gpl3+))))
 
 (define-public emacs-canvas-diagram
-  (let ((commit "3d2b4a0618a5276174ddcf80a08b94c18f5eaa16"))
+  (let ((commit "5c6d2cd0da1523ed7fc686c0cce1a72bab5a8db9"))
     (package
       (name "emacs-canvas-diagram")
-      (version (git-version "0.1.0" "0" commit))
+      (version (git-version "0.1.0" "1" commit))
       (source
        (origin
          (method git-fetch)
@@ -60,7 +60,7 @@ for packages that display Emacs 32 @code{canvas} images.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0kfq51wayafzh19pcfklz49vviwm0xjlcjblxlghp28h4v6ld3yq"))))
+          (base32 "0y08x1vrssmrrn2iicplmjqr3vb7cdplmvlvlw1hz065sbm61yhv"))))
       (build-system emacs-build-system)
       (arguments
        (list
