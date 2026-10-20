@@ -48,7 +48,9 @@
           (use-modules (srfi srfi-64)
                        (gnu build marionette))
 
-          (define marionette (make-marionette (list #$vm)))
+          ;; The upstream x86_64 binary requires x86-64-v2 instructions.
+          (define marionette
+            (make-marionette (list #$vm "-cpu" "Nehalem-v1")))
 
           (test-runner-current (system-test-runner #$output))
           (test-begin "stalwart")

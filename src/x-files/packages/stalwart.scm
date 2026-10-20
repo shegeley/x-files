@@ -13,14 +13,14 @@
 (define targets (map car target->bin-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "1m6k3h3g500a3faxbdxga7431z5vflpwzpvqbr3ppvnppv9glzcn")
-    ("aarch64-linux" . "1gsnfm28yjv4zb6xfpp29fjzp1g8k1i0mm4ygdvzjl5scjpqk8s9")))
+  '(("x86_64-linux"  . "06ih1gzlijm0plfjmicwahi4y065xj5f4d41533csc3i7q2lhi9x")
+    ("aarch64-linux" . "1mq025ij9vr2bkqlgazdbgn3gp35vibxb763skpzhfwy8k402lr1")))
 
 (define-public stalwart
   (let* [(target  (or (%current-target-system) (%current-system)))
          (bin     (assoc-ref target->bin-name target))
          (hash    (assoc-ref target->hash target))
-         (version "0.16.23")
+         (version "0.16.27")
          (uri     (string-append
                    "https://github.com/stalwartlabs/stalwart/"
                    "releases/download/v" version "/"
@@ -57,5 +57,6 @@ written in Rust.  It bundles SMTP, IMAP4, POP3, JMAP, ManageSieve, LMTP, and
 CalDAV/CardDAV/WebDAV support in a single binary, together with a built-in
 spam and phishing filter, DKIM/SPF/DMARC/ARC/DANE/MTA-STS, full-text search,
 Sieve scripting, and a web administration interface.  This package installs
-the upstream prebuilt release binary.")
+the upstream prebuilt release binary.  On x86_64 it requires an x86-64-v2
+compatible CPU.")
       (license license:agpl3))))
