@@ -19,7 +19,7 @@
 ;; To bump: set %glab-version and recompute each hash with
 ;;   guix download https://gitlab.com/gitlab-org/cli/-/releases/vX.Y.Z/downloads/glab_X.Y.Z_linux_amd64.tar.gz
 ;;   guix download https://gitlab.com/gitlab-org/cli/-/releases/vX.Y.Z/downloads/glab_X.Y.Z_linux_arm64.tar.gz
-(define %glab-version "1.112.0")
+(define %glab-version "1.124.0")
 
 (define target->arch
   '(("x86_64-linux"  . "amd64")
@@ -28,8 +28,8 @@
 (define targets (map car target->arch))
 
 (define target->hash
-  '(("x86_64-linux"  . "1gwfda7zr6s8z60ill0b4ia6xl1w6myph5dn68h5yrlbal3jkigi")
-    ("aarch64-linux" . "1y6qv26aa3x0x067s7vklzv6x7p550f5cpn5a50y68yvw1yzx9al")))
+  '(("x86_64-linux"  . "03xlicpj4msmd8nl5jydzfh1vb1p9lvn9pa9hr0pwsdh8946ipv3")
+    ("aarch64-linux" . "05ld3g6x3s95qx86wx5rv75syi8665azwcsbhky93fgy1rd3j5h7")))
 
 (define-public glab
   (let* [(target (or (%current-target-system) (%current-system)))
