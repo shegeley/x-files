@@ -168,13 +168,13 @@ Agent Client Protocol, including typed messages and stdio transport.")
   (package
     (inherit python-starlette)
     (name "python-starlette-hermes")
-    (version "1.3.1")
+    (version "1.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "starlette" version))
        (sha256
-        (base32 "1q142yki2vz3mda6nls69snn4hnx98xmkjrf1vkamyzjjcqj3l05"))))
+        (base32 "06239hfikpygjq9ms99gb5g8kvqn11278nb0rqshx1zd8vi1v4rx"))))
     (arguments
      (list
       #:tests? #f))
