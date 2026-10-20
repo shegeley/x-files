@@ -24,6 +24,7 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module ((guix utils) #:select (version-major+minor))
   #:use-module (guix packages))
 
 ;; Iotas' spellchecking widget hard-imports `gtkspellcheck' (editor_text_view.py),
@@ -54,10 +55,10 @@
 using Enchant as its spell-checking backend.")
     (license license:gpl3+)))
 
-(define %iotas-commit "6b69a7e275765b178227acde388b6d8369856b74")
+(define %iotas-commit "6c0819af7c169812374b984431a4ed227056b276")
 ;; meson.build has no release tag at this commit; snapshot off the version
 ;; the upstream project.build file itself declares.
-(define %iotas-version (git-version "2026.8" "0" %iotas-commit))
+(define %iotas-version (git-version "2026.10" "0" %iotas-commit))
 
 (define iotas-source
   (origin
@@ -67,7 +68,7 @@ using Enchant as its spell-checking backend.")
           (commit %iotas-commit)))
     (file-name (git-file-name "iotas" %iotas-version))
     (sha256
-     (base32 "19w4fvanfcpbkck0w98f6r4adnjiv45b3d0673sw34x4l620w2v0"))))
+     (base32 "1z0kfyvnfw61ax47lkbiv7gw0rxwnywmlf69k9yd8467wggkak7h"))))
 
 (define-public iotas
   (package
@@ -94,7 +95,11 @@ using Enchant as its spell-checking backend.")
               ;; helper both need it.
               (let* ((out (assoc-ref outputs "out"))
                      (gi-typelib-path (getenv "GI_TYPELIB_PATH"))
-                     (python-path (getenv "GUIX_PYTHONPATH"))
+                     (python-path
+                      (string-append
+                       out "/lib/python"
+                       #$(version-major+minor (package-version python))
+                       "/site-packages:" (getenv "GUIX_PYTHONPATH")))
                      (pandoc-bin (string-append
                                   (assoc-ref inputs "pandoc") "/bin")))
                 (for-each
