@@ -94,7 +94,7 @@ Indicators: it loads indicator modules and renders their menus.  It installs
 (define-public libayatana-appindicator
   (package
     (name "libayatana-appindicator")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
@@ -103,7 +103,7 @@ Indicators: it loads indicator modules and renders their menus.  It installs
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j28gl3hkl3iparp2dai819cspgqx6apshb7w897kmbwnyzy7akh"))))
+        (base32 "1xrx7g047yfl17v4m8rvwbcrv877xp5vmrwcl248fdkg0fgcxji4"))))
     (build-system cmake-build-system)
     (arguments
      (list
