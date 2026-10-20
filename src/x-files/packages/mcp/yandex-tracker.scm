@@ -164,16 +164,16 @@ registered-method API) run correctly.")
 (define-public python-yandexcloud
   (package
     (name "python-yandexcloud")
-    (version "0.402.0")
+    (version "0.412.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://files.pythonhosted.org/packages/9c/c0/"
-             "b019909268ee17eb9a76b4d6647d986e2b324a6f1b8258fc935cfe2effeb/"
+             "https://files.pythonhosted.org/packages/e0/03/"
+             "8627e7594fcd58ad123719dd3d217c72941e309e39b8c3c63c3e55c47535/"
              "yandexcloud-" version ".tar.gz"))
        (sha256
-        (base32 "03mjvsnsx2izaph849k6kd2h6g5ki72r9bhwfb6zwcb5jzp3k5px"))))
+        (base32 "04d4nbw2y5r7rrcmqbcvsfkr56ffxsdv1lrn18b1z47bw7himdzb"))))
     (build-system pyproject-build-system)
     ;; No tests shipped in the sdist; the generated gRPC stubs are import-only.
     (arguments
