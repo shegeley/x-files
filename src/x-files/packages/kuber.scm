@@ -49,14 +49,14 @@
 (define-public kubectl
   (package
     (name "kubectl")
-    (version "1.36.4")
+    (version "1.37.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dl.k8s.io/release/v"
                                   version "/bin/linux/amd64/kubectl"))
               (sha256
                (base32
-                "0nnhpmdc8mr3918sgv1r53g5xq8v7c1n915kagw69ffsla6hi3wb"))))
+                "1a111s4h848dxjmyyp1vffww74phr6110ymp134l9ymngvviysb5"))))
     (build-system trivial-build-system)
     (native-inputs `(("source" ,source)))
     (arguments
