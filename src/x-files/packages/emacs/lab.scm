@@ -13,18 +13,18 @@
   #:export (emacs-lab))
 
 (define-public emacs-lab
-  (let ((commit "8c33f35b490a12a8d4bc57954a946fe4d12abb81")
+  (let ((commit "180148f2b6fe6e52149decf70dadfd5ac51b3c0a")
         (version "3.10.0"))
     (package
       (name "emacs-lab")
-      (version (git-version version "0" commit))
+      (version (git-version version "1" commit))
       (source
        (origin
         (method git-fetch)
         (uri (git-reference
               (url "https://github.com/isamert/lab.el")
               (commit commit)))
-        (sha256 (base32 "1r3z1i3rkk75qhhjlcgagvww45z1sn06b4cx4ann539yvf4k6asd"))
+        (sha256 (base32 "04zykg62nl67rw7kblmi64mxndh28bamivq2xnbxflyc3iw5zsq0"))
         (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (arguments (list #:tests? #f))
