@@ -84,8 +84,8 @@
 (define %util-linux-lib-input (list %util-linux-package "lib"))
 (define %util-linux-lib (gexp-input %util-linux-package "lib"))
 
-(define %max-version "26.29.0")
-(define %max-build "77636")
+(define %max-version "26.36.0")
+(define %max-build "81334")
 (define %max-full-version (string-append %max-version "." %max-build))
 
 ;; Shell wrapper for the bin/max launcher.  Format args: lib-paths-joined,
@@ -142,7 +142,7 @@ exec env \\
        (uri (string-append "https://download.max.ru/linux/deb/pool/main/m/max/MAX-"
                            %max-full-version ".deb"))
        (sha256
-        (base32 "0b6a27vjsyrhaxd83gk60aqqq7pjpxazjxilvrf8il4rk1imb1hx"))))
+        (base32 "12bm2p3aw5a9ar25c8hhl0y8iqwd8n34p3ljfbsgyj8pskhi0imq"))))
     (build-system binary-build-system)
     (arguments
      (list
