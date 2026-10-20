@@ -1,5 +1,6 @@
 (define-module (x-files packages penguin-mail)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module ((gnu packages bash) #:select (bash-minimal))
   #:use-module ((gnu packages gcc) #:select (gcc))
   #:use-module ((gnu packages glib) #:select (glib))
   #:use-module ((gnu packages gnome) #:select (glib-networking
@@ -19,7 +20,7 @@
 (define-public penguin-mail
   (package
     (name "penguin-mail")
-    (version "1.0.0")
+    (version "1.0.10")
     (source
      (origin
        (method url-fetch)
@@ -27,7 +28,7 @@
              "https://github.com/c9dev/penguin-mail/releases/download/v"
              version "/penguin-mail-" version "-x86_64.tar.gz"))
        (sha256
-        (base32 "1mq2bfgqn8sdnv232dkxnn81129f5sriash5b61k1lmgx2r8nzzy"))))
+        (base32 "18xvvhpzkcb0zqy9ai3pa6d0n1n9czg0qfbjbrr7dir1dn0j6q26"))))
     (build-system binary-build-system)
     (arguments
      (list
@@ -61,7 +62,8 @@
                   (,(dirname (search-input-file
                               inputs "lib/gio/modules/libgiognutls.so"))))))))))
     (inputs
-     (list `(,gcc "lib")
+     (list bash-minimal
+           `(,gcc "lib")
            glib
            cairo
            pango
