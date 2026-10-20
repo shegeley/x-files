@@ -1,0 +1,19 @@
+Create the database parent directory before starting the daemon thread.
+This permits a first launch with an absent XDG data directory and propagates
+directory creation errors through start's existing Result.
+
+--- a/ntfy-daemon/src/ntfy.rs
++++ b/ntfy-daemon/src/ntfy.rs
+@@ -437,6 +437,12 @@
+     notification_proxy: Arc<dyn models::NotificationProxy>,
+     network_proxy: Arc<dyn models::NetworkMonitorProxy>,
+ ) -> anyhow::Result<NtfyHandle> {
++    if let Some(parent) = std::path::Path::new(dbpath)
++        .parent()
++        .filter(|parent| !parent.as_os_str().is_empty())
++    {
++        std::fs::create_dir_all(parent)?;
++    }
+     let dbpath = dbpath.to_owned();
+ 
+     // Create a channel to receive the handle from the spawned thread
