@@ -67,13 +67,13 @@ Calendar exports) into RFC 5545-compliant files with proper
 (define-public python-recurring-ical-events
   (package
     (name "python-recurring-ical-events")
-    (version "3.8.0")
+    (version "3.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "recurring_ical_events" version))
        (sha256
-        (base32 "013xrrmsd1shnp8kyv93w5rdjq3w8x8svbwimfkmd2dxv4spr31y"))))
+        (base32 "13ng18m84hphp7l9a68wmdpz7qj9hp6zmpm18z6wbpmps0qsycg7"))))
     (build-system pyproject-build-system)
     (arguments
      (list
