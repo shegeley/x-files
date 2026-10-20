@@ -20,20 +20,20 @@
 (define target->arch-name
   '(("x86_64-linux"  . "amd64")
     ("aarch64-linux" . "arm64")
-    ("armv7-linux"   . "armv7")))
+    ("armhf-linux"   . "armv7")))
 
 (define targets (map car target->arch-name))
 
 (define target->hash
-  '(("x86_64-linux"  . "0dpbyk0irpdsvx8gbh3n758129laka4vw0h50218rg9qd5wplac1")
-    ("aarch64-linux" . "0i0wckml8h25y4792w2b4kzcqxasf45ycdcd0qb8hghxlyz8cm8x")
-    ("armv7-linux"   . "0gqfz1pf0z1qkyi14xw8pqalc622jyx73972z7d2fgnw11n43ri0")))
+  '(("x86_64-linux"  . "15cmgvdnzd6r8i98ls3bskwz5hyzaqk1jyp7lgqhsyr0m2s317l9")
+    ("aarch64-linux" . "08qzn5sq73nj83w3i6krgv8gxw8vd15n7nwnz9jc0hx3vw9wh2pa")
+    ("armhf-linux"   . "1z046j0dhz60yv0ksgnaxlasjpcmszwk3s7gslsafvyr6z4r78x0")))
 
 (define-public coder
   (let* [(target  (or (%current-target-system) (%current-system)))
          (arch    (assoc-ref target->arch-name target))
          (hash    (assoc-ref target->hash target))
-         (version "2.37.2")
+         (version "2.37.5")
          (uri     (string-append
                    "https://github.com/coder/"
                    "coder/releases/download/"
