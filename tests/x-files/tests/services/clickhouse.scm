@@ -5,7 +5,8 @@
   #:use-module ((gnu system vm)          #:select (virtual-machine))
   #:use-module ((gnu services)           #:select (service))
   #:use-module ((gnu services networking) #:select (dhcpcd-service-type))
-  #:use-module ((x-files services clickhouse) #:select (clickhouse-service-type))
+  #:use-module ((x-files services clickhouse)
+                #:select (clickhouse-service-type clickhouse-default-config))
   #:use-module ((x-files packages clickhouse) #:select (clickhouse-bin))
   #:use-module (guix gexp)
   #:export (%test-clickhouse))
@@ -18,15 +19,19 @@
   (simple-operating-system
    (service dhcpcd-service-type)
    (service clickhouse-service-type
-    `((package    . ,clickhouse-bin)
-      (http-port  . "8123")
-      (tcp-port   . "9000")
-      (listen     . "0.0.0.0")
-      (data-dir   . "/var/lib/clickhouse")
-      (log-dir    . "/var/log/clickhouse-server")
-      (log-level  . "information")
-      (log-size   . "500M")
-      (log-count  . "3")))))
+    (append
+     `((package    . ,clickhouse-bin)
+       (http-port  . "8123")
+       (tcp-port   . "9000")
+       (listen     . "0.0.0.0")
+       (data-dir   . "/var/lib/clickhouse")
+       (log-dir    . "/var/log/clickhouse-server")
+       (log-level  . "information")
+       (log-size   . "500M")
+       (log-count  . "3")
+       (max-server-memory . "1073741824")
+       (mark-cache-size . "268435456"))
+     clickhouse-default-config))))
 
 (define* (run-clickhouse-test #:optional (http-port 8123) (tcp-port 9000))
   "Run tests in %CLICKHOUSE-OS, forwarding HTTP-PORT."
@@ -52,7 +57,7 @@
                        (ice-9 popen))
 
           (define marionette
-            (make-marionette (list #$vm)))
+            (make-marionette (list #$vm "-cpu" "max")))
 
           (test-runner-current (system-test-runner #$output))
           (test-begin "clickhouse")
@@ -61,7 +66,8 @@
           (test-assert "service running"
             (marionette-eval
              '(begin
-                (use-modules (gnu services herd))
+                (use-modules ((gnu services herd) #:select (start-service))
+                             ((ice-9 match) #:select (match)))
                 (match (start-service 'clickhouse)
                   (#f #f)
                   (('service response-parts ...)
