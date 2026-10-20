@@ -120,12 +120,12 @@
     (native-inputs
      (list `(,glib "bin") gobject-introspection pkg-config vala))))
 
-;; feedbackd 0.8.9 — needed by phosh (requires libfeedback >= 0.7.0)
+;; feedbackd 0.8.10 — needed by phosh (requires libfeedback >= 0.7.0)
 (define-public feedbackd-next
   (package
     (inherit feedbackd)
     (name "feedbackd-next")
-    (version "0.8.9")
+    (version "0.8.10")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -134,7 +134,7 @@
               (file-name (git-file-name "feedbackd" version))
               (sha256
                (base32
-                "0fygrlncz0h3m8h7r8w8i0ywd4y9cm5qlnsvzjn16bfv7kkcgip1"))
+                "1fvcn4vvc9pw7n6fxhjydsix6dpnccc1wlj85vi2sz5yg1wddwiy"))
               (snippet
                #~(begin
                    (use-modules (guix build utils))
