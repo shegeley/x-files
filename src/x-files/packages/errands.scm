@@ -130,8 +130,8 @@ iCloud.")
     ;; (GPLv3 text, no "or later" grant in the project's own notices).
     (license (list license:asl2.0 license:gpl3))))
 
-(define %errands-commit "79dd1694e8055814c6f7e7a41e680967a5782b21")
-(define %errands-version (git-version "46.2.10" "1" %errands-commit))
+(define %errands-commit "c8a672910cc3dc2be80b766510f2c73d4678fb90")
+(define %errands-version (git-version "46.2.10" "2" %errands-commit))
 
 (define-public errands
   (package
@@ -145,7 +145,7 @@ iCloud.")
              (commit %errands-commit)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j4y1q0916hjyn7l3n5dy4724bchvs80h0w4h68c02p3392mz5sv"))))
+        (base32 "021s5q51psy48i1fb1rijhhy2hwgzssfrwjnxizw00cqiyp2cm5h"))))
     (build-system meson-build-system)
     (arguments
      (list
