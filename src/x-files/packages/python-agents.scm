@@ -146,13 +146,13 @@ Agent Client Protocol, including typed messages and stdio transport.")
 (define-public python-mcp-types
   (package
     (name "python-mcp-types")
-    (version "2.0.0")
+    (version "2.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mcp_types" version))
        (sha256
-        (base32 "0yc3dmw338dn9szyyxp2mwmx2d6shpppbfk6i2p636aw52wkknfp"))))
+        (base32 "0qn33xw88p9zm3fr5smpk9c7xpdds7kcw3wljjdf2pmkxm4nbr6i"))))
     (build-system pyproject-build-system)
     (arguments
      %release-arguments)
@@ -186,13 +186,13 @@ Agent Client Protocol, including typed messages and stdio transport.")
   (package
     (inherit python-mcp)
     (name "python-mcp-2")
-    (version "2.0.0")
+    (version "2.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mcp" version))
        (sha256
-        (base32 "0a070m74y0qlbv9pgfrg8d438cglhq5wyqmw36xyiv0kbirhwi0g"))))
+        (base32 "1n1l5gyyyc03p7kwviir1ymg11rnxnpf1166i3f5kw0w8i87l54b"))))
     (arguments
      %release-arguments)
     (native-inputs (list python-hatchling python-tomlkit))
