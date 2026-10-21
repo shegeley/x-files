@@ -41,16 +41,27 @@
                          (srfi srfi-19)
                          (json))
 
+            ;; Keep direct invocation independent of a Shepherd environment.
+            (setenv "PATH" (string-append #$coreutils "/bin:" #$bash "/bin:"
+                                           #$openjdk "/bin"))
+            (unless (getenv "XDG_STATE_HOME")
+              (setenv "XDG_STATE_HOME"
+                      (string-append (passwd:dir (getpwuid (getuid))) "/.local/state")))
+
             (define datomic-bin (string-append #$datomic "/bin/datomic"))
             (define psql-bin    (string-append #$postgresql "/bin/psql"))
             (define gzip-bin    (string-append #$gzip "/bin/gzip"))
+
+            (define (run! . arguments)
+              (unless (zero? (apply system* arguments))
+                (error "Datomic restore command failed" (car arguments))))
 
             (define (list-backups db-name)
               (let ((dir (string-append #$backup-dir "/" db-name)))
                 (if (file-exists? dir)
                     (begin
                       (format #t "Datomic backups for '~a':~%" db-name)
-                      (system* datomic-bin "list-backups"
+                      (run! datomic-bin "list-backups"
                                (string-append "file:" dir))
                       (format #t "~%PostgreSQL dumps:~%")
                       (let ((pg-dir (string-append #$backup-dir "/pg")))
@@ -62,18 +73,9 @@
                     (format #t "No backups found for '~a' in ~a~%"
                             db-name dir))))
 
-            ;; JSON listing — read-only introspection, safe to run anytime, no
-            ;; live Datomic peer connection needed (unlike the backup script's
-            ;; own `discover-databases`, which does need one). `datomic
-            ;; list-backups` prints a wall of logback startup noise (its
-            ;; logging config isn't writable in this sandboxed invocation, so
-            ;; it always falls over to stdout) followed by ONE line: a bare
-            ;; Scheme-readable list of Datomic `t` values — the transaction
-            ;; points you can `restore-db` to. That's what Datomic backups
-            ;; actually are: an appended incremental log, not discrete dated
-            ;; snapshots (unlike the pg_dumps, which genuinely are dated
-            ;; files) — so `t_values`/`latest_t` is the closest honest
-            ;; equivalent of "list of backups" for the datomic-level side.
+            ;; list-backups reads stored transaction points without a live peer.
+            ;; Validate its Scheme-readable list, ignoring JVM/logging messages.
+            ;; These are incremental backup points, unlike dated pg_dump files.
             (define (backup-t-values dir)
               (if (file-exists? dir)
                   (let* ((port  (open-pipe* OPEN_READ datomic-bin "list-backups"
@@ -86,12 +88,12 @@
                          (payload (find (lambda (l)
                                           (string-prefix? "(" (string-trim-both l)))
                                         (reverse lines))))
-                    (close-pipe port)
-                    (if payload
-                        (catch #t
-                          (lambda () (with-input-from-string payload read))
-                          (lambda _ '()))
-                        '()))
+                    (unless (zero? (close-pipe port))
+                      (error "Datomic list-backups failed" dir))
+                    (let ((values (and payload (with-input-from-string payload read))))
+                      (unless (and (list? values) (every exact-integer? values))
+                        (error "Invalid Datomic list-backups output" dir))
+                      values))
                   '()))
 
             (define (iso8601 unix-seconds)
@@ -146,34 +148,28 @@
                      (uri (string-append "datomic:sql://" db-name
                                          "?" #$sql-url)))
                 (format #t "Restoring datomic database '~a' from ~a~%" db-name dir)
-                (let ((rc (system* datomic-bin "restore-db"
-                                   (string-append "file:" dir) uri)))
-                  (if (zero? (status:exit-val rc))
-                      (format #t "Restore succeeded.~%")
-                      (begin
-                        (format #t "Restore FAILED (exit ~a).~%"
-                                (status:exit-val rc))
-                        (exit 1))))))
+                (run! datomic-bin "restore-db" (string-append "file:" dir) uri)
+                (format #t "Restore succeeded.~%")))
 
             (define (restore-pg sql-file)
               (unless (file-exists? sql-file)
                 (format #t "File not found: ~a~%" sql-file)
                 (exit 1))
               (format #t "Restoring PostgreSQL from ~a~%" sql-file)
+              ;; Reject corrupt input before any destructive database command.
+              (run! gzip-bin "-t" "--" sql-file)
               (format #t "WARNING: This drops and recreates the datomic database!~%")
-              (system* psql-bin "-U" "datomic" "-h" "localhost"
+              (run! psql-bin "-U" "datomic" "-h" "localhost"
+                       "-d" "postgres" "-v" "ON_ERROR_STOP=1"
                        "-c" "DROP DATABASE IF EXISTS datomic;")
-              (system* psql-bin "-U" "datomic" "-h" "localhost"
+              (run! psql-bin "-U" "datomic" "-h" "localhost"
+                       "-d" "postgres" "-v" "ON_ERROR_STOP=1"
                        "-c" "CREATE DATABASE datomic;")
-              (let ((rc (system (string-append
-                                 gzip-bin " -dc " sql-file
-                                 " | " psql-bin
-                                 " -U datomic -h localhost datomic"))))
-                (if (zero? (status:exit-val rc))
-                    (format #t "PostgreSQL restore succeeded.~%")
-                    (begin
-                      (format #t "PostgreSQL restore FAILED.~%")
-                      (exit 1)))))
+              ;; Positional arguments preserve filenames; pipefail checks gzip too.
+              (run! #$(file-append bash "/bin/bash") "-o" "pipefail" "-c"
+                    "\"$1\" -dc -- \"$2\" | \"$3\" -U datomic -h localhost -d datomic -v ON_ERROR_STOP=1 --single-transaction -f -"
+                    "datomic-restore" gzip-bin sql-file psql-bin)
+              (format #t "PostgreSQL restore succeeded.~%"))
 
             (match (cdr (command-line))
               (("list" db-name)
@@ -228,6 +224,10 @@ Examples:
                        (srfi srfi-13)
                        (srfi srfi-19))
 
+          (define (run! . arguments)
+            (unless (zero? (apply system* arguments))
+              (error "Datomic backup command failed" (car arguments))))
+
           ;; Auto-discover Datomic databases via the PEER API
           ;; (datomic.api/get-database-names). Datomic Pro has NO CLI to list
           ;; databases, and the old SQL scan of datomic_kvs.map returned ~50k
@@ -240,14 +240,16 @@ Examples:
                    (form (string-append
                           "(do (require '[datomic.api :as d])"
                           " (doseq [n (datomic.api/get-database-names \""
-                          storage-uri "\")] (println (str \"DBNAME:\" n))))"))
+                          storage-uri "\")] (println (str \"DBNAME:\" n)))"
+                          " (d/shutdown true) (shutdown-agents))"))
                    (port  (open-pipe* OPEN_READ run-bin "-e" form))
                    (lines (let loop ((acc '()))
                             (let ((line (read-line port)))
                               (if (eof-object? line)
                                   (reverse acc)
                                   (loop (cons (string-trim-both line) acc)))))))
-              (close-pipe port)
+              (unless (zero? (close-pipe port))
+                (error "Datomic backup command failed: database discovery"))
               (filter-map
                (lambda (l)
                  (and (string-prefix? "DBNAME:" l)
@@ -268,10 +270,9 @@ Examples:
             ;; 1. PostgreSQL-level backup
             (let ((pg-file (string-append pg-backup-dir "/datomic-" date-str ".sql")))
               (format #t "~a pg_dump → ~a.gz~%" date-str pg-file)
-              (let ((rc (system* pg-dump-bin "-U" "datomic" "-h" "localhost"
-                                 "-f" pg-file "datomic")))
-                (when (zero? (status:exit-val rc))
-                  (system* gzip-bin pg-file)))
+              (run! pg-dump-bin "-U" "datomic" "-h" "localhost"
+                    "-f" pg-file "datomic")
+              (run! gzip-bin pg-file)
 
               ;; Keep last 7 pg dumps
               (let ((files (or (scandir pg-backup-dir
@@ -296,7 +297,7 @@ Examples:
                                   "?" #$sql-url)))
                        (format #t "~a datomic backup-db ~a → ~a~%"
                                date-str db-name db-backup-dir)
-                       (system* datomic-bin "backup-db" uri
+                       (run! datomic-bin "backup-db" uri
                                 (string-append "file:" db-backup-dir))))
                    db-names)))
 
@@ -307,21 +308,26 @@ Examples:
 
   (define activation
     #~(begin
-        (use-modules (guix build utils))
-        (let* ((pw  (getpwnam #$user))
-               (uid (passwd:uid pw))
-               (gid (passwd:gid pw)))
-          (for-each (lambda (dir)
-                      (mkdir-p dir)
-                      (chown dir uid gid))
-                    (list #$backup-dir
-                          (string-append #$backup-dir "/pg")
-                          (dirname #$log-file)))
-          ;; Symlink restore script
-          (let ((link "/usr/local/bin/datomic-restore"))
-            (mkdir-p (dirname link))
-            (when (file-exists? link) (delete-file link))
-            (symlink #$restore-script* link)))))
+        (use-modules ((guix build utils) #:select (mkdir-p switch-symlinks)))
+        (catch #t
+          (lambda ()
+            (let* ((pw  (getpwnam #$user))
+                   (uid (passwd:uid pw))
+                   (gid (passwd:gid pw)))
+              (for-each (lambda (dir)
+                          (mkdir-p dir)
+                          (unless (eq? 'directory (stat:type (stat dir)))
+                            (error "Datomic backup path is not a directory" dir))
+                          (chown dir uid gid))
+                        (list #$backup-dir
+                              (string-append #$backup-dir "/pg")
+                              (dirname #$log-file)))
+              (let ((link "/usr/local/bin/datomic-restore"))
+                (mkdir-p (dirname link))
+                (switch-symlinks link #$restore-script*))))
+          (lambda args
+            (format (current-error-port) "Datomic backup activation failed: ~s~%" args)
+            #t))))
 
   (define envs
     #~(list
@@ -330,6 +336,7 @@ Examples:
                       #$bash "/bin:"
                       #$openjdk "/bin")
        (string-append "DATOMIC_HOME=" #$datomic)
+       (string-append "XDG_STATE_HOME=" #$(dirname log-file))
        "TMPDIR=/tmp"))
 
   (define shepherd-service*
