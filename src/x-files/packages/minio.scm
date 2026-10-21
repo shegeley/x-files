@@ -14,7 +14,11 @@
 (define targets (map car target->minio-target))
 
 (define target->minio-server-hash
-  '(("x86_64-linux"  . "0pw5zdji0a3k81y3gaw3gb3r3ldjb29j166in5an95kf5i8xhnvw")
+  ;; dl.min.io removed the whole open-source tree (410 Gone, everything):
+  ;; this is the hash of the binary actually running on zone51 -- the
+  ;; fleet's only surviving copy -- re-pinned here so builds validate
+  ;; against local/seeded store items instead of the dead URL.
+  '(("x86_64-linux"  . "1ldgjbgd5fpcwvha8x7sapd5f7disld5sv3cajg3xxyi7khpajis")
     ("aarch64-linux" . "0gghsr7nhz8zgzfln5375cknxwrgh33y2wrz4jh7nwaiy4ncv0sw")))
 
 (define-public minio-server
