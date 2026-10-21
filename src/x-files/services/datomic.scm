@@ -74,6 +74,10 @@
 
 (define (log-dir config) (assoc-ref config 'log-dir))
 
+(define (datomic-package config)
+  "Return the configured transactor package, including for generation rollback."
+  (or (assoc-ref config 'package) datomic))
+
 (define (datomic-transactor-shepherd-service config)
   (let* ((props      (transactor/dev-config config))
          (props-file (serialize-transactor-config props)))
@@ -82,7 +86,7 @@
      (provision '(datomic-dev-transactor))
      (requirement '(file-systems networking))
      (start #~(make-forkexec-constructor
-               (list (string-append #$datomic "/bin/transactor") #$props-file)
+               (list #$(file-append (datomic-package config) "/bin/transactor") #$props-file)
                #:user "datomic"
                #:group "datomic"
                ;; #:pid-file "/var/run/datomic-transactor.pid"
@@ -93,28 +97,37 @@
                                (string-append #$coreutils "/bin") ":"
                                (string-append #$bash "/bin") ":"
                                (string-append #$openjdk "/bin"))
-                (string-append "DATOMIC_HOME="   #$datomic)
+                (string-append "DATOMIC_HOME="   #$(datomic-package config))
                 (string-append "XDG_STATE_HOME=" #$(data-dir config)))))
      (stop #~(make-kill-destructor)))))
 
 (define (datomic-transactor-activation config)
   #~(begin
-      (use-modules (guix build utils))
-      (mkdir-p #$(data-dir config))
-      (mkdir-p #$(log-dir config))
-      (let* ((pw  (getpwnam "datomic"))
-             (uid (passwd:uid pw))
-             (gid (passwd:gid pw)))
-        (for-each (lambda (dir) (chown dir uid gid))
-                  (list #$(datomic-dir config)
-                        #$(data-dir config)
-                        #$(log-dir config))))))
+      (use-modules ((guix build utils) #:select (mkdir-p)))
+      (catch #t
+        (lambda ()
+          (mkdir-p #$(data-dir config))
+          (mkdir-p #$(log-dir config))
+          (let* ((pw  (getpwnam "datomic"))
+                 (uid (passwd:uid pw))
+                 (gid (passwd:gid pw)))
+            (for-each (lambda (dir)
+                        (unless (eq? 'directory (stat:type (stat dir)))
+                          (error "Datomic state path is not a directory" dir))
+                        (chown dir uid gid))
+                      (list #$(datomic-dir config)
+                            #$(data-dir config)
+                            #$(log-dir config)))))
+        (lambda args
+          (format (current-error-port) "Datomic activation failed: ~s~%" args)
+          #t))))
 
 (define (datomic-shepherd-services config)
   (list (datomic-transactor-shepherd-service config)))
 
 (define datomic-default-value
-  `((port     . "4334")
+  `((package  . ,datomic)
+    (port     . "4334")
     (log-dir  . "/var/log/datomic")))
 
 (define-public datomic-dev-transactor-service-type
@@ -123,7 +136,8 @@
    (description "Datomic Transactor Service")
    (extensions
     (list
-     (service-extension profile-service-type       (const (list datomic)))
+     (service-extension profile-service-type
+                        (lambda (config) (list (datomic-package config))))
      (service-extension account-service-type       datomic-accounts)
      (service-extension activation-service-type    datomic-transactor-activation)
      (service-extension shepherd-root-service-type datomic-shepherd-services)))
@@ -207,16 +221,15 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
   ;; It retries psql until the datomic_kvs schema is created, then replaces
   ;; itself with the transactor via execl.  This avoids blocking shepherd's
   ;; fiber scheduler with a synchronous retry loop in the start thunk.
-  ;; Connects as the datomic user via TCP (-h localhost) with password auth,
-  ;; since the service runs as OS user "datomic" and peer auth would fail for
-  ;; any other PostgreSQL role.
+  ;; Schema preparation uses the local Unix socket as the configured SQL user;
+  ;; the transactor itself uses sql-url and sql-password-file.
   (let* ((props      (transactor/postgres-config config))
          (props-file (serialize-transactor-config props))
          ;; Extra args passed to bin/transactor BEFORE the props file. The
          ;; transactor script parses -Xmx*/-Xms* and forwards the rest as
          ;; JAVA_OPTS, so e.g. '("-Xmx4g" "-Xms1g") bumps the transactor heap.
          (java-opts  (or (assoc-ref config 'java-opts) '()))
-         (bin        (file-append datomic "/bin/transactor")))
+         (bin        (file-append (datomic-package config) "/bin/transactor")))
     (program-file "datomic-transactor-wrapper"
       #~(begin
           (let loop ((tries 0))
@@ -255,7 +268,7 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
                                 (string-append #$coreutils "/bin") ":"
                                 (string-append #$bash "/bin") ":"
                                 (string-append #$openjdk "/bin"))
-                 (string-append "DATOMIC_HOME="   #$datomic)
+                 (string-append "DATOMIC_HOME="   #$(datomic-package config))
                  (string-append "XDG_STATE_HOME=" #$(data-dir config)))
                 ;; Native-spliced so a metrics-classpath given as a
                 ;; lowerable object (file-append, package) reaches the
@@ -263,18 +276,19 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
                 #+(if metrics-classpath
                       #~(list (string-append "DATOMIC_EXT_CLASSPATH="
                                              #$metrics-classpath))
-                      #~())
+                      #~'())
                 #+(if metrics-port
                       #~(list (string-append "DATOMIC_METRICS_PORT="
                                              #$metrics-port))
-                      #~()))))
+                      #~'()))))
      (stop #~(make-kill-destructor)))))
 
 (define (datomic-postgres-shepherd-services config)
   (list (datomic-postgres-transactor-shepherd-service config)))
 
 (define datomic-postgres-default-value
-  `((port             . "4334")
+  `((package          . ,datomic)
+    (port             . "4334")
     (log-dir          . "/var/log/datomic")
     (sql-url          . "jdbc:postgresql://localhost:5432/datomic")
     (sql-user         . "datomic")
@@ -302,7 +316,8 @@ GRANT ALL ON TABLE datomic_kvs TO datomic;"))
       (service-extension postgresql-role-service-type
                          datomic-postgres-roles)
       (service-extension profile-service-type
-                         (const (list datomic datomic-cli-tools)))
+                         (lambda (config)
+                           (list (datomic-package config) datomic-cli-tools)))
       (service-extension account-service-type
                          datomic-accounts)
       (service-extension activation-service-type

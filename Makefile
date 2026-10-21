@@ -69,6 +69,13 @@ system-test-datomic-postgres:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services datomic) %test-datomic-postgres)'
 
+test-datomic:
+	guix shell guile-ares-rs guile -- guix repl -L src tests/datomic-test.scm
+
+system-test-datomic-migration:
+	guix build -L src -L tests --no-grafts \
+	  -e '(@ (x-files tests services datomic-migration) %test-datomic-migration)'
+
 system-test-datomic-backup:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services datomic-backup) %test-datomic-backup)'
@@ -76,6 +83,10 @@ system-test-datomic-backup:
 system-test-datomic-backup-names:
 	guix build -L $(src) -L $(tests) --no-grafts \
 	  -e '(@ (x-files tests services datomic-backup) %test-datomic-backup-names)'
+
+system-test-datomic-clone-safety:
+	guix build -L $(src) -L $(tests) --no-grafts \
+	  -e '(@ (x-files tests services datomic-clone) %test-datomic-clone-safety)'
 
 system-test-clickhouse:
 	guix build -L $(src) -L $(tests) --no-grafts \

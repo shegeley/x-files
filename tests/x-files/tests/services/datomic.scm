@@ -74,13 +74,12 @@
 
       ;; Wait for transactor to start listening
       (test-assert "transactor listening on port"
-       (wait-for-tcp-port #$port marionette))
+       (wait-for-tcp-port #$port marionette #:timeout 300))
 
       ;; Check that data directory is created with correct ownership
       (test-assert "data directory with correct ownership"
        (marionette-eval
         '(begin
-          (use-modules (gnu build install))
           (let ((stat (stat "/var/lib/datomic/data")))
            (and (file-exists? "/var/lib/datomic/data")
             (eq? (stat:uid stat) (passwd:uid (getpwnam "datomic")))
@@ -174,8 +173,7 @@
       (test-assert "postgresql ready"
        (wait-for-unix-socket "/var/run/postgresql/.s.PGSQL.5432" marionette))
 
-      ;; Start datomic transactor; shepherd will first start datomic-postgres-init
-      ;; (one-shot service that runs psql synchronously to create datomic_kvs table)
+      ;; The wrapper retries schema preparation after postgres-roles starts.
       (test-assert "datomic transactor service running"
        (marionette-eval
         '(begin

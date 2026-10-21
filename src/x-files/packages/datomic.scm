@@ -7,11 +7,11 @@
   #:use-module (guix packages)
   #:use-module ((guix licenses) #:prefix license:))
 
-(define-public datomic
+(define (make-datomic version hash)
   ;; stolen from https://codeberg.org/simendsjo/dotfiles.git
   (package
     (name "datomic")
-    (version "1.0.7705")
+    (version version)
     (source
      (origin
        (method url-fetch)
@@ -19,7 +19,7 @@
              "https://datomic-pro-downloads.s3.amazonaws.com/"
              version "/datomic-pro-" version ".zip"))
        (sha256
-        (base32 "0zlc3cddh8gcr0i754rj9linswwmf8m06nm3k3cv1pwkp01jcz51"))))
+        (base32 hash))))
     (build-system copy-build-system)
     (inputs (list unzip openjdk))
     (arguments
@@ -43,7 +43,17 @@
                  (substitute* "bin/repl-jline"
                    (("/usr/bin/env java") java-bin))
                  (substitute* "bin/run"
-                   (("/usr/bin/env java") java-bin))
+                   (("/usr/bin/env java") java-bin)
+                   (("while \\[ \\$# -gt 0 \\]")
+                    "java_opts=()\nclojure_args=()\n\nwhile [ $# -gt 0 ]")
+                   (("java_opts=\"\\$\\{java_opts\\} \\$1\"")
+                    "java_opts+=(\"$1\")")
+                   (("clojure_args=\"\\$\\{clojure_args\\} \\$1\"")
+                    "clojure_args+=(\"$1\")")
+                   (("\\$\\{java_opts\\}") "\"${java_opts[@]}\"")
+                   (("\\$\\{clojure_args\\}") "\"${clojure_args[@]}\""))
+                 (substitute* "bin/datomic"
+                   (("\\$@") "\"$@\""))
                  (substitute* "bin/shell"
                    (("java") java-bin))
                  (substitute* "bin/transactor"
@@ -52,3 +62,6 @@
     (synopsis "The Datomic database")
     (description "The fully transactional, cloud-ready, distributed database.")
     (license license:asl2.0)))
+
+(define-public datomic
+  (make-datomic "1.0.7745" "1p6jgfg724haw02z5fd61j45m71nqpkabxpfb9dbivsgy32npb30"))
