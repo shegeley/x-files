@@ -1,6 +1,25 @@
 (channel-news
  (version 0)
  (entry
+  (commit "d3aaf731e06776f4bcf0be900f1686e84a512131")
+  (title (en "Datomic 1.0.7745 and backup safety")
+         (ru "Datomic 1.0.7745 и безопасность резервного копирования"))
+  (body
+   (en "Updated @code{datomic} from 1.0.7705 to 1.0.7745. CLI wrappers preserve argument boundaries, including Clojure expressions and filenames containing spaces. Transactor services accept a @code{package} configuration entry and correctly handle omitted metrics settings. Activation failures are contained and reported.
+
+Backup and restore helpers propagate child-process failures instead of reporting success. PostgreSQL restore checks gzip integrity before dropping the database and stops on SQL errors; invalid SQL can still leave a recreated empty database, so keep a verified recovery dump.
+
+The existing same-storage clone job now refuses to run before touching credentials, databases, or backups. Datomic restores preserve database identity: a staging copy requires separate SQL storage and its own transactor. Existing timers must be replaced after deployment before relying on this guard.
+
+VM tests cover SQL data across 7705/7745 upgrade and downgrade, service lifecycle and recovery, queryable backup restores, and clone refusal. This validates the fixture's schema features, not arbitrary production migrations; no base-schema upgrade is performed.")
+   (ru "Пакет @code{datomic} обновлён с 1.0.7705 до 1.0.7745. Обёртки CLI сохраняют границы аргументов, включая выражения Clojure и имена файлов с пробелами. Сервисы транзактора принимают параметр @code{package} и корректно обрабатывают отсутствие настроек метрик. Ошибки активации перехватываются и выводятся в журнал.
+
+Команды резервного копирования и восстановления передают ошибки дочерних процессов вместо ложного сообщения об успехе. Восстановление PostgreSQL проверяет gzip до удаления базы и останавливается при ошибке SQL; неверный SQL всё ещё может оставить заново созданную пустую базу, поэтому сохраняйте проверенный дамп для восстановления.
+
+Существующая задача клонирования внутри одного хранилища теперь отказывается работать до доступа к секретам, базам и резервным копиям. Восстановление Datomic сохраняет идентичность базы: копии для staging нужны отдельное SQL-хранилище и свой транзактор. После развёртывания нужно заменить уже работающие таймеры, прежде чем полагаться на эту защиту.
+
+Тесты в виртуальных машинах проверяют данные при обновлении и откате 7705/7745, жизненный цикл сервисов, восстановление с чтением данных и отказ небезопасного клонирования. Проверены возможности схемы тестового набора, а не произвольные производственные миграции; базовая схема не обновляется.")))
+ (entry
   (commit "940c66255892a91481771407379c82a1806c0bfd")
   (title (en "October 2026 package updates")
          (ru "Обновления пакетов за октябрь 2026"))
