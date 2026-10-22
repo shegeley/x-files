@@ -36,10 +36,12 @@
    (map
     specification->package
     (list
-     "nautilus"
-     ;; yelp dropped: it propagates a dconf whose graft differs from
-     ;; shotwell's -- "profile contains conflicting entries for dconf".
-     ;; A help browser is not worth a fleet build blocker.
+     ;; nautilus dropped: already propagated by gnome-meta-core-utilities;
+     ;; listing it again pairs two same-version differently-grafted items
+     ;; -> "profile contains conflicting entries".  Same for everything
+     ;; else the gnome meta sets already provide (gnome-bluetooth,
+     ;; gnome-shell-extensions, xdg-desktop-portal-gnome, dconf, ...).
+     ;; yelp dropped: same class, not worth a fleet build blocker.
      ;; "glib" ;; gsettings
      "seahorse" ;; Gnome GUI key management
      ;; shotwell dropped: its dconf propagation keeps colliding with the
@@ -49,17 +51,14 @@
      "glade"
      "xdg-utils"
      "xdg-dbus-proxy"
-     "xdg-desktop-portal-gnome" ;; needed for screenshare
      "system-config-printer"
      ;; dconf/dconf-editor dropped: the explicit dconf collides with the
      ;; dconf propagated by gnome-meta-core-utilities (two same-version
      ;; differently-grafted items): profile conflicts.  dconf still
      ;; arrives via propagation everywhere it is needed.
      "gnome-terminal"
-     "gnome-bluetooth"
      "bluez"
      "gnome-tweaks"
-     "gnome-shell-extensions"
      "blueman"))))
 
 (define extensions
