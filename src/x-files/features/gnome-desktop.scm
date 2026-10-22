@@ -37,7 +37,9 @@
     specification->package
     (list
      "nautilus"
-     "evince"
+     ;; yelp dropped: it propagates a dconf whose graft differs from
+     ;; shotwell's -- "profile contains conflicting entries for dconf".
+     ;; A help browser is not worth a fleet build blocker.
      ;; "glib" ;; gsettings
      "seahorse" ;; Gnome GUI key management
      "shotwell"
