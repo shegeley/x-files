@@ -42,7 +42,10 @@
      ;; A help browser is not worth a fleet build blocker.
      ;; "glib" ;; gsettings
      "seahorse" ;; Gnome GUI key management
-     "shotwell"
+     ;; shotwell dropped: its dconf propagation keeps colliding with the
+     ;; gnome-meta-core-utilities dconf (differently-grafted): profile
+     ;; conflicts with yelp, epiphany, ... whichever comes next.  Use
+     ;; gthumb or restore via feature-photography when grafts align.
      "glade"
      "xdg-utils"
      "xdg-dbus-proxy"
