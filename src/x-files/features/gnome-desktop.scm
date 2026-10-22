@@ -51,8 +51,10 @@
      "xdg-dbus-proxy"
      "xdg-desktop-portal-gnome" ;; needed for screenshare
      "system-config-printer"
-     "dconf"
-     "dconf-editor"
+     ;; dconf/dconf-editor dropped: the explicit dconf collides with the
+     ;; dconf propagated by gnome-meta-core-utilities (two same-version
+     ;; differently-grafted items): profile conflicts.  dconf still
+     ;; arrives via propagation everywhere it is needed.
      "gnome-terminal"
      "gnome-bluetooth"
      "bluez"
