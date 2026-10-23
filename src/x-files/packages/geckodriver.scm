@@ -15,24 +15,13 @@
 ;; geckodriver -- WebDriver server for Firefox (Gecko counterpart to
 ;; chromedriver, see (g-files packages chromedriver)).
 ;;
-;; Unlike Chrome/chromedriver, geckodriver has no tight per-build version
-;; lock: Mozilla's own compat docs
-;; (https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html)
-;; say any reasonably current geckodriver works with Firefox 57 and later, and
-;; explicitly recommend always using the LATEST geckodriver release rather
-;; than pinning to a specific Firefox build.  So "moving hand-in-hand with
-;; Firefox" here means something different than chromedriver-for's exact
-;; build-matching: always track the newest geckodriver, and assert whatever
-;; Firefox package it's meant to drive actually clears geckodriver's minimum
-;; supported version -- erroring loudly rather than silently building a driver
-;; against a Firefox too old for it to work at all.
+;; Gecko versions have a support floor, unlike Chrome's per-build matching.
+;; https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html
 
 (define %geckodriver-version "0.37.1")
 
-;; Firefox 57 = the oldest version geckodriver supports at all (pre-57 lacks
-;; the multi-process/e10s architecture geckodriver depends on). Checked
-;; against Mozilla's own compat docs, cited above.
-(define %geckodriver-minimum-firefox-version 57)
+;; Mozilla's compatibility table specifies Firefox 115 ESR for 0.37.1.
+(define %geckodriver-minimum-firefox-version 115)
 
 (define target->gecko-target
   '(("x86_64-linux"  . "linux64")
