@@ -31,6 +31,15 @@ check/nix-feature-elisp:
 check/nix-trusted-users:
 	guix repl -L $(src) $(tests)/nix-trusted-users-test.scm
 
+.PHONY: check/max
+check/max:
+	@mesa=$$(guix build -L $(src) --no-offload \
+	    -e '(@ (x-files packages max) max-messenger)') && \
+	  nvidia=$$(guix build -L $(src) --no-offload \
+	    -e '((@ (nongnu packages nvidia) replace-mesa) (@ (x-files packages max) max-messenger))') && \
+	  guix shell guile-ares-rs patchelf -- \
+	    guix repl -- $(tests)/max-test.scm "$$mesa" "$$nvidia"
+
 system-test-podman-storage:
 	guix build -L $(src) -L $(tests) --no-offload \
 	  -e '(@ (x-files tests services podman-storage) %test-podman-storage)'

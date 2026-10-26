@@ -160,6 +160,8 @@ exec env \\
                       #$(file-append (specification->package "glibc")
                                      "/lib/ld-linux-x86-64.so.2"))
                      (abi-compat (string-append #$output "/share/max/abi-compat"))
+                     (graphics-libs
+                      #$(file-append (this-package-input "mesa") "/lib"))
                      (system-libs
                       (string-join
                        (append
@@ -170,12 +172,12 @@ exec env \\
                                       %max-libs)))
                        ":"))
                      (max-rpath
-                      (string-append abi-compat ":"
+                      (string-append graphics-libs ":" abi-compat ":"
                                      #$output "/share/max/lib64:"
                                      #$output "/share/max/lib:"
                                      system-libs))
                      (max-service-rpath
-                      (string-append abi-compat ":"
+                      (string-append graphics-libs ":" abi-compat ":"
                                      #$output "/share/max/bin/max-service/lib64:"
                                      system-libs)))
                 (for-each (lambda (binary)
@@ -193,18 +195,13 @@ exec env \\
           ;; SONAME compatibility shims, confirmed necessary by actually
           ;; launching the built package and iterating on what crashed:
           ;;
-          ;; - Guix's mesa is built without glvnd's vendor split --
-          ;;   libGL.so.1 alone exports both the glX* (GLX window-system)
-          ;;   and gl* (OpenGL core/compat) symbol sets that upstream's
-          ;;   Debian build expects split across separate
-          ;;   libGLX.so.0/libOpenGL.so.0 SONAMEs (the glvnd convention).
-          ;;   There is no glvnd vendor JSON on Guix's non-FHS layout for
-          ;;   those SONAMEs to dispatch through either, so simply adding
-          ;;   "libglvnd" as an input resolves to a dispatcher with nothing
-          ;;   to dispatch to: GLX context creation fails ("Could not
-          ;;   initialize GLX") the moment the QML scene needs a real GL
-          ;;   surface.  Symlinking both expected SONAMEs directly at
-          ;;   mesa's own libGL.so.1 sidesteps glvnd entirely.
+          ;; - Non-GLVND Mesa supplies GLX and OpenGL in libGL.so.1.
+          ;;   Keep these aliases behind the graphics driver's own lib
+          ;;   directory in both RPATH and the launcher: replace-mesa
+          ;;   grafts Mesa to NVIDIA after building, and NVIDIA supplies
+          ;;   real libGLX.so.0/libOpenGL.so.0.  Shadowing its libGLX with
+          ;;   libGL creates a dependency cycle (__GLXGL_CORE_FUNCTIONS).
+          ;;   A build-time file-exists? check cannot account for grafts.
           ;; - libffi and pcre2's SONAMEs have simply moved on (.so.6->.so.8,
           ;;   .so.2->.so.3) since whatever Debian build max-service links
           ;;   against; both libraries' relevant ABI surface (libffi's core
@@ -237,7 +234,8 @@ exec env \\
                     (format port #$%max-wrapper-script
                             (string-join
                              (append
-                              (list (string-append #$output "/share/max/abi-compat")
+                              (list #$(file-append (this-package-input "mesa") "/lib")
+                                    (string-append #$output "/share/max/abi-compat")
                                     (string-append #$output "/share/max/lib64")
                                     (string-append #$output "/share/max/lib")
                                     #$(file-append (this-package-input "nss") "/lib/nss")
