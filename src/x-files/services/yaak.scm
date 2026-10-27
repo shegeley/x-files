@@ -60,20 +60,32 @@ whatever port the plugin ends up on drifts from whatever a caller (e.g.
 at reconfigure time -- the two were never actually the same value, they
 just happened to coincide with the plugin's own default (64343) the first
 time. Fixing the env var pins the plugin to a port a caller can actually
-predict and register correctly, every time the service (re)starts."
+predict and register correctly, every time the service (re)starts.
+
+The home shepherd starts before the graphical session, so its environment
+has no @env{DISPLAY}/@env{WAYLAND_DISPLAY}; they are defaulted here, or GTK
+init panics and the service gets disabled."
   (list
    (shepherd-service
     (provision '(yaak))
     (start #~(begin
                (use-modules (srfi srfi-13))
+               (define (env-or name default)
+                 (let ((v (getenv name)))
+                   (string-append name "="
+                                  (if (and v (not (string-null? v))) v default))))
                (make-forkexec-constructor
                 (list #$(file-append (cfg config 'package) "/bin/yaak-app-client"))
                 #:environment-variables
-                (cons (string-append "YAAK_PLUGIN_MCP_SERVER_PORT="
+                (cons* (string-append "YAAK_PLUGIN_MCP_SERVER_PORT="
                                       (number->string #$(cfg config 'mcp-port)))
-                      (filter (lambda (kv)
-                                (not (string-prefix? "YAAK_PLUGIN_MCP_SERVER_PORT=" kv)))
-                              (environ)))
+                       (env-or "DISPLAY" ":0")
+                       (env-or "WAYLAND_DISPLAY" "wayland-0")
+                       (filter (lambda (kv)
+                                 (not (or (string-prefix? "YAAK_PLUGIN_MCP_SERVER_PORT=" kv)
+                                          (string-prefix? "DISPLAY=" kv)
+                                          (string-prefix? "WAYLAND_DISPLAY=" kv))))
+                               (environ)))
                 #:log-file #$(cfg config 'log-file))))
     (stop #~(make-kill-destructor))
     (documentation "Yaak API client -- auto-started desktop window + MCP server."))))
