@@ -68,12 +68,10 @@ init panics and the service gets disabled."
   (list
    (shepherd-service
     (provision '(yaak))
-    (start #~(begin
-               (use-modules (srfi srfi-13))
-               (define (env-or name default)
-                 (let ((v (getenv name)))
-                   (string-append name "="
-                                  (if (and v (not (string-null? v))) v default))))
+    (start #~(let ((env-or (lambda (name default)
+                             (let ((v (getenv name)))
+                               (string-append name "="
+                                              (if (and v (not (string-null? v))) v default))))))
                (make-forkexec-constructor
                 (list #$(file-append (cfg config 'package) "/bin/yaak-app-client"))
                 #:environment-variables
