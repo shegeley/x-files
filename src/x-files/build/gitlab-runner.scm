@@ -1,7 +1,8 @@
 (define-module (x-files build gitlab-runner)
   #:use-module ((x-files utils alist) #:select (match-alist))
-  #:use-module ((toml) #:select (toml->scm
-                                 scm->toml))
+  ;; Supplied by runner-program's with-extensions at runtime.
+  #:autoload (toml) (toml->scm
+                     scm->toml)
   #:use-module ((gcrypt hash) #:select (sha256))
   #:use-module ((gcrypt base16) #:select (bytevector->base16-string))
   #:use-module ((rnrs bytevectors) #:select (string->utf8))
