@@ -1,6 +1,13 @@
 (channel-news
  (version 0)
  (entry
+  (commit "f81dd85942667ca0e65716e75b7635121c679697")
+  (title (en "GitLab Runner service")
+         (ru "Сервис GitLab Runner"))
+  (body
+   (en "New @code{gitlab-runner-service-type}: a declarative GitLab CI runner.  Runners are declared with public TOML settings while authentication tokens stay in runtime files outside the store; rotated tokens survive reconfigures and retired runners are kept so a rollback can restore them.  The manager runs as a dedicated unprivileged user, drains jobs via SIGQUIT on stop with a configurable timeout, and its activation keeps existing state on failure.  The @code{gitlab-runner-bin} package pins the official static binary 19.5.1 per architecture.  Covered by a configuration test suite (34 assertions against the real binary's lint) and an offline VM lifecycle test (@command{make check/gitlab-runner}, @command{make system-test-gitlab-runner}).")
+   (ru "Новый @code{gitlab-runner-service-type}: декларативный GitLab CI runner.  Раннеры описываются публичными TOML-настройками, а токены аутентификации остаются в runtime-файлах вне store; ротированные токены переживают реконфигурации, а снятые раннеры сохраняются, чтобы откат мог их восстановить.  Менеджер работает отдельным непривилегированным пользователем, при остановке завершает задачи через SIGQUIT с настраиваемым таймаутом, а активация при ошибке сохраняет существующее состояние.  Пакет @code{gitlab-runner-bin} фиксирует официальный статический бинарник 19.5.1 для каждой архитектуры.  Покрыто набором тестов конфигурации (34 проверки через lint настоящего бинарника) и офлайн VM-тестом жизненного цикла (@command{make check/gitlab-runner}, @command{make system-test-gitlab-runner}).")))
+ (entry
   (commit "d3aaf731e06776f4bcf0be900f1686e84a512131")
   (title (en "Datomic 1.0.7745 and backup safety")
          (ru "Datomic 1.0.7745 и безопасность резервного копирования"))
