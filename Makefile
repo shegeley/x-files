@@ -150,3 +150,9 @@ run-oneplus-6t:
 	  -device virtio-keyboard-pci -device virtio-tablet-pci \
 	  -device virtio-net-pci,netdev=n0 -netdev user,id=n0,hostfwd=tcp::5555-:22 \
 	  -display gtk
+
+.PHONY: check/gitlab-runner
+check/gitlab-runner:
+	@runner=$$(guix build -L $(src) -e '(@ (x-files packages gitlab-runner) gitlab-runner-bin)') && \
+	  guix shell --pure guile guix guile-ares-rs guile-toml guile-gcrypt -- \
+	    guile --no-auto-compile -L $(src) -s $(tests)/gitlab-runner-config-test.scm "$$runner/bin/gitlab-runner"
