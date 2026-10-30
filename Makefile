@@ -160,3 +160,19 @@ check/gitlab-runner:
 system-test-gitlab-runner:
 	guix build -L $(src) -L $(tests) --no-offload \
 	  -e '(@ (x-files tests services gitlab-runner) %test-gitlab-runner)'
+
+# --- Bun: packages, bun-mode (ERT, incl. live tsc+biome eglot) and feature ---
+bun-packages := bun biome typescript-native emacs-bun-mode
+
+.PHONY: check/bun build/bun
+build/bun:
+	guix build -L $(src) $(bun-packages)
+
+check/bun:
+	@cache=$$(mktemp -d) && trap 'rm -rf "$$cache"' EXIT && \
+	  guix shell -L $(src) --pure emacs $(bun-packages) \
+	    tree-sitter-typescript tree-sitter-javascript tree-sitter-jsdoc coreutils -- \
+	    env HOME="$$cache" XDG_CACHE_HOME="$$cache/cache" \
+	    emacs --batch -l ert \
+	      -l $(tests)/bun-mode-test.el -l $(tests)/bun-lsp-test.el \
+	      -f ert-run-tests-batch-and-exit
