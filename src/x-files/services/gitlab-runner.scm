@@ -125,13 +125,16 @@ already exist."
                                                (eq? 'x-files (car name))))
           (program-file "start-gitlab-runner"
             #~(begin
-                (use-modules ((x-files build gitlab-runner) #:select (configure-runner!)))
+                (use-modules ((x-files build gitlab-runner) #:select (configure-runner!
+                                                                      runner-with-job-path)))
                 (umask #o077)
                 (catch #t
                   (lambda ()
                     (configure-runner!
                      '#$settings
-                     '#$runners
+                     (map (lambda (runner)
+                            (runner-with-job-path runner (getenv "PATH")))
+                          '#$runners)
                      #$state-directory
                      (lambda (candidate)
                        ;; Lint output may contain credentials. Keep it out of logs.
