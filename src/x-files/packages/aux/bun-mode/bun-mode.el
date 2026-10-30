@@ -2,11 +2,18 @@
 
 ;;; Commentary:
 
-;; Bun ships no language server, so `bun/*-mode' buffers get one eglot
-;; server that is really two: rass (rassumfrassum) multiplexes the native
-;; TypeScript 7 server (`tsc --lsp': types, completion, navigation) and
-;; Biome (`biome lsp-proxy': lint, format, fixes).  `bun-rass.py' makes
-;; formatting go to Biome.
+;; Bun ships no language server, so `bun/*-mode' buffers get two: the
+;; native TypeScript 7 server (`tsc --lsp': types, completion, navigation)
+;; and Biome (`biome lsp-proxy': lint, format, fixes).  Formatting always
+;; goes to Biome.
+;;
+;; - eglot (one server per buffer): rass (rassumfrassum) multiplexes both;
+;;   `bun-rass.py' routes formatting.
+;; - lsp-mode (native multi-server): clients `bun-tsc' (priority over the
+;;   stock TypeScript clients) and add-on `bun-biome'; `bun-tsc' hides its
+;;   formatting capability, since lsp-mode would concatenate both servers'
+;;   edits.  `bun--lsp-drop-null-capabilities' works around an lsp-mode
+;;   null that TypeScript 7 rejects.
 ;;
 ;; A file gets a `bun/*-mode' only inside a Bun project (see
 ;; `bun/project-markers'); otherwise `bun/mode-maybe' defers to the next
@@ -164,6 +171,75 @@ whose mode matches, so the entry must precede generic TypeScript ones."
           (cons entry (remove entry eglot-server-programs)))))
 
 (with-eval-after-load 'eglot (bun/eglot-register))
+
+(declare-function lsp-register-client "lsp-mode" (client))
+(declare-function make-lsp-client "lsp-mode" (&rest args))
+(declare-function lsp-stdio-connection "lsp-mode" (command &optional test-command))
+(declare-function lsp--workspace-server-capabilities "lsp-mode" (workspace))
+(defvar lsp-language-id-configuration)
+
+(defconst bun/lsp-formatting-capabilities
+  '(:documentFormattingProvider
+    :documentRangeFormattingProvider
+    :documentOnTypeFormattingProvider)
+  "Server capabilities `bun-tsc' hides so only Biome formats.")
+
+(defun bun--lsp-drop-formatting (workspace)
+  "Hide the formatting capabilities of WORKSPACE's server, in place.
+Capabilities are a hash table, or a plist with `lsp-use-plists'."
+  (let ((capabilities (lsp--workspace-server-capabilities workspace)))
+    (dolist (capability bun/lsp-formatting-capabilities)
+      (if (hash-table-p capabilities)
+          (remhash (substring (symbol-name capability) 1) capabilities)
+        (plist-put capabilities capability nil)))))
+
+(defun bun--lsp-drop-null-capabilities (capabilities)
+  "CAPABILITIES without textDocument entries whose value is nil (JSON null).
+lsp-mode 10 sends `inlineCompletion: null'; the LSP spec wants an object
+and TypeScript 7 rejects `initialize' over it.  Lenient servers read null
+as absent, so dropping it changes nothing for them."
+  (mapcar (lambda (entry)
+            (if (eq (car-safe entry) 'textDocument)
+                (cons 'textDocument
+                      (seq-remove (lambda (capability)
+                                    (and (consp capability) (null (cdr capability))))
+                                  (cdr entry)))
+              entry))
+          capabilities))
+
+(defun bun/lsp-tsc-command ()
+  "Command of the `bun-tsc' lsp-mode client."
+  (list bun/tsc-bin "--lsp" "--stdio"))
+
+(defun bun/lsp-biome-command ()
+  "Command of the `bun-biome' lsp-mode client."
+  (list bun/biome-bin "lsp-proxy"))
+
+(defun bun/lsp-register ()
+  "Register the `bun-tsc' and `bun-biome' lsp-mode clients.  Idempotent."
+  (dolist (entry bun/eglot-modes)
+    (setq lsp-language-id-configuration
+          (cons (cons (car entry) (plist-get (cdr entry) :language-id))
+                (assq-delete-all (car entry) lsp-language-id-configuration))))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection #'bun/lsp-tsc-command)
+    :major-modes bun/modes
+    ;; Above ts-ls, tsgo, deno-ls and friends, which also match these modes.
+    :priority 10
+    :server-id 'bun-tsc
+    :initialized-fn #'bun--lsp-drop-formatting))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection #'bun/lsp-biome-command)
+    :major-modes bun/modes
+    :add-on? t
+    :server-id 'bun-biome)))
+
+(with-eval-after-load 'lsp-mode
+  (bun/lsp-register)
+  (advice-add 'lsp--client-capabilities :filter-return
+              #'bun--lsp-drop-null-capabilities))
 
 ;;;; Commands
 
