@@ -8,12 +8,28 @@
   #:use-module ((rnrs bytevectors) #:select (string->utf8))
   #:use-module ((ice-9 textual-ports) #:select (get-string-all))
   #:use-module ((srfi srfi-1) #:select (find
+                                        alist-delete
                                         filter))
   #:use-module ((srfi srfi-13) #:select (string-trim-both
                                          string-prefix?
                                          string-any))
   #:export (configure-runner!
+            runner-with-job-path
             read-config))
+
+(define (runner-with-job-path runner path)
+  "Give shell jobs the manager's @var{path} after login profile loading.
+Preserve an explicitly declared PATH and all other runner settings."
+  (match-alist runner (settings)
+    (let ((environment (vector->list (or (assoc-ref settings "environment") #()))))
+      (if (and (equal? "shell" (assoc-ref settings "executor"))
+               (not (find (lambda (entry) (string-prefix? "PATH=" entry)) environment)))
+          (acons 'settings
+                 (acons "environment"
+                        (list->vector (cons (string-append "PATH=" path) environment))
+                        (alist-delete "environment" settings))
+                 (alist-delete 'settings runner))
+          runner))))
 
 (define (read-config path)
   "Read the Runner TOML file at @var{path} without printing its credentials."

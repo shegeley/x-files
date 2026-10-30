@@ -7,6 +7,7 @@
                                       make-suitbl))
              ((ares suitbl state) #:select (get-run-history))
              ((x-files build gitlab-runner) #:select (configure-runner!
+                                                      runner-with-job-path
                                                       read-config))
              ((x-files services gitlab-runner) #:select (gitlab-runner
                                                          gitlab-runner-configuration))
@@ -25,6 +26,23 @@
     (lambda _ #t)))
 
 (suite "GitLab Runner configuration"
+  (test "Shell job PATH survives profiles while respecting explicit overrides" ()
+    (let* ((entry (gitlab-runner #:name "path-test"
+                                #:token-file "/run/secret"
+                                #:settings '(("executor" . "shell")
+                                             ("shell" . "bash")
+                                             ("environment" . #("KEEP=value")))))
+           (configured (runner-with-job-path entry "/service/bin"))
+           (settings (assq-ref configured 'settings)))
+      (is (equal? #("PATH=/service/bin" "KEEP=value")
+                  (assoc-ref settings "environment")))
+      (is (equal? configured (runner-with-job-path configured "/different/bin")))
+      (is (equal? #("KEEP=value") (assoc-ref (assq-ref entry 'settings) "environment")))
+      (is (equal? "/run/secret" (assq-ref configured 'token-file))))
+    (let ((entry (gitlab-runner #:name "container"
+                               #:token-file "/run/secret"
+                               #:settings '(("executor" . "docker")))))
+      (is (equal? entry (runner-with-job-path entry "/service/bin")))))
   (test "Configure the manager log destination" ()
     (is (equal? "/var/log/gitlab-runner.log"
                 (assq-ref (gitlab-runner-configuration) 'log-files)))
