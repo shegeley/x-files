@@ -79,7 +79,7 @@
        (seq-some (lambda (marker) (file-exists-p (expand-file-name marker dir)))
                  bun/project-markers)))))
 
-(defun bun//root ()
+(defun bun--root ()
   "Current Bun project root, or a `user-error'."
   (or (bun/project-root)
       (user-error "Not inside a Bun project (no %s)"
@@ -97,21 +97,21 @@
   "a" #'bun/add
   "x" #'bun/x)
 
-(defmacro bun//define-mode (name parent lighter)
+(defmacro bun--define-mode (name parent lighter)
   "Define NAME as a `bun' flavour of PARENT showing LIGHTER."
   `(progn
      (define-derived-mode ,name ,parent ,lighter
        ,(format "`%s' inside a Bun project.\n\n\\{%s-map}" parent name))
      (keymap-set ,(intern (format "%s-map" name)) "C-c C-b" bun/command-map)))
 
-(bun//define-mode bun/ts-mode  typescript-ts-mode "Bun/TS")
-(bun//define-mode bun/tsx-mode tsx-ts-mode        "Bun/TSX")
-(bun//define-mode bun/js-mode  js-ts-mode         "Bun/JS")
-(bun//define-mode bun/jsx-mode js-ts-mode         "Bun/JSX")
+(bun--define-mode bun/ts-mode  typescript-ts-mode "Bun/TS")
+(bun--define-mode bun/tsx-mode tsx-ts-mode        "Bun/TSX")
+(bun--define-mode bun/js-mode  js-ts-mode         "Bun/JS")
+(bun--define-mode bun/jsx-mode js-ts-mode         "Bun/JSX")
 
 (defconst bun/modes '(bun/ts-mode bun/tsx-mode bun/js-mode bun/jsx-mode))
 
-(defun bun//fallback-mode ()
+(defun bun--fallback-mode ()
   "Set the major mode `auto-mode-alist' would pick without `bun/mode-maybe'."
   (let ((auto-mode-alist (seq-remove (lambda (entry) (eq (cdr entry) 'bun/mode-maybe))
                                      auto-mode-alist)))
@@ -124,7 +124,7 @@
             (mode (assoc-default (file-name-extension file) bun/extension->mode))
             ((bun/project-root (file-name-directory file))))
       (funcall mode)
-    (bun//fallback-mode)))
+    (bun--fallback-mode)))
 
 (defun bun/install-auto-mode ()
   "Put `bun/mode-maybe' in front of `auto-mode-alist'.  Idempotent."
@@ -167,14 +167,14 @@ whose mode matches, so the entry must precede generic TypeScript ones."
 
 ;;;; Commands
 
-(defun bun//compile (command)
+(defun bun--compile (command)
   "Run bun COMMAND (a list of arguments) from the project root."
-  (let ((default-directory (bun//root)))
+  (let ((default-directory (bun--root)))
     (compile (mapconcat #'shell-quote-argument (cons bun/bin command) " "))))
 
 (defun bun/scripts (&optional root)
   "Script names from package.json at ROOT (default: project root)."
-  (let ((file (expand-file-name "package.json" (or root (bun//root)))))
+  (let ((file (expand-file-name "package.json" (or root (bun--root)))))
     (when (file-exists-p file)
       (mapcar (lambda (script) (symbol-name (car script)))
               (alist-get 'scripts (json-read-file file))))))
@@ -182,38 +182,38 @@ whose mode matches, so the entry must precede generic TypeScript ones."
 (defun bun/run-script (script)
   "Run package.json SCRIPT with `bun run'."
   (interactive (list (completing-read "bun run: " (bun/scripts) nil t)))
-  (bun//compile (list "run" script)))
+  (bun--compile (list "run" script)))
 
 (defun bun/run-file (file)
   "Run FILE (default: the current one) with `bun run'."
   (interactive (list (read-file-name "bun run file: " nil (buffer-file-name) t)))
-  (bun//compile (list "run" (expand-file-name file))))
+  (bun--compile (list "run" (expand-file-name file))))
 
 (defun bun/test (&optional filter)
   "Run `bun test', optionally only tests matching FILTER."
   (interactive (list (let ((s (read-string "bun test filter (empty: all): ")))
                        (unless (string-empty-p s) s))))
-  (bun//compile (cons "test" (when filter (list filter)))))
+  (bun--compile (cons "test" (when filter (list filter)))))
 
 (defun bun/test-file ()
   "Run `bun test' for the current file."
   (interactive)
-  (bun//compile (list "test" (expand-file-name (buffer-file-name)))))
+  (bun--compile (list "test" (expand-file-name (buffer-file-name)))))
 
 (defun bun/install ()
   "Run `bun install'."
   (interactive)
-  (bun//compile (list "install")))
+  (bun--compile (list "install")))
 
 (defun bun/add (packages &optional dev)
   "`bun add' PACKAGES (space separated); with prefix arg DEV, as dev deps."
   (interactive (list (read-string "bun add: ") current-prefix-arg))
-  (bun//compile (append '("add") (when dev '("--dev")) (split-string packages))))
+  (bun--compile (append '("add") (when dev '("--dev")) (split-string packages))))
 
 (defun bun/x (command)
   "Run COMMAND (a package binary and its arguments) with `bun x'."
   (interactive (list (read-string "bunx: ")))
-  (bun//compile (cons "x" (split-string-and-unquote command))))
+  (bun--compile (cons "x" (split-string-and-unquote command))))
 
 (provide 'bun-mode)
 ;;; bun-mode.el ends here
