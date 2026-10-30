@@ -15,12 +15,13 @@
 (define (stub values)
   (feature (name 'stub) (values values)))
 
-(define (elisp-forms values)
-  "Elisp emitted by feature-bun's Emacs service under a config with VALUES."
-  (let* ((features (list (stub values) (feature-bun)))
+(define* (elisp-forms values #:optional (args '()))
+  "Elisp emitted by feature-bun (called with ARGS) under a config with VALUES."
+  (let* ((bun      (apply feature-bun args))
+         (features (list (stub values) bun))
          (config   (rde-config (features features)))
          (services (filter (lambda (s) (and s (not (unspecified? s))))
-                           ((feature-home-services-getter (feature-bun)) config)))
+                           ((feature-home-services-getter bun) config)))
          (emacs    (find (lambda (s)
                            (string-prefix? "emacs-"
                                            (symbol->string
@@ -48,6 +49,25 @@
       (is (file-append? bun-path))
       (is (eq? bun (file-append-base bun-path)))
       (is (equal? "/bin/bun" (car (file-append-suffix bun-path))))))
+  (test "lsp-mode: lsp-deferred hooks, never eglot ones" ()
+    (let ((hooks (forms-matching 'add-hook
+                                 (elisp-forms '((emacs . #t) (emacs-eglot . #t) (emacs-lsp . #t))
+                                              '(#:lsp-client lsp-mode)))))
+      (is (= 1 (length hooks)))
+      (is (equal? '(function lsp-deferred) (caddr (car hooks))))))
+  (test "eglot is the default even when lsp-mode is also present" ()
+    (let ((hooks (forms-matching 'add-hook
+                                 (elisp-forms '((emacs . #t) (emacs-eglot . #t) (emacs-lsp . #t))))))
+      (is (equal? '((function eglot-ensure)) (map caddr hooks)))))
+  (test "lsp-mode without the emacs-lsp feature is a configuration error" ()
+    (is (catch #t
+          (lambda () (elisp-forms '((emacs . #t)) '(#:lsp-client lsp-mode)) #f)
+          (lambda _ #t))))
+  (test "#:lsp-client #f starts nothing" ()
+    (is (null? (forms-matching 'add-hook
+                               (elisp-forms '((emacs . #t) (emacs-eglot . #t)) '(#:lsp-client #f))))))
+  (test "unknown #:lsp-client is rejected" ()
+    (is (catch #t (lambda () (feature-bun #:lsp-client 'lsp) #f) (lambda _ #t))))
   (test "no Emacs service without the emacs feature" ()
     (is (not (elisp-forms '())))))
 
