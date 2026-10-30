@@ -1,0 +1,57 @@
+(use-modules ((ares suitbl) #:select (suite test is current-test-runner get-state make-suitbl))
+             ((ares suitbl state) #:select (get-run-history))
+             ((gnu services) #:select (service-kind service-type-name service-value))
+             ((guix gexp) #:select (file-append? file-append-base file-append-suffix))
+             ((rde features) #:select (feature feature-home-services-getter rde-config))
+             ((x-files features bun) #:select (feature-bun))
+             ((x-files packages bun) #:select (bun))
+             ((srfi srfi-1) #:select (append-map every filter find)))
+
+(define (forms-matching head tree)
+  (cond ((not (pair? tree)) '())
+        ((eq? (car tree) head) (cons tree (append-map (lambda (t) (forms-matching head t)) (cdr tree))))
+        (else (append-map (lambda (t) (forms-matching head t)) tree))))
+
+(define (stub values)
+  (feature (name 'stub) (values values)))
+
+(define (elisp-forms values)
+  "Elisp emitted by feature-bun's Emacs service under a config with VALUES."
+  (let* ((features (list (stub values) (feature-bun)))
+         (config   (rde-config (features features)))
+         (services (filter (lambda (s) (and s (not (unspecified? s))))
+                           ((feature-home-services-getter (feature-bun)) config)))
+         (emacs    (find (lambda (s)
+                           (string-prefix? "emacs-"
+                                           (symbol->string
+                                            (service-type-name (service-kind s)))))
+                         services)))
+    (and emacs
+         ((@@ (rde home services emacs) home-elisp-configuration-config)
+          (service-value emacs)))))
+
+(define runner (make-suitbl))
+(current-test-runner runner)
+(suite "feature-bun Emacs configuration"
+  (test "eglot hooks for every bun mode, as function references" ()
+    (let ((hooks (forms-matching 'add-hook (elisp-forms '((emacs . #t) (emacs-eglot . #t))))))
+      (is (= 1 (length hooks)))
+      (is (equal? '(function eglot-ensure) (caddr (car hooks))))
+      (is (equal? '(quote (bun-ts-mode-hook bun-tsx-mode-hook bun-js-mode-hook bun-jsx-mode-hook))
+                  (cadr (cadr (car (forms-matching 'dolist (elisp-forms '((emacs . #t) (emacs-eglot . #t)))))))))))
+  (test "no eglot hooks without the emacs-eglot feature" ()
+    (is (null? (forms-matching 'add-hook (elisp-forms '((emacs . #t)))))))
+  (test "executables come from the feature's packages" ()
+    (let* ((setq (car (forms-matching 'setq (elisp-forms '((emacs . #t))))))
+           (bun-path (caddr setq)))
+      (is (eq? 'bun-bin (cadr setq)))
+      (is (file-append? bun-path))
+      (is (eq? bun (file-append-base bun-path)))
+      (is (equal? "/bin/bun" (car (file-append-suffix bun-path))))))
+  (test "no Emacs service without the emacs feature" ()
+    (is (not (elisp-forms '())))))
+
+(let ((history (get-run-history (get-state runner))))
+  (exit (if (and (pair? history)
+                 (every (lambda (run) (eq? 'pass (assq-ref run 'test-run/outcome))) history))
+            0 1)))

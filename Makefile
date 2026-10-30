@@ -164,7 +164,7 @@ system-test-gitlab-runner:
 # --- Bun: packages, bun-mode (ERT, incl. live tsc+biome eglot) and feature ---
 bun-packages := bun biome typescript-native emacs-bun-mode
 
-.PHONY: check/bun build/bun
+.PHONY: check/bun check/bun-feature build/bun
 build/bun:
 	guix build -L $(src) $(bun-packages)
 
@@ -176,3 +176,6 @@ check/bun:
 	    emacs --batch -l ert \
 	      -l $(tests)/bun-mode-test.el -l $(tests)/bun-lsp-test.el \
 	      -f ert-run-tests-batch-and-exit
+
+check/bun-feature:
+	guix repl -L $(src) $(tests)/bun-feature-test.scm
