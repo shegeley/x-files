@@ -12,6 +12,9 @@
                                                   shepherd-root-service-type))
   #:use-module ((gnu system vm) #:select (virtual-machine))
   #:use-module ((gnu packages admin) #:select (shepherd))
+  #:use-module ((gnu packages base) #:select (hello))
+  #:use-module ((gnu packages version-control) #:select (git-minimal))
+  #:use-module ((gnu packages package-management) #:select (guix))
   #:use-module ((gnu packages guile-xyz) #:select (guile-toml))
   #:use-module ((gnu packages guile) #:select (guile-json-4))
   #:use-module ((guix scripts system reconfigure) #:select (switch-system-program
@@ -25,6 +28,7 @@
 (define (config concurrent)
   (gitlab-runner-configuration
    #:stop-timeout 90
+   #:extra-packages (list hello)
    #:log-files (if (= concurrent 1)
                    "/var/log/gitlab-runner.log"
                    "/var/log/gitlab-runner-custom.log")
@@ -32,7 +36,10 @@
                 ("check_interval" . 1))
    #:runners (list (gitlab-runner #:name "offline-fixture"
                                   #:url "http://127.0.0.1:8091"
-                                  #:token-file "/etc/gitlab-runner-token"))))
+                                  #:token-file "/etc/gitlab-runner-token"
+                                  #:settings '(("executor" . "shell")
+                                               ("shell" . "bash")
+                                               ("environment" . #("RUNNER_FIXTURE=present")))))))
 
 (define coordinator
   (with-extensions (list guile-json-4)
@@ -266,6 +273,16 @@
             (test-equal "job uses the dedicated account"
               (guest '(passwd:uid (getpwnam "gitlab-runner")))
               (string->number (string-trim-both (contents (job-file 101 "uid")))))
+            (test-assert "login-shell job finds service Git and Guix"
+              (let ((tools (contents (job-file 101 "tools"))))
+                (and (string-contains tools #$(file-append git-minimal "/bin/git"))
+                     (string-contains tools #$(file-append guix "/bin/guix")))))
+            (test-assert "login-shell job finds extra packages"
+              (string-contains (contents (job-file 101 "tools"))
+                               #$(file-append hello "/bin/hello")))
+            (test-assert "job retains declared environment variables"
+              (string-contains (contents (job-file 101 "tools"))
+                               "RUNNER_FIXTURE=present"))
             (define job-pid (string->number (string-trim-both (contents (job-file 101 "pid")))))
             (define log-offset (string-length (contents "/var/log/gitlab-runner.log")))
             ;; Fork herd inside the VM so the test can release the job while stop waits.

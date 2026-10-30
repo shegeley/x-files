@@ -10,6 +10,10 @@ fi
 trap 'printf "interrupted\n" > "$job_state.interrupted"; exit 1' HUP INT TERM QUIT
 printf '%s\n' "$$" > "$job_state.pid"
 id -u > "$job_state.uid"
+{
+    for tool in git guix hello; do command -v "$tool" || true; done
+    printf 'RUNNER_FIXTURE=%s\n' "${RUNNER_FIXTURE:-}"
+} > "$job_state.tools"
 touch "$job_state.ready"
 printf 'fixture job %s started\n' "$CI_JOB_ID"
 
