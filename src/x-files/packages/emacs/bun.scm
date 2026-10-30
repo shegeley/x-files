@@ -33,16 +33,16 @@
           (add-after 'unpack 'patch-exe-paths
             (lambda* (#:key inputs #:allow-other-keys)
               (emacs-substitute-variables "bun-mode.el"
-                ("bun-bin"       (search-input-file inputs "/bin/bun"))
-                ("bun-tsc-bin"   (search-input-file inputs "/bin/tsc"))
-                ("bun-biome-bin" (search-input-file inputs "/bin/biome"))
-                ("bun-rass-bin"  (search-input-file inputs "/bin/rass"))))))))
+                ("bun/bin"       (search-input-file inputs "/bin/bun"))
+                ("bun/tsc-bin"   (search-input-file inputs "/bin/tsc"))
+                ("bun/biome-bin" (search-input-file inputs "/bin/biome"))
+                ("bun/rass-bin"  (search-input-file inputs "/bin/rass"))))))))
     (inputs (list bun typescript-native biome rassumfrassum))
     (home-page "https://grigory.tech")
     (synopsis "Emacs major modes, LSP and commands for Bun projects")
     (description
-     "Provides @code{bun-ts-mode}, @code{bun-tsx-mode}, @code{bun-js-mode} and
-@code{bun-jsx-mode} for files inside Bun projects, an eglot server combining
+     "Provides @code{bun/ts-mode}, @code{bun/tsx-mode}, @code{bun/js-mode} and
+@code{bun/jsx-mode} for files inside Bun projects, an eglot server combining
 the native TypeScript language server with Biome via rassumfrassum, and
 commands for @command{bun run}, @command{bun test}, @command{bun install},
 @command{bun add} and @command{bun x}.  Executable paths are patched to their
