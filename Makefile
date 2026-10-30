@@ -170,11 +170,12 @@ build/bun:
 
 check/bun:
 	@cache=$$(mktemp -d) && trap 'rm -rf "$$cache"' EXIT && \
-	  guix shell -L $(src) --pure emacs $(bun-packages) \
+	  guix shell -L $(src) --pure emacs emacs-lsp-mode $(bun-packages) \
 	    tree-sitter-typescript tree-sitter-javascript tree-sitter-jsdoc coreutils -- \
 	    env HOME="$$cache" XDG_CACHE_HOME="$$cache/cache" \
 	    emacs --batch -l ert \
 	      -l $(tests)/bun-mode-test.el -l $(tests)/bun-lsp-test.el \
+	      -l $(tests)/bun-lsp-mode-test.el \
 	      -f ert-run-tests-batch-and-exit
 
 check/bun-feature:
